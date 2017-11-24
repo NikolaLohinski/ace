@@ -6,12 +6,19 @@ class Engine(object):
     """Class that defines the game engine"""
 
     def __init__(self, players, teams):
-        """Constructor"""
-        hearts = [Card(x, 'h') for x in range(7, 14)] + [Card(1, 'h')]
-        diamonds = [Card(x, 'd') for x in range(7, 14)] + [Card(1, 'd')]
-        spades = [Card(x, 's') for x in range(7, 14)] + [Card(1, 's')]
-        clubs = [Card(x, 'c') for x in range(7, 14)] + [Card(1, 'c')]
-        self.deck = hearts + diamonds + spades + clubs
+        """Constructor.
+
+        Args:
+            players (list<int>): List of player IDs.
+            teams (list<tuple<int>>): List of teams. A team is a combination of indices in the players list.
+                For example teams = [(1, 2), (0, 3)].
+
+        """
+        values = ['7', '8', '9', 'j', 'q', 'k', '10', 'a']
+        families = ['h', 'c', 's', 'd']
+        self.deck = []
+        for f in families:
+            self.deck += [Card('{},{}'.format(v, f)) for v in values]
         self.current_game_state = self.generate_new_game_state(players, teams)
 
     def shuffle(self):
@@ -42,22 +49,17 @@ class Engine(object):
                 'teams': teams  # List of teams
             },
             'game-data': {
-                'leading-player': -1,  # Player that is leading the bet
-                'leading-bet': (-1, None),  # Value of the leading bet
-                'game-type': {
-                    'type': 'bet',  # which phase of the game : 'bet' or 'game'
-                    'bet': (-1, None),  # which bet value did won if type == 'game'
-                },
+                'type': 'bet',
                 'dealer': -1
             },
             'past': {
                 'score': [0, 0],  # Score of each team
                 'bets': [[], [], [], []],  # Keep trace of the bets
-                'turns': [[], [], [], [], [], [], [], []],  # Keep trace of the turns
+                'turns': [],  # Keep trace of the turns
             }
         }
 
-    def bet(self, playing, bet=(-1, None)):
+    def bet(self, playing, bet=None):
         """Updates game state given a choice taken by the player. If the player has passed, then (-1, None)
         should be passed as a default bet.
 
@@ -73,38 +75,37 @@ class Engine(object):
         # Append the bet to the list
         possible_bets = []
         new_playing = (playing + 1) % 4
+        leading_player, leading_bet = self.leading_bets()
         self.current_game_state['past']['bets'][playing].append(bet)
         # Did the player pass
-        if bet == (-1, None):
+        if bet is None:
             # Is the leading player the player about to play ?
-            if playing + 1 % 4 == self.current_game_state['game-data']['leading-player']:
+            if playing + 1 % 4 == leading_player:
                 # Then it means it is the end of bets
-                self.current_game_state['game-data']['game-type'] = {
-                    'type': 'game',
-                    'bet': self.current_game_state['game-data']['leading-bet']
-                }
+                self.current_game_state['game-data']['type'] = 'game'
                 new_playing = self.current_game_state['game-data']['dealer']
             else:
                 # Check if no one bet
-                if all(x == [(-1, None)] for x in self.current_game_state['past']['bets']):
+                if all(x == [None] for x in self.current_game_state['past']['bets']):
                     new_playing = -1
                 else:
                     possible_bets = self.possible_bets()
         else:
-            # Then the new bet is the leading bet
-            self.current_game_state['game-data']['leading-player'] = playing
-            self.current_game_state['game-data']['leading-bet'] = bet
             possible_bets = self.possible_bets()
-            # Check if it was the maximal bet
-            if len(possible_bets) == 0:
-                # In which case, get ready for the game
-                self.current_game_state['game-data']['game-type'] = {
-                    'type': 'game',
-                    'bet': self.current_game_state['game-data']['leading-bet']
-                }
-                new_playing = self.current_game_state['game-data']['dealer']
 
         return self.current_game_state, new_playing, possible_bets
+
+    def leading_bets(self,):
+        leading_player = -1
+        leading_bet = 0
+        for player in range(4):
+            for bet_str in self.current_game_state['past']['bets'][player]:
+                if bet_str is not None:
+                    bet = int(bet_str.split(',')[0])
+                    if bet > leading_bet:
+                        leading_player = player
+                        leading_bet = bet
+        return leading_player, leading_bet
 
     def possible_bets(self):
         """Determines the possible bets of the current state
@@ -114,7 +115,7 @@ class Engine(object):
 
         """
         bets = [80, 90, 100, 110, 120, 130, 140, 150, 160, 162]
-        current_bet = self.current_game_state['game-data']['leading-bet'][0]
+        leading_player, current_bet = self.leading_bets()
         possible_bets = [x for x in bets if x > current_bet]
         return possible_bets
 
@@ -130,4 +131,82 @@ class Engine(object):
             list: the list of possible cards indexes for each player
 
         """
+        new_playing = (playing + 1) % 4
+        # First, get the card that is about to be played
+        card = self.current_game_state['actors']['cards'][playing].pop(card_index)
+        # Then play the card
+        turn_index = self.get_current_turn_index()
+        self.current_game_state['past']['turns'][turn_index].append(card)
+        # Check if the turn is finished
+        if len(self.current_game_state['past']['turns'][turn_index]) == 4:
+            new_playing = self.determine_leader_of_turn(turn_index=turn_index)
+            # Since the turn is finished, we may calculate the score and update the state
+            self.current_game_state['past']['score'] = self.determine_score(turn_index=turn_index)
+        return self.current_game_state, new_playing, []
+
+    def get_current_turn_index(self):
+        """Get the index in the state of the current turn. If the index does not exist, create the turn.
+
+        Returns:
+            int: index in the list of turns in state > past of the current turn
+        """
+        turns = self.current_game_state['past']['turns']
+        last_turn = len(turns) - 1
+        if last_turn == -1:
+            # Then it is the first turn
+            self.current_game_state['past']['turns'].append([])
+            return 0
+        else:
+            if len(turns[last_turn]) == 4:
+                self.current_game_state['past']['turns'].append([])
+                return last_turn + 1
+            else:
+                return last_turn
+
+    def determine_leader_of_turn(self, turn_index):
+        """Determine recursively who has the lead in the turn.
+
+        Args:
+            turn_index (int): Index in state of the turn
+
+        Returns:
+            int: Index of the player that is leading the turn
+        """
+        # If we just started the game, then the leader is the one just after the dealer
+        if turn_index == -1:
+            return (self.current_game_state['game-data']['dealer'] + 1) % 4
+        else:
+            # Else we need the leader from the previous turn to know who played what
+            previous_leader = self.determine_leader_of_turn(turn_index=turn_index - 1)
+            cards = self.current_game_state['past']['turns'][turn_index]
+            leading_card = cards[0]
+            cards = [x for i, x in enumerate(cards) if i > 0]
+            player = previous_leader
+            leading_player = previous_leader
+            for c in cards:
+                player = (player + 1) % 4
+                if c.is_better_than(leading_card):
+                    leading_card = c
+                    leading_player = player
+            return leading_player
+
+    def determine_score(self, turn_index):
+        """Determine recursively the score.
+
+        Args:
+            turn_index (int): Index in state of the turn
+
+        Returns:
+            list<int>: list of score for each team.
+        """
+        if turn_index == - 1:
+            return [0, 0]
+        else:
+            winner_of_turn = self.determine_leader_of_turn(turn_index=turn_index)
+            scores = self.determine_score(turn_index=turn_index - 1)
+            teams = self.current_game_state['actors']['teams']
+            index_of_team = [i for i, team in enumerate(teams) if winner_of_turn in team][0]
+            for c in self.current_game_state['past']['turns'][turn_index]:
+                scores[index_of_team] += c.price
+            return scores
 
