@@ -15,7 +15,7 @@ class TestPlay(object):
         engine.current_game_state['past']['turns'] = [
             [Card('j,h', True), Card('7,h', True), Card('k,h', True), Card('q,h', True)],
             [Card('9,h', True), Card('7,d'), Card('j,d'), Card('a,h', True)],
-            [Card('7,s')]
+            [Card('7,c')]
         ]
         engine.current_game_state['past']['score'] = [64, 0]
         engine.current_game_state['game-data']['dealer'] = 1
@@ -33,7 +33,7 @@ class TestPlay(object):
             state['past']['turns'] == [
                 [Card('j,h', True), Card('7,h', True), Card('k,h', True), Card('q,h', True)],
                 [Card('9,h', True), Card('7,d'), Card('j,d'), Card('a,h', True)],
-                [Card('7,s'), Card('7,d')]
+                [Card('7,c'), Card('7,d')]
             ]
             and state['actors']['cards'] == [
                [Card('a,s'), Card('k,s'), Card('8,c'), Card('9,c'), Card('a,d'), Card('k,d')],
@@ -42,12 +42,12 @@ class TestPlay(object):
                [Card('j,s'), Card('7,s'), Card('10,s'), Card('8,d'), Card('9,d')],
             ]
             and playing == 0
-            # and possibles == [
-            #     [2, 3],
-            #     [1, 2, 3],
-            #     [],
-            #     []
-            # ]
+            and possibles == [
+                [2, 3],
+                [1, 2, 3],
+                [],
+                []
+            ]
         )
 
     def test_start_game(self):
@@ -93,12 +93,12 @@ class TestPlay(object):
                     Card('7,d'), Card('9,d'), Card('7,h', True), Card('7,d')],
             ]
             and playing == 3
-            # and possibles == [
-            #     [7],
-            #     [6, 7],
-            #     [],
-            #     [6]
-            # ]
+            and possibles == [
+                [7],
+                [6, 7],
+                [],
+                [6]
+            ]
         )
 
     def test_end_turn(self):
@@ -152,11 +152,123 @@ class TestPlay(object):
             ]
             and playing == 1
             and state['past']['score'] == [113, 28]
-            # and possibles == [
-            #     [7],
-            #     [6, 7],
-            #     [],
-            #     [6]
-            # ]
+            and possibles == [
+                [0],
+                [0],
+                [0],
+                [0]
+            ]
+        )
+
+    def test_piss_turn(self):
+        from classes.Engine import Engine
+        from classes.Card import Card
+        players = [12, 34, 56, 78]
+        teams = [[0, 2], [1, 3]]
+        engine = Engine(players=players, teams=teams)
+        engine.current_game_state['actors']['cards'] = [
+            [Card('k,s', True), Card('j,s', True), Card('9,s', True), Card('j,h'),
+             Card('a,h'), Card('q,d')],
+            [Card('q,s', True), Card('a,s', True), Card('8,s', True), Card('7,s', True),
+             Card('7,h'), Card('9,h'), Card('k,h')],
+            [Card('7,c'), Card('8,c'), Card('9,c'), Card('a,c'),
+             Card('10,c'), Card('10,h')],
+            [Card('10,s'), Card('k,c'), Card('q,c'), Card('j,c'),
+             Card('8,h'), Card('q,h')]
+        ]
+        engine.current_game_state['past']['turns'] = [
+            [Card('a,d'), Card('8,d'), Card('j,d'), Card('10,d')],
+            [Card('q,d'), Card('k,d'), Card('7,d')]
+        ]
+        engine.current_game_state['past']['score'] = [23, 0]
+        engine.current_game_state['game-data']['dealer'] = 1
+        engine.current_game_state['game-data']['type'] = 'game'
+        engine.current_game_state['past']['bets'] = [
+            ['100,s'],
+            [None],
+            ['90,c', None],
+            [None, None]
+        ]
+        playing = 1
+        card_index = 6
+        state, playing, possibles = engine.play(playing=playing, card_index=card_index)
+        assert (
+            state['past']['turns'] == [
+                [Card('a,d'), Card('8,d'), Card('j,d'), Card('10,d')],
+                [Card('q,d'), Card('k,d'), Card('7,d'), Card('k,h')]
+            ]
+            and state['actors']['cards'] == [
+                [Card('k,s', True), Card('j,s', True), Card('9,s', True), Card('j,h'),
+                 Card('a,h'), Card('q,d')],
+                [Card('q,s', True), Card('a,s', True), Card('8,s', True), Card('7,s', True),
+                 Card('7,h'), Card('9,h')],
+                [Card('7,c'), Card('8,c'), Card('9,c'), Card('a,c'),
+                 Card('10,c'), Card('10,h')],
+                [Card('10,s'), Card('k,c'), Card('q,c'), Card('j,c'),
+                 Card('8,h'), Card('q,h')]
+            ]
+            and playing == 3
+            and possibles == [
+                [0, 1, 2, 3, 4, 5],
+                [0, 1, 2, 3, 4, 5],
+                [0, 1, 2, 3, 4, 5],
+                [0, 1, 2, 3, 4, 5]
+            ]
+        )
+
+    def test_piss_possibles(self):
+        from classes.Engine import Engine
+        from classes.Card import Card
+        players = [12, 34, 56, 78]
+        teams = [[0, 2], [1, 3]]
+        engine = Engine(players=players, teams=teams)
+        engine.current_game_state['actors']['cards'] = [
+            [Card('k,s', True), Card('j,s', True), Card('9,s', True), Card('j,h'),
+             Card('a,h'), Card('q,d'), Card('7,d')],
+            [Card('q,s', True), Card('a,s', True), Card('8,s', True), Card('7,s', True),
+             Card('7,h'), Card('9,h'), Card('k,h')],
+            [Card('7,c'), Card('8,c'), Card('9,c'), Card('a,c'),
+             Card('10,c'), Card('10,h')],
+            [Card('10,s'), Card('k,c'), Card('q,c'), Card('j,c'),
+             Card('8,h'), Card('q,h'), Card('k,d')]
+        ]
+        engine.current_game_state['past']['turns'] = [
+            [Card('a,d'), Card('8,d'), Card('j,d'), Card('10,d')],
+            [Card('q,d')]
+        ]
+        engine.current_game_state['past']['score'] = [23, 0]
+        engine.current_game_state['game-data']['dealer'] = 1
+        engine.current_game_state['game-data']['type'] = 'game'
+        engine.current_game_state['past']['bets'] = [
+            ['100,s'],
+            [None],
+            ['90,c', None],
+            [None, None]
+        ]
+        playing = 3
+        card_index = 6
+        state, playing, possibles = engine.play(playing=playing, card_index=card_index)
+        assert (
+            state['past']['turns'] == [
+                [Card('a,d'), Card('8,d'), Card('j,d'), Card('10,d')],
+                [Card('q,d'), Card('k,d')]
+            ]
+            and state['actors']['cards'] == [
+                [Card('k,s', True), Card('j,s', True), Card('9,s', True), Card('j,h'),
+                 Card('a,h'), Card('q,d'), Card('7,d')],
+                [Card('q,s', True), Card('a,s', True), Card('8,s', True), Card('7,s', True),
+                 Card('7,h'), Card('9,h'), Card('k,h')],
+                [Card('7,c'), Card('8,c'), Card('9,c'), Card('a,c'),
+                 Card('10,c'), Card('10,h')],
+                [Card('10,s'), Card('k,c'), Card('q,c'), Card('j,c'),
+                 Card('8,h'), Card('q,h')]
+            ]
+            and playing == 0
+            and possibles == [
+                [5, 6],
+                [0, 1, 2, 3, 4, 5, 6],
+                [],
+                []
+            ]
         )
 

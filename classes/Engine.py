@@ -14,11 +14,9 @@ class Engine(object):
                 For example teams = [(1, 2), (0, 3)].
 
         """
-        values = ['7', '8', '9', 'j', 'q', 'k', '10', 'a']
-        families = ['h', 'c', 's', 'd']
         self.deck = []
-        for f in families:
-            self.deck += [Card('{},{}'.format(v, f)) for v in values]
+        for f in ['h', 'c', 's', 'd']:
+            self.deck += [Card('{},{}'.format(v, f)) for v in ['7', '8', '9', 'j', 'q', 'k', '10', 'a']]
         self.current_game_state = self.generate_new_game_state(players, teams)
 
     def shuffle(self):
@@ -131,6 +129,7 @@ class Engine(object):
             list: the list of possible cards indexes for each player
 
         """
+
         new_playing = (playing + 1) % 4
         # First, get the card that is about to be played
         card = self.current_game_state['actors']['cards'][playing].pop(card_index)
@@ -142,7 +141,8 @@ class Engine(object):
             new_playing = self.determine_leader_of_turn(turn_index=turn_index)
             # Since the turn is finished, we may calculate the score and update the state
             self.current_game_state['past']['score'] = self.determine_score(turn_index=turn_index)
-        return self.current_game_state, new_playing, []
+        possibles = self.determine_possibles(turn_index=turn_index)
+        return self.current_game_state, new_playing, possibles
 
     def get_current_turn_index(self):
         """Get the index in the state of the current turn. If the index does not exist, create the turn.
@@ -209,4 +209,64 @@ class Engine(object):
             for c in self.current_game_state['past']['turns'][turn_index]:
                 scores[index_of_team] += c.price
             return scores
+
+    def determine_possibles(self, turn_index):
+        """Determine cards that can be played by all players. If the player already played, then he cannot play
+        anything.
+
+        Args:
+            turn_index (int): Index in state of the turn
+            playing (int): Index of the player who's about to play
+
+        Returns:
+            list<list<int>>: For each player, each index of card he can play
+
+        """
+        possibles = [[i for i, x in enumerate(self.current_game_state['actors']['cards'][p])] for p in range(4)]
+        turn = self.current_game_state['past']['turns'][turn_index]
+        number_of_cards_on_pile = len(turn)
+        if 4 > number_of_cards_on_pile > 0:
+            possibles = [[], [], [], []]
+            leader = self.determine_leader_of_turn(turn_index=turn_index)
+            starter = self.determine_leader_of_turn(turn_index=turn_index - 1)
+            first_card = turn[0]
+            waiting_players = [(starter + i) % 4 for i in range(number_of_cards_on_pile, 4)]
+            for p in waiting_players:
+                cards = self.current_game_state['actors']['cards'][p]
+                # check if first card wanted is asset
+                if first_card.asset:
+                    possibles[p] = self.determine_possible_assets(turn_index=turn_index, player=p)
+                else:
+                    # Otherwise, the first card is not an asset
+                    same_family_cards = [x for x in cards if x.family == first_card.family]
+                    if len(same_family_cards) > 0:
+                        # Check if the player has any card of the family
+                        possibles[p] = [cards.index(x) for x in same_family_cards]
+                    else:
+                        team = [t for t in self.current_game_state['actors']['teams'] if p in t][0]
+                        if leader in team:
+                            # If the leader is in the same team, then the player can play whatever he wants
+                            possibles[p] = [i for i, x in enumerate(cards)]
+                        else:
+                            # Otherwise, if he has assets,
+                            possibles[p] = self.determine_possible_assets(turn_index=turn_index, player=p)
+        return possibles
+
+    def determine_possible_assets(self, turn_index, player):
+        turn = self.current_game_state['past']['turns'][turn_index]
+        cards = self.current_game_state['actors']['cards'][player]
+        assets = [c for c in cards if c.asset]
+        if len(assets) > 0:
+            # If we do, we need to check if we have better assets than all the assets currently played
+            already_played_assets = [c for c in turn if c.asset]
+            better_assets = []
+            for a in assets:
+                l = [al for al in already_played_assets if al.is_better_than(a)]
+                if len(l) == 0:
+                    better_assets.append(a)
+            if len(better_assets) > 0:
+                assets = better_assets
+            return [cards.index(x) for x in assets]
+        else:
+            return [i for i, x in enumerate(cards)]
 
