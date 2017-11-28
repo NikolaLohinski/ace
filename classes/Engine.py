@@ -48,7 +48,8 @@ class Engine(object):
             },
             'game-data': {
                 'type': 'bet',
-                'dealer': -1
+                'dealer': -1,
+                'winner': -1
             },
             'past': {
                 'score': [0, 0],  # Score of each team
@@ -56,6 +57,17 @@ class Engine(object):
                 'turns': [],  # Keep trace of the turns
             }
         }
+
+    def deal(self, dealer=0):
+        self.deck = self.shuffle()
+        self.current_game_state['actors']['cards'] = [[], [], [], []]
+        # Dealing 3-2-3
+        for i in range(4):
+            p = (i + dealer) % 4
+            self.current_game_state['actors']['cards'][p] += self.deck[(0 + 3 * p):(3 + 3 * p)]
+            self.current_game_state['actors']['cards'][p] += self.deck[(12 + 2 * p):(14 + 2 * p)]
+            self.current_game_state['actors']['cards'][p] += self.deck[(20 + 3 * p): (23 + 3 * p)]
+        return self.current_game_state['actors']['cards']
 
     def bet(self, playing, bet=None):
         """Updates game state given a choice taken by the player. If the player has passed, then (-1, None)
@@ -73,7 +85,7 @@ class Engine(object):
         # Append the bet to the list
         possible_bets = []
         new_playing = (playing + 1) % 4
-        leading_player, leading_bet = self.leading_bets()
+        leading_player, leading_bet = self.leading_bet()
         self.current_game_state['past']['bets'][playing].append(bet)
         # Did the player pass
         if bet is None:
@@ -93,7 +105,7 @@ class Engine(object):
 
         return self.current_game_state, new_playing, possible_bets
 
-    def leading_bets(self,):
+    def leading_bet(self,):
         leading_player = -1
         leading_bet = 0
         for player in range(4):
@@ -113,7 +125,7 @@ class Engine(object):
 
         """
         bets = [80, 90, 100, 110, 120, 130, 140, 150, 160, 162]
-        leading_player, current_bet = self.leading_bets()
+        leading_player, current_bet = self.leading_bet()
         possible_bets = [x for x in bets if x > current_bet]
         return possible_bets
 
@@ -125,7 +137,7 @@ class Engine(object):
             card_index (int): Index of the card to be played in the hand of the player.
         Returns:
             object: the new game state
-            int: the new player that needs to play
+            int: the new player that needs to play, -1 if it's the end of the game
             list: the list of possible cards indexes for each player
 
         """
@@ -142,6 +154,9 @@ class Engine(object):
             # Since the turn is finished, we may calculate the score and update the state
             self.current_game_state['past']['score'] = self.determine_score(turn_index=turn_index)
         possibles = self.determine_possibles(turn_index=turn_index)
+        if turn_index == 7:
+            new_playing = -1
+            self.current_game_state['game-data']['winner'] = self.determine_winner()
         return self.current_game_state, new_playing, possibles
 
     def get_current_turn_index(self):
@@ -208,6 +223,8 @@ class Engine(object):
             index_of_team = [i for i, team in enumerate(teams) if winner_of_turn in team][0]
             for c in self.current_game_state['past']['turns'][turn_index]:
                 scores[index_of_team] += c.price
+            if turn_index == 7:
+                scores[index_of_team] += 10
             return scores
 
     def determine_possibles(self, turn_index):
@@ -269,4 +286,17 @@ class Engine(object):
             return [cards.index(x) for x in assets]
         else:
             return [i for i, x in enumerate(cards)]
+
+    def determine_winner(self):
+        """Returns the index of the team that won the game
+
+        Returns:
+            int: index of the winners
+
+        """
+        leading_player, leading_bet = self.leading_bet()
+        team = [i for i, t in enumerate(self.current_game_state['actors']['teams']) if leading_player in t][0]
+        if self.current_game_state['past']['score'][team] >= leading_bet:
+            return team
+        return (team + 1) % 2
 

@@ -8,14 +8,24 @@ class Card(object):
             value (str):  value of the card ('a,h', '8,c', 'q,d' etc...)
             asset (bool): tell if the card is an asset or not.
         """
-
-        [self.number, self.family] = value.split(sep=',')
+        list_value = value.split(sep=',')
+        self.number = list_value[0]
+        self.family = list_value[1]
         self.asset = asset
         self.cardinal, self.price = self.convert(number=self.number, asset=self.asset)
 
     def __eq__(self, other):
         """Redefine equality operator."""
         return self.number == other.number and self.family == other.family and self.asset == other.asset
+
+    def __str__(self):
+        name = '{},{}'.format(self.number, self.family)
+        if self.asset:
+            name += '_'
+        return name
+
+    def __repr__(self):
+        return self.__str__()
 
     def convert(self, number, asset):
         """Convert string value into a rank from 0 (worst) to 7 (best) in the family and a price.
