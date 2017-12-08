@@ -124,7 +124,7 @@ class Engine(object):
             list: the list of possible bets
 
         """
-        bets = [80, 90, 100, 110, 120, 130, 140, 150, 160, 162]
+        bets = [82, 90, 100, 110, 120, 130, 140, 150, 160, 162]
         leading_player, current_bet = self.leading_bet()
         possible_bets = [x for x in bets if x > current_bet]
         return possible_bets
