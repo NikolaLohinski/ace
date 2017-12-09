@@ -1,5 +1,5 @@
 from random import shuffle
-from .Card import Card
+from classes.Card import Card
 
 
 class Engine(object):
@@ -59,6 +59,15 @@ class Engine(object):
         }
 
     def deal(self, dealer=0):
+        """Deal the cards and determine first player to bet.
+
+        Args:
+            dealer (int): dealer of the game.
+        Returns:
+            object: the current game state
+            int: the player about to play
+            list: list of possible bets
+        """
         self.deck = self.shuffle()
         self.current_game_state['actors']['cards'] = [[], [], [], []]
         # Dealing 3-2-3
@@ -67,7 +76,7 @@ class Engine(object):
             self.current_game_state['actors']['cards'][p] += self.deck[(0 + 3 * p):(3 + 3 * p)]
             self.current_game_state['actors']['cards'][p] += self.deck[(12 + 2 * p):(14 + 2 * p)]
             self.current_game_state['actors']['cards'][p] += self.deck[(20 + 3 * p): (23 + 3 * p)]
-        return self.current_game_state['actors']['cards']
+        return self.current_game_state, (dealer + 1) % 4, self.possible_bets()
 
     def bet(self, playing, bet=None):
         """Updates game state given a choice taken by the player. If the player has passed, then (-1, None)
@@ -75,7 +84,7 @@ class Engine(object):
 
         Args:
             playing (int): Index of the player who is playing.
-            bet (tuple<int, str>): Bet that has been played.
+            bet (str): Bet that has been played.
         Returns:
             object: the new game state
             int: the new player that needs to play
@@ -105,9 +114,10 @@ class Engine(object):
 
         return self.current_game_state, new_playing, possible_bets
 
-    def leading_bet(self,):
+    def leading_bet(self):
         leading_player = -1
         leading_bet = 0
+        max_bet = ''
         for player in range(4):
             for bet_str in self.current_game_state['past']['bets'][player]:
                 if bet_str is not None:
@@ -115,7 +125,8 @@ class Engine(object):
                     if bet > leading_bet:
                         leading_player = player
                         leading_bet = bet
-        return leading_player, leading_bet
+                        max_bet = bet_str
+        return leading_player, max_bet
 
     def possible_bets(self):
         """Determines the possible bets of the current state
@@ -126,8 +137,9 @@ class Engine(object):
         """
         bets = [82, 90, 100, 110, 120, 130, 140, 150, 160, 162]
         leading_player, current_bet = self.leading_bet()
-        possible_bets = [x for x in bets if x > current_bet]
-        return possible_bets
+        if current_bet != '':
+            bets = [x for x in bets if x > int(current_bet.split(',')[0])]
+        return bets
 
     def play(self, playing, card_index):
         """Updates the current state given a player and the card he is about to play.
@@ -296,7 +308,7 @@ class Engine(object):
         """
         leading_player, leading_bet = self.leading_bet()
         team = [i for i, t in enumerate(self.current_game_state['actors']['teams']) if leading_player in t][0]
-        if self.current_game_state['past']['score'][team] >= leading_bet:
+        if self.current_game_state['past']['score'][team] >= int(leading_bet.split(',')[0]):
             return team
         return (team + 1) % 2
 
