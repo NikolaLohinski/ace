@@ -3,7 +3,7 @@ class TestPlay(object):
     def test_simple_turn(self):
         from classes.Engine import Engine
         from classes.Card import Card
-        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]])
+        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]], dealer=1)
         engine.current_game_state['actors']['cards'] = [
             [Card('a,s'), Card('k,s'), Card('8,c'), Card('9,c'), Card('a,d'), Card('k,d')],
             [Card('9,s'), Card('a,c'), Card('k,c'), Card('j,c'), Card('q,d'), Card('10,d')],
@@ -15,7 +15,6 @@ class TestPlay(object):
             [Card('9,h', True), Card('7,d'), Card('j,d'), Card('a,h', True)],
             [Card('7,c')]
         ]
-        engine.current_game_state['game-data']['dealer'] = 1
         engine.current_game_state['game-data']['type'] = 'game'
         engine.current_game_state['past']['bets'] = [
             ['110,h', None],
@@ -43,7 +42,7 @@ class TestPlay(object):
     def test_start_game(self):
         from classes.Engine import Engine
         from classes.Card import Card
-        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]])
+        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]], dealer=1)
         engine.current_game_state['actors']['cards'] = [
             [Card('a,s'), Card('k,s'), Card('8,c'), Card('9,c'),
                 Card('a,d'), Card('k,d'), Card('j,d'), Card('k,h', True)],
@@ -54,7 +53,6 @@ class TestPlay(object):
             [Card('j,s'), Card('7,s'), Card('10,s'), Card('8,d'),
                 Card('7,d'), Card('9,d'), Card('7,h', True), Card('7,d')],
         ]
-        engine.current_game_state['game-data']['dealer'] = 1
         engine.current_game_state['game-data']['type'] = 'game'
         state, playing, possibles = engine.play(playing=2, card_index=6)
         assert (
@@ -78,7 +76,7 @@ class TestPlay(object):
     def test_end_turn(self):
         from classes.Engine import Engine
         from classes.Card import Card
-        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]])
+        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]], dealer=1)
         engine.current_game_state['actors']['cards'] = [
             [Card('k,s')],
             [Card('j,c')],
@@ -95,7 +93,6 @@ class TestPlay(object):
             [Card('9,c'), Card('a,c'), Card('q,c')]
         ]
         engine.current_game_state['past']['score'] = [113, 4]
-        engine.current_game_state['game-data']['dealer'] = 1
         engine.current_game_state['game-data']['type'] = 'game'
         state, playing, possibles = engine.play(playing=3, card_index=1)
         assert (
@@ -122,7 +119,7 @@ class TestPlay(object):
     def test_asset_cut_turn(self):
         from classes.Engine import Engine
         from classes.Card import Card
-        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]])
+        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]], dealer=1)
         engine.current_game_state['actors']['cards'] = [
             [Card('k,s', True), Card('j,s', True), Card('9,s', True), Card('j,h'),
              Card('a,h'), Card('q,d')],
@@ -138,7 +135,6 @@ class TestPlay(object):
             [Card('q,d'), Card('k,d'), Card('7,d'), Card('k,h')],
             [Card('k,c')]
         ]
-        engine.current_game_state['game-data']['dealer'] = 1
         engine.current_game_state['game-data']['type'] = 'game'
         state, playing, possibles = engine.play(playing=0, card_index=0)
         assert (
@@ -169,7 +165,7 @@ class TestPlay(object):
     def test_piss_possibles(self):
         from classes.Engine import Engine
         from classes.Card import Card
-        engine = Engine(players=[0, 1, 2, 3], teams=[[0, 2], [1, 3]])
+        engine = Engine(players=[0, 1, 2, 3], teams=[[0, 2], [1, 3]], dealer=1)
         engine.current_game_state['actors']['cards'] = [
             [Card('k,s', True), Card('j,s', True), Card('9,s', True), Card('j,h'),
              Card('a,h'), Card('q,d'), Card('7,d')],
@@ -184,7 +180,6 @@ class TestPlay(object):
             [Card('a,d'), Card('8,d'), Card('j,d'), Card('10,d')],
             [Card('q,d')]
         ]
-        engine.current_game_state['game-data']['dealer'] = 1
         engine.current_game_state['game-data']['type'] = 'game'
         state, playing, possibles = engine.play(playing=3, card_index=6)
         assert possibles == [
@@ -197,7 +192,7 @@ class TestPlay(object):
     def test_end_game(self):
         from classes.Engine import Engine
         from classes.Card import Card
-        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]])
+        engine = Engine(players=[1, 3, 2, 4], teams=[[0, 2], [1, 3]], dealer=1)
         engine.current_game_state['actors']['cards'] = [
             [Card('k,s')],
             [],
@@ -221,7 +216,6 @@ class TestPlay(object):
             [Card('j,c'), Card('q,s'), Card('j,s')]
         ]
         engine.current_game_state['past']['score'] = [113, 4]
-        engine.current_game_state['game-data']['dealer'] = 1
         engine.current_game_state['game-data']['type'] = 'game'
         state, playing, possibles = engine.play(playing=0, card_index=0)
         assert (

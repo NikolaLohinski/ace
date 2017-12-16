@@ -9,9 +9,13 @@ class Card(object):
             asset (bool): tell if the card is an asset or not.
         """
         list_value = value.split(sep=',')
+        if value.find('*') != -1:
+            self.asset = True
+            list_value = value.partition('*')[0].split(sep=',')
+        else:
+            self.asset = asset
         self.number = list_value[0]
         self.family = list_value[1]
-        self.asset = asset
         self.cardinal, self.price = self.convert(number=self.number, asset=self.asset)
 
     def __eq__(self, other):
@@ -21,11 +25,17 @@ class Card(object):
     def __str__(self):
         name = '{},{}'.format(self.number, self.family)
         if self.asset:
-            name += '_'
+            name += '*'
         return name
 
     def __repr__(self):
         return self.__str__()
+
+    def __lt__(self, card):
+        return card.is_better_than(self)
+
+    def __gt__(self, other):
+        return self.is_better_than(other)
 
     def convert(self, number, asset):
         """Convert string value into a rank from 0 (worst) to 7 (best) in the family and a price.
@@ -53,7 +63,7 @@ class Card(object):
             is_asset (bool): rather the card is an asset or not
         """
         self.asset = is_asset
-        self.cardinal, self.price = self.convert(number=self.value, asset=is_asset)
+        self.cardinal, self.price = self.convert(number=self.number, asset=is_asset)
 
     def is_better_than(self, card):
         """Check if a given card is better than the self one.
