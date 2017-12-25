@@ -1,0 +1,14 @@
+{
+  "env": {
+    "commonjs": true,
+    "browser": true
+  },
+  "extends": ["google", "vue"],
+  "rules": {
+    "semi": ["error", "always"],
+    "max-len": ["warn", {"code": 120}]
+  },
+  "globals": {
+    "L": true
+  }
+}
