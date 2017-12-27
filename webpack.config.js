@@ -1,8 +1,8 @@
 const Webpack = require('webpack');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 // const CopyWebpackPlugin = require('copy-webpack-plugin');
-// const AppCachePlugin = require('appcache-webpack-plugin');
-// const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+const AppCachePlugin = require('appcache-webpack-plugin');
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 module.exports = {
   entry: {
     'app.js': './src/js/main.js'
@@ -32,7 +32,7 @@ module.exports = {
         test: /\.(png|jpg|svg|ttf|otf|min.js)$/,
         loader: 'file-loader',
         options: {
-          name: 'assets/[hash].[ext]'
+          name: '[hash].[ext]'
         }
       },
       {
@@ -44,7 +44,7 @@ module.exports = {
             minimize: true,
             removeComments: true,
             collapseWhitespace: true,
-            attrs: ['link:href', 'script:src'],
+            attrs: ['link:href', 'script:src']
           },
         }]
       },
@@ -59,23 +59,23 @@ module.exports = {
         loader: 'vue-loader',
         options: {
           loaders: {
-            sass: 'vue-style-loader!css-loader!sass-loader?indentedSyntax=sass'
+            scss: 'vue-style-loader!css-loader!sass-loader'
           }
         }
       }
     ]
   },
   plugins: [
-    // new FaviconsWebpackPlugin({
-    //   logo: './src/img/logo-suponts-nouveau.png',
-    //   prefix: 'assets/',
-    //   emitStats: false,
-    //   statsFilename: 'assets/[hash].json',
-    //   persistentCache: false,
-    //   inject: true,
-    //   background: '#fff',
-    //   title: 'Suponts'
-    // }),
+    new FaviconsWebpackPlugin({
+      logo: './src/img/ace-logo.png',
+      prefix: '',
+      emitStats: false,
+      statsFilename: '[hash].json',
+      persistentCache: false,
+      inject: true,
+      background: '#f3f3f3',
+      title: 'ACE'
+    }),
     new HTMLWebpackPlugin({
       template: 'src/html/index.html',
       filename: 'index.html'
@@ -84,8 +84,8 @@ module.exports = {
     //   { from: 'src/json/content.json' }
     // ]),
     // new AppCachePlugin({
-    //   exclude: [/.*\.json$/],
-    //   network: ['*', 'content.json'],
+    // //   exclude: [/.*\.json$/],
+    // //   network: ['*', 'content.json'],
     //   output: 'cache.manifest'
     // }),
     new Webpack.DefinePlugin({

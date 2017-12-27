@@ -2,8 +2,9 @@
   "name": "awesome-coinche-entertainer",
   "version": "1.0.0",
   "description": "This is an enternaining application built with Tornado and VueJS to play the popular card game Coinche (or Belote coinché).",
-  "main": "src/js/main.js",
+  "main": "out/app.js",
   "scripts": {
+    "dev-server": "npm run webpack-server -- -d",
     "webpack-server": "./node_modules/.bin/webpack-dev-server",
     "webpack": "./node_modules/.bin/webpack",
     "build": "npm run webpack -- -p",
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "add-to-homescreen": "^3.2.6",
+    "inobounce": "^0.1.5",
     "vue": "^2.3.3",
     "vue-touch": "git://github.com/vuejs/vue-touch.git#next",
     "vuex": "^2.3.1"
@@ -53,7 +55,7 @@
     "ia"
   ],
   "author": "N.Lohinski",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/NikolaLohinski/awesome-coinche-entertainer/issues"
   },
