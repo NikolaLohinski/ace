@@ -1,9 +1,9 @@
 <template>
   <transition name="component-fade" mode="out-in">
-  <div class="container" v-if="loading">
+  <div class="container" v-if="loading" :block="block" :cover="cover">
     <div class=loader>
       <div class=spinner></div>
-      <span class=text>Loading</span>
+      <span class=text>{{ text }}</span>
     </div>
   </div>
   </transition>
@@ -17,6 +17,18 @@
       loading: {
         type: Boolean,
         default: false
+      },
+      text: {
+        type: String,
+        default: ''
+      },
+      cover: {
+        type: Boolean,
+        default: true
+      },
+      block: {
+        type: Boolean,
+        default: true
       }
     }
   };
@@ -28,7 +40,6 @@
   font-family: DefaultFont;
 }
 .container {
-    pointer-events: none;
     overflow: hidden;
     position: fixed;
     z-index: 999999999;
@@ -36,12 +47,16 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: $general-background;
+    background-color: rgba(255, 255, 255, 0.1);
     font-family: DefaultFont;
     opacity: 1;
     transition: opacity .2s;
-    &[hide] {
-      opacity: 0;
+    pointer-events: none;
+    &[cover] {
+      background-color: $general-background;
+    }
+    &[block] {
+      pointer-events: auto;
     }
     > .loader {
       position: absolute;

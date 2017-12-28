@@ -22,7 +22,8 @@ global.store = new Vuex.Store({
     socket: undefined,
     name: '',
     idPlayer: -1,
-    idGame: -1
+    idGame: -1,
+    players: []
   },
   getters: {
     name (state) {
@@ -33,6 +34,9 @@ global.store = new Vuex.Store({
     },
     idPlayer (state) {
       return state.idPlayer;
+    },
+    players (state) {
+      return state.players;
     },
     loading (state) {
       return state.loading;
@@ -61,6 +65,9 @@ global.store = new Vuex.Store({
     },
     setIdGame (state, idGame) {
       state.idGame = idGame;
+    },
+    setPlayers (state, players) {
+      state.players = players;
     },
     setLoading (state, value) {
       state.loading = value;

@@ -1,15 +1,16 @@
 <template>
   <div class="root">
-    <transition name="component-fade" mode="out-in">
+    <transition name="transition">
     <v-touch class="back-to-menu"
              tag="div"
-             @tap="backToMenu"
-             v-if="currentComponent != 'game-menu'">Back</v-touch>
+             @tap="back"
+             v-if="history.length > 0">Back</v-touch>
     </transition>
-    <transition name="component-slide" mode="out-in">
-      <component :is="currentComponent" @redirect="redirectTo"></component>
+    <transition name="transition">
+      <component :is="currentComponent"
+                 @redirect="redirectTo">
+      </component>
     </transition>
-    <spinner></spinner>
   </div>
 </template>
 <script>
@@ -18,11 +19,13 @@
   import Join from './join.vue';
   import Rules from './rules.vue';
   import About from './about.vue';
+  import Room from './room.vue';
   import Spinner from './utils/spinner.vue';
   export default {
     data () {
       return {
-        currentComponent: 'game-menu'
+        currentComponent: 'game-menu',
+        history: []
       };
     },
     components: {
@@ -31,15 +34,21 @@
       Join,
       Rules,
       About,
-      Spinner
+      Spinner,
+      Room
     },
     store: global.store,
     methods: {
       redirectTo (link) {
+        if (link === 'game-menu') {
+          this.history = [];
+        } else {
+          this.history.push(this.currentComponent);
+        }
         this.currentComponent = link;
       },
-      backToMenu () {
-        this.currentComponent = 'game-menu';
+      back () {
+        this.currentComponent = this.history.pop();
         this.$store.commit('killSocket');
       }
     }
@@ -68,23 +77,15 @@
       }
     }
   }
-  .component-fade-enter-active,
-  .component-fade-leave-active {
-    transition: opacity .2s ease;
+  .transition-leave-active {
+    transition: opacity .1s;
   }
-  .component-fade-enter,
-  .component-fade-leave-to {
-    opacity: 0;
-  }
-  .component-slide-enter-active,
-  .component-slide-leave-active {
-    transition: transform .2s ease;
-  }
-  .component-slide-enter {
-    transform: translateX(-100vw);
+  .transition-enter-active {
+    transition: opacity .1s ease .1s;
   }
 
-  .component-slide-leave-to {
-    transform: translateX(100vw);
+  .transition-leave-to,
+  .transition-enter {
+    opacity: 0;
   }
 </style>

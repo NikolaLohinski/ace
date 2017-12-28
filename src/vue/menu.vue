@@ -53,22 +53,24 @@
       text-align: center;
       table {
         width: 100vw;
-        max-width: 500px;
-        margin: 0 auto;
+        max-width: 400px;
+        margin: 15px auto;
         tr {
           &.title {
             font-size: 60px;
+            line-height: 45px;
             text-shadow: 0.5px 0.5px 5px gray;
           }
           &.subtitle {
             font-size: 15px;
+            line-height: 0;
             color: $lighter-text-color;
           }
           td {
             width: 33%;
             .logo {
               display: inline-block;
-              background: $logo 0 10px;
+              background-image: $logo;
               background-size: 100% 100%;
               width: 80px;
               height: 80px;
@@ -80,6 +82,14 @@
     .nav-bar {
       text-align: center;
       margin: 20px 0;
+      @media screen and (min-height: 600px),
+      screen and (min-device-height: 600px) {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
       .link {
         font-size: 20px;
         cursor: pointer;

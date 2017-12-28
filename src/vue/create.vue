@@ -27,7 +27,9 @@
         const body = data['body'];
         if (head === 'IDGAME') {
           this.$store.commit('setIdGame', body['id']);
+          this.$store.commit('setPlayers', body['players']);
           this.$store.commit('setLoading', false);
+          this.$emit('redirect', 'room');
         }
       },
       createGame () {
@@ -55,7 +57,12 @@
         }
       }
     },
-    store: global.store
+    store: global.store,
+    mounted () {
+      if (this.$store.getters.name) {
+        this.name = this.$store.getters.name;
+      }
+    }
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
@@ -67,7 +74,7 @@
     width: 100vw;
     height: 100vh;
     .title {
-      margin-top: 5vh;
+      margin-top: 45px;
       font-size: 20px;
       text-align: center;
     }
@@ -81,7 +88,7 @@
         color: $default-text-color;
         font-size: 5vh;
         max-width: 250px;
-        margin-top: 15px;
+        margin-top: 5px;
         text-align: center;
       }
     }

@@ -29,10 +29,39 @@
       };
     },
     methods: {
+      getMessageFromServer (data) {
+        const head = data['head'];
+        const body = data['body'];
+        if (head === 'IDGAME') {
+          this.$store.commit('setIdGame', body['id']);
+          this.$store.commit('setPlayers', body['players']);
+          this.$store.commit('setLoading', false);
+          this.$emit('redirect', 'room');
+        }
+      },
       joinGame () {
         if (this.name.length > 0 && this.gameId.length === 6) {
+          // Set loading status
           this.$store.commit('setLoading', true);
-          console.log(`Player ${this.name} wants to join game ${this.gameId}.`);
+          // Initialize socket
+          this.$store.dispatch('initDialog', this.name).then(/* Success handler */ () => {
+            // When it is done, register listener for the room
+            this.$store.dispatch('registerListener', this.getMessageFromServer).then(() => {
+              // Finally create game
+              this.$store.dispatch('send', {
+                head: 'JOIN',
+                body: {
+                  name: this.$store.getters.name,
+                  idPlayer: this.$store.getters.idPlayer,
+                  idGame: this.gameId
+                }
+              }).then(null, (err) => {
+                window.console.error(err);
+              });
+            });
+          }, /* Error handler */ (err) => {
+            window.console.error(err);
+          });
         }
       }
     },
