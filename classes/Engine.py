@@ -10,14 +10,17 @@ class Engine(object):
 
         Args:
             players (list<int>): List of player IDs.
-            teams (list<tuple<int>>): List of teams. A team is a combination of indices in the players list.
-                For example teams = [(1, 2), (0, 3)].
+            teams (list<tuple<int>>): List of teams. A team is a combination
+            of indices in the players list (e.g: teams = [(1, 2), (0, 3)]).
             dealer (int): Index of the dealer
 
         """
         self.deck = []
         for f in ['h', 'c', 's', 'd']:
-            self.deck += [Card('{},{}'.format(v, f)) for v in ['7', '8', '9', 'j', 'q', 'k', '10', 'a']]
+            self.deck += [
+                Card('{},{}'.format(v, f))
+                for v in ['7', '8', '9', 'j', 'q', 'k', '10', 'a']
+            ]
         self.current_game_state = self.generate_new_game_state(players, teams)
         self.current_game_state['game-data']['dealer'] = dealer
 
@@ -36,8 +39,8 @@ class Engine(object):
 
         Args:
             players (list<int>): List of player IDs.
-            teams (list<tuple<int>>): List of teams. A team is a combination of indices in the players list.
-                For example teams = [(1, 2), (0, 3)].
+            teams (list<tuple<int>>): List of teams. A team is a combination
+            of indices in the players list e.g: teams = [(1, 2), (0, 3)].
         Returns:
             object: returns a factory setting game state
 
@@ -45,7 +48,7 @@ class Engine(object):
         return {
             'actors': {
                 'players': players,  # List of players
-                'cards': [[], [], [], []],  # List of cards in each of the players' hands
+                'cards': [[], [], [], []],  # Cards in each of the hands
                 'teams': teams  # List of teams
             },
             'game-data': {
@@ -69,19 +72,20 @@ class Engine(object):
             list: list of possible bets
         """
         self.deck = self.shuffle()
-        self.current_game_state['actors']['cards'] = [[], [], [], []]
-        dealer = self.current_game_state['game-data']['dealer']
+        state = self.current_game_state
+        state['actors']['cards'] = [[], [], [], []]
+        dealer = state['game-data']['dealer']
         # Dealing 3-2-3
         for i in range(4):
             p = (i + dealer) % 4
-            self.current_game_state['actors']['cards'][p] += self.deck[(0 + 3 * p):(3 + 3 * p)]
-            self.current_game_state['actors']['cards'][p] += self.deck[(12 + 2 * p):(14 + 2 * p)]
-            self.current_game_state['actors']['cards'][p] += self.deck[(20 + 3 * p): (23 + 3 * p)]
-        return self.current_game_state, (dealer + 1) % 4, self.possible_bets()
+            state['actors']['cards'][p] += self.deck[(0 + 3 * p):(3 + 3 * p)]
+            state['actors']['cards'][p] += self.deck[(12 + 2 * p):(14 + 2 * p)]
+            state['actors']['cards'][p] += self.deck[(20 + 3 * p):(23 + 3 * p)]
+        return state, (dealer + 1) % 4, self.possible_bets()
 
     def bet(self, playing, bet=None):
-        """Updates game state given a choice taken by the player. If the player has passed, then (-1, None)
-        should be passed as a default bet.
+        """Updates game state given a choice taken by the player. If the player
+        has passed, then (-1, None) should be passed as a default bet.
 
         Args:
             playing (int): Index of the player who is playing.
@@ -106,7 +110,8 @@ class Engine(object):
                 new_playing = -1
             else:
                 # Check if no one bet
-                if all(x == [None] for x in self.current_game_state['past']['bets']):
+                state = self.current_game_state
+                if all(x == [None] for x in state['past']['bets']):
                     self.current_game_state['game-data']['type'] = None
                     new_playing = -1
                 else:
@@ -135,13 +140,14 @@ class Engine(object):
 
          Returns:
             object: the new game state
-            int: the new player that needs to play, -1 if it's the end of the game
+            int: the new player that needs to play, -1 if it's the end of
+            the game
             list: the list of possible cards indexes for each player
 
         """
         possibles = self.determine_possibles(turn_index=-1)
         playing = (self.current_game_state['game-data']['dealer'] + 1) % 4
-        # Now we need the update all the cards of all players to determine assets
+        # Now update all the cards of all players to determine assets
         leading_ply, leading_bet = self.leading_bet()
         family = leading_bet.split(',')[1]
         for hand in self.current_game_state['actors']['cards']:
@@ -164,38 +170,43 @@ class Engine(object):
         return bets
 
     def play(self, playing, card_index):
-        """Updates the current state given a player and the card he is about to play.
+        """Updates the current state given a player and the card he is about
+        to play.
 
         Args:
             playing (int): Index of the player who is playing.
-            card_index (int): Index of the card to be played in the hand of the player.
+            card_index (int): Index of the card to be played in the hand of
+            the player.
         Returns:
-            object: the new game state
-            int: the new player that needs to play, -1 if it's the end of the game
-            list: the list of possible cards indexes for each player
+            object: the new game state.
+            int: the new player that needs to play, -1 if it's the end of the
+            game.
+            list: the list of possible cards indexes for each player.
 
         """
 
         new_playing = (playing + 1) % 4
         # First, get the card that is about to be played
-        card = self.current_game_state['actors']['cards'][playing].pop(card_index)
+        state = self.current_game_state
+        card = state['actors']['cards'][playing].pop(card_index)
         # Then play the card
         turn_index = self.get_current_turn_index()
-        self.current_game_state['past']['turns'][turn_index].append(card)
+        state['past']['turns'][turn_index].append(card)
         # Check if the turn is finished
-        if len(self.current_game_state['past']['turns'][turn_index]) == 4:
+        if len(state['past']['turns'][turn_index]) == 4:
             new_playing = self.determine_leader_of_turn(turn_index=turn_index)
-            # Since the turn is finished, we may calculate the score and update the state
-            self.current_game_state['past']['score'] = self.determine_score(turn_index=turn_index)
+            # The turn is finished, calculate the score and update the state
+            state['past']['score'] = self.determine_score(turn_index=turn_index)
         possibles = self.determine_possibles(turn_index=turn_index)
-        if turn_index == 7 and len(self.current_game_state['past']['turns'][turn_index]) == 4:
+        if turn_index == 7 and len(state['past']['turns'][turn_index]) == 4:
             new_playing = -1
-            self.current_game_state['game-data']['type'] = None
-            self.current_game_state['game-data']['winner'] = self.determine_winner()
-        return self.current_game_state, new_playing, possibles
+            state['game-data']['type'] = None
+            state['game-data']['winner'] = self.determine_winner()
+        return state, new_playing, possibles
 
     def get_current_turn_index(self):
-        """Get the index in the state of the current turn. If the index does not exist, create the turn.
+        """Get the index in the state of the current turn. If the index does
+        not exist, create the turn.
 
         Returns:
             int: index in the list of turns in state > past of the current turn
@@ -222,17 +233,17 @@ class Engine(object):
         Returns:
             int: Index of the player that is leading the turn
         """
-        # If we just started the game, then the leader is the one just after the dealer
+        # If we just started the game, the leader is just after the dealer
         if turn_index == -1:
             return (self.current_game_state['game-data']['dealer'] + 1) % 4
         else:
-            # Else we need the leader from the previous turn to know who played what
-            previous_leader = self.determine_leader_of_turn(turn_index=turn_index - 1)
+            # Otherwise determine the leader from previous turn
+            prev = self.determine_leader_of_turn(turn_index=turn_index - 1)
             cards = self.current_game_state['past']['turns'][turn_index]
             leading_card = cards[0]
             cards = [x for i, x in enumerate(cards) if i > 0]
-            player = previous_leader
-            leading_player = previous_leader
+            player = prev
+            leading_player = prev
             for c in cards:
                 player = (player + 1) % 4
                 if c > leading_card:
@@ -252,19 +263,19 @@ class Engine(object):
         if turn_index == - 1:
             return [0, 0]
         else:
-            winner_of_turn = self.determine_leader_of_turn(turn_index=turn_index)
+            leader = self.determine_leader_of_turn(turn_index=turn_index)
             scores = self.determine_score(turn_index=turn_index - 1)
             teams = self.current_game_state['actors']['teams']
-            index_of_team = [i for i, team in enumerate(teams) if winner_of_turn in team][0]
+            team_id = [i for i, team in enumerate(teams) if leader in team][0]
             for c in self.current_game_state['past']['turns'][turn_index]:
-                scores[index_of_team] += c.price
+                scores[team_id] += c.price
             if turn_index == 7:
-                scores[index_of_team] += 10
+                scores[team_id] += 10
             return scores
 
     def determine_possibles(self, turn_index):
-        """Determine cards that can be played by all players. If the player already played, then he cannot play
-        anything.
+        """Determine cards that can be played by all players. If the player
+        already played, then he cannot play anything.
 
         Args:
             turn_index (int): Index in state of the turn
@@ -274,35 +285,57 @@ class Engine(object):
             list<list<int>>: For each player, each index of card he can play
 
         """
-        possibles = [[i for i, x in enumerate(self.current_game_state['actors']['cards'][p])] for p in range(4)]
+        state = self.current_game_state
+        possibles = [
+            [i for i, x in enumerate(state['actors']['cards'][p])]
+            for p in range(4)
+        ]
         if turn_index != -1:
-            turn = self.current_game_state['past']['turns'][turn_index]
-            number_of_cards_on_pile = len(turn)
-            if 4 > number_of_cards_on_pile > 0:
+            turn = state['past']['turns'][turn_index]
+            nb_cards_pile = len(turn)
+            if 4 > nb_cards_pile > 0:
                 possibles = [[], [], [], []]
-                leader = self.determine_leader_of_turn(turn_index=turn_index)
-                starter = self.determine_leader_of_turn(turn_index=turn_index - 1)
+                leader = self.determine_leader_of_turn(
+                    turn_index=turn_index
+                )
+                starter = self.determine_leader_of_turn(
+                    turn_index=turn_index - 1
+                )
                 first_card = turn[0]
-                waiting_players = [(starter + i) % 4 for i in range(number_of_cards_on_pile, 4)]
-                for p in waiting_players:
-                    cards = self.current_game_state['actors']['cards'][p]
+                waiters = [
+                    (starter + i) % 4 for i in range(nb_cards_pile, 4)
+                ]
+                for p in waiters:
+                    cards = state['actors']['cards'][p]
                     # check if first card wanted is asset
                     if first_card.asset:
-                        possibles[p] = self.determine_possible_assets(turn_index=turn_index, player=p)
+                        possibles[p] = self.determine_possible_assets(
+                            turn_index=turn_index,
+                            player=p
+                        )
                     else:
                         # Otherwise, the first card is not an asset
-                        same_family_cards = [x for x in cards if x.family == first_card.family]
-                        if len(same_family_cards) > 0:
+                        family = [
+                            x for x in cards
+                            if x.family == first_card.family
+                        ]
+                        if len(family) > 0:
                             # Check if the player has any card of the family
-                            possibles[p] = [cards.index(x) for x in same_family_cards]
+                            possibles[p] = [cards.index(x) for x in family]
                         else:
-                            team = [t for t in self.current_game_state['actors']['teams'] if p in t][0]
+                            team = [
+                                t for t in state['actors']['teams'] if p in t
+                            ][0]
                             if leader in team:
-                                # If the leader is in the same team, then the player can play whatever he wants
+                                # If the leader is in the same team, then the
+                                # player can play whatever he wants
                                 possibles[p] = [i for i, x in enumerate(cards)]
                             else:
                                 # Otherwise, if he has assets,
-                                possibles[p] = self.determine_possible_assets(turn_index=turn_index, player=p)
+                                possibles[p] = self.determine_possible_assets(
+                                    turn_index=turn_index,
+                                    player=p
+                                )
         return possibles
 
     def determine_possible_assets(self, turn_index, player):
@@ -310,7 +343,8 @@ class Engine(object):
         cards = self.current_game_state['actors']['cards'][player]
         assets = [c for c in cards if c.asset]
         if len(assets) > 0:
-            # If we do, we need to check if we have better assets than all the assets currently played
+            # If we do, we need to check if we have better assets than all
+            # the assets currently played
             already_played_assets = [c for c in turn if c.asset]
             better_assets = []
             for a in assets:
@@ -330,9 +364,12 @@ class Engine(object):
             int: index of the winners
 
         """
+        state = self.current_game_state
         leading_player, leading_bet = self.leading_bet()
-        team = [i for i, t in enumerate(self.current_game_state['actors']['teams']) if leading_player in t][0]
-        if self.current_game_state['past']['score'][team] >= int(leading_bet.split(',')[0]):
+        team = [
+            i for i, t in enumerate(state['actors']['teams'])
+            if leading_player in t
+        ][0]
+        if state['past']['score'][team] >= int(leading_bet.split(',')[0]):
             return team
         return (team + 1) % 2
-

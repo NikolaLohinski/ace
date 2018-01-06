@@ -20,20 +20,24 @@ global.store = new Vuex.Store({
   state: {
     loading: true,
     socket: undefined,
-    name: '',
-    idPlayer: -1,
-    idGame: -1,
-    players: []
+    roomId: -1,
+    player: {},
+    players: [],
+    error: '',
+    currentView: undefined
   },
   getters: {
-    name (state) {
-      return state.name;
+    currentView (state) {
+      return state.currentView;
     },
-    idGame (state) {
-      return state.idGame;
+    error (state) {
+      return state.error;
     },
-    idPlayer (state) {
-      return state.idPlayer;
+    player (state) {
+      return state.player;
+    },
+    roomId (state) {
+      return state.roomId;
     },
     players (state) {
       return state.players;
@@ -48,29 +52,39 @@ global.store = new Vuex.Store({
     }
   },
   mutations: {
+    setCurrentView (state, view) {
+      state.currentView = view;
+    },
+    setError (state, error) {
+      state.error = error;
+    },
     setSocket (state, socket) {
       state.socket = socket;
     },
-    killSocket (state) {
-      if (state.socket) {
-        state.socket.close();
-        state.socket = undefined;
-      }
+    setPlayer (state, player) {
+      state.player = player;
     },
-    setName (state, name) {
-      state.name = name;
-    },
-    setIdPlayer (state, idPlayer) {
-      state.idPlayer = parseInt(idPlayer);
-    },
-    setIdGame (state, idGame) {
-      state.idGame = idGame;
+    setRoomId (state, idGame) {
+      state.roomId = idGame;
     },
     setPlayers (state, players) {
       state.players = players;
+      for (let k = 0; k < players.length; k++) {
+        const p = players[k];
+        if (p['id'] === state.player['id']) {
+          state.player = p;
+        }
+      }
     },
     setLoading (state, value) {
       state.loading = value;
+    },
+    setSession (state) {
+      localStorage['session'] = JSON.stringify({
+        player: state.player,
+        roomId: state.roomId,
+        players: state.players
+      });
     }
   },
   actions: {
@@ -84,19 +98,56 @@ global.store = new Vuex.Store({
         }
       });
     },
-    registerListener (state, callback) {
+    killSocket (state) {
+      return new Promise(() => {
+        if (state.getters.socket) {
+          state.dispatch('send', {
+            head: 'QUIT'
+          }).then(() => {
+            localStorage['session'] = '';
+            state.getters.socket.close();
+            state.commit('setSocket', undefined);
+          }, (err) => {
+            console.error(err);
+          });
+        }
+      });
+    },
+    registerListener (state, args) {
       return new Promise((resolve, reject) => {
         if (state.getters.socket) {
           state.getters.socket.addEventListener('message', (message) => {
-            callback(JSON.parse(message['data']));
-          });
+            args['callback'](JSON.parse(message['data']));
+          }, { once: args['once'] });
           resolve();
         } else {
           reject('No socket.');
         }
       });
     },
-    initDialog (state, name) {
+    initPlayer (state, name) {
+      return new Promise((resolve, reject) => {
+        state.dispatch('init').then((socket) => {
+          socket.addEventListener('message', (msg) => {
+            const data = JSON.parse(msg['data']);
+            if (data['head'] === 'PLY') {
+              state.commit('setPlayer', data['body']);
+              state.commit('setSocket', socket);
+              resolve();
+            }
+          }, { once: true });
+          socket.send(JSON.stringify({
+            head: 'INIT',
+            body: {
+              name: name
+            }
+          }));
+        }, (e) => {
+          reject(e);
+        });
+      });
+    },
+    init (state) {
       return new Promise((resolve, reject) => {
         if (!('WebSocket' in window)) {
           window.alert('Websocket is not supported by this browser. How about Google Chrome ?');
@@ -107,24 +158,45 @@ global.store = new Vuex.Store({
             const socket = new WebSocket('ws://' + window.location.host + '/ws');
             socket.addEventListener('message', (msg) => {
               const data = JSON.parse(msg['data']);
-              if (data['head'] === 'IDPLY') {
-                state.commit('setName', data['body']['name']);
-                state.commit('setIdPlayer', data['body']['id']);
-                state.commit('setSocket', socket);
-                resolve();
-              }
-            }, { once: true });
-            socket.addEventListener('open', () => {
-              socket.send(JSON.stringify({
-                head: 'INIT',
-                body: {
-                  name: name
+              if (data['head'] === 'ERR') {
+                state.commit('setError', data['body'][0]);
+                for (let i = 0; i < data['body'].length; i++) {
+                  console.error(data['body'][i]);
                 }
-              }));
+              }
+            });
+            socket.addEventListener('open', () => {
+              resolve(socket);
             });
           } catch (e) {
             reject(e);
           }
+        }
+      });
+    },
+    retrieveSession (state) {
+      return new Promise((resolve, reject) => {
+        if (localStorage['session']) {
+          const session = JSON.parse(localStorage['session']);
+          state.commit('setPlayer', session['player']);
+          state.commit('setRoomId', session['roomId']);
+          state.commit('setPlayers', session['players']);
+          state.dispatch('init').then(
+            (socket) => {
+              socket.addEventListener('message', (msg) => {
+                const data = JSON.parse(msg['data']);
+                if (data['head'] === 'ROOM') {
+                  state.commit('setCurrentView', 'room');
+                }
+              }, { once: true });
+              state.commit('setSocket', socket);
+              state.dispatch('send', {
+                head: 'RESTART',
+                body: session
+              }).then(() => resolve(), (err) => reject(err));
+            }, (err) => reject(err));
+        } else {
+          reject();
         }
       });
     }
@@ -133,6 +205,14 @@ global.store = new Vuex.Store({
 
 global.vm = new Vue({
   el: '#app-container',
+  data () {
+    return {
+      session: {
+        player: undefined,
+        roomId: -1
+      }
+    };
+  },
   computed: {
     loading () {
       return this.$store.getters.loading;
@@ -144,7 +224,13 @@ global.vm = new Vue({
   },
   store: global.store,
   mounted () {
-    this.$store.commit('setLoading', false);
+    // Get local session storage
+    this.$store.dispatch('retrieveSession').then(() => {
+      this.$store.commit('setLoading', false);
+    }, (err) => {
+      if (err) console.error(err);
+      this.$store.commit('setLoading', false);
+    });
   }
 });
 

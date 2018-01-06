@@ -4,12 +4,17 @@
     <v-touch class="back-to-menu"
              tag="div"
              @tap="back"
-             v-if="history.length > 0">Back</v-touch>
+             :disabled="disableBack"
+             v-if="currentComponent !== 'game-menu'">Back</v-touch>
     </transition>
     <transition name="transition">
       <component :is="currentComponent"
+                 @disable-back-button="disableBackButton"
                  @redirect="redirectTo">
       </component>
+    </transition>
+    <transition name="transition">
+      <error></error>
     </transition>
   </div>
 </template>
@@ -20,13 +25,19 @@
   import Rules from './rules.vue';
   import About from './about.vue';
   import Room from './room.vue';
+  import Error from './error.vue';
   import Spinner from './utils/spinner.vue';
   export default {
     data () {
       return {
-        currentComponent: 'game-menu',
+        disableBack: false,
         history: []
       };
+    },
+    computed: {
+      currentComponent () {
+        return this.$store.getters.currentView;
+      }
     },
     components: {
       'game-menu': Menu,
@@ -35,7 +46,8 @@
       Rules,
       About,
       Spinner,
-      Room
+      Room,
+      Error
     },
     store: global.store,
     methods: {
@@ -45,12 +57,20 @@
         } else {
           this.history.push(this.currentComponent);
         }
-        this.currentComponent = link;
+        this.$store.commit('setCurrentView', link);
       },
       back () {
-        this.currentComponent = this.history.pop();
-        this.$store.commit('killSocket');
+        let link = this.history.pop();
+        if (!link) link = 'game-menu';
+        this.$store.commit('setCurrentView', link);
+        this.$store.dispatch('killSocket');
+      },
+      disableBackButton (status) {
+        this.disableBack = status;
       }
+    },
+    mounted () {
+      this.$store.commit('setCurrentView', 'game-menu');
     }
   };
 </script>
@@ -72,6 +92,9 @@
       left: 15px;
       cursor: pointer;
       z-index: 99;
+      &[disabled] {
+        display: none;
+      }
       &:hover, &:active {
         color: $link-text-color;
       }

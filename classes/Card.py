@@ -2,7 +2,7 @@ class Card(object):
     """This class is for describing the cards of the game"""
 
     def __init__(self, value, asset=False):
-        """Constructor
+        """Constructor.
 
         Args:
             value (str):  value of the card ('a,h', '8,c', 'q,d' etc...)
@@ -16,11 +16,18 @@ class Card(object):
             self.asset = asset
         self.number = list_value[0]
         self.family = list_value[1]
-        self.cardinal, self.price = self.convert(number=self.number, asset=self.asset)
+        self.cardinal, self.price = self.convert(
+            number=self.number,
+            asset=self.asset
+        )
 
     def __eq__(self, other):
         """Redefine equality operator."""
-        return self.number == other.number and self.family == other.family and self.asset == other.asset
+        result = True
+        result = result and self.number == other.number
+        result = result and self.family == other.family
+        result = result and self.asset == other.asset
+        return result
 
     def __str__(self):
         name = '{},{}'.format(self.number, self.family)
@@ -38,10 +45,12 @@ class Card(object):
         return self.is_better_than(other)
 
     def convert(self, number, asset):
-        """Convert string value into a rank from 0 (worst) to 7 (best) in the family and a price.
+        """Convert string value into a rank from 0 (worst) to 7 (best) in the
+        family and a price.
 
         Args:
-            number (str): value (str): natural language value of the card ('a', '8', 'q' etc...)
+            number (str): value (str): natural language value of the card
+            ('a', '8', 'q' etc...).
             asset (bool): tell if the card is an asset or not.
 
         Returns:
@@ -60,24 +69,28 @@ class Card(object):
         """Modify asset status of the card.
 
         Args:
-            is_asset (bool): rather the card is an asset or not
+            is_asset (bool): rather the card is an asset or not.
         """
         self.asset = is_asset
-        self.cardinal, self.price = self.convert(number=self.number, asset=is_asset)
+        self.cardinal, self.price = self.convert(
+            number=self.number,
+            asset=is_asset
+        )
 
     def is_better_than(self, card):
         """Check if a given card is better than the self one.
 
         Args:
-            card (Card): the card to compare to
+            card (Card): the card to compare to.
 
         Returns:
-            bool: true if the current card is better than the parameter one, and false otherwise
+            bool: true if the current card is better than the parameter one.
+            and false otherwise.
         """
         if self.family != card.family:
-            # Cards are not from the same family. Therefore, self is better iff it is an asset.
+            # Cards are not from the same family. Therefore, self is better
+            # iff it is an asset.
             return self.asset
         else:
             # Both cards are from the same family.
             return self.cardinal > card.cardinal
-

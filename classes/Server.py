@@ -1,7 +1,8 @@
-from tornado import ioloop, web, websocket
-import time
 import json
 import os.path
+from tornado import ioloop, web, websocket
+
+from classes.Manager import Manager
 
 _DEFAULT_PORT_ = 8080
 
@@ -10,7 +11,8 @@ settings = dict(
     static_path=os.path.join(os.path.dirname(__file__), '..', 'out'),
 )
 
-class Server(web.RequestHandler):
+
+class RootServer(web.RequestHandler):
     def get(self):
         self.render('index.html')
 
@@ -18,78 +20,122 @@ class Server(web.RequestHandler):
 class WSHandler(websocket.WebSocketHandler):
     """Tornado websocket handler"""
 
+    def __init__(self, *args, manager, **kwargs):
+        super(WSHandler, self).__init__(*args, **kwargs)
+        self.manager = manager
+        self.player_id = -1
+
     def open(self):
         """Called when a socket is opened."""
-        print('Connection opened')
 
     def on_message(self, message):
         """Called when a socket transmitted a message."""
         action = json.loads(message)
-        head = action['head']
-        body = action['body']
-        if head == 'INIT':
-            name = body['name']
-            # Convert name into an integer code
-            code = int(''.join([str(ord(c)) for c in list(name)])) % 100000
-            # Get current time's 5 last digits
-            time_code = int(time.time()) % 100000
-            # Combine those 2 to create a hopefully unique identifier
-            id_player = str(time_code) + str(code)
+        head = action.get('head')
+        body = action.get('body')
+        try:
+            answer, destinations = self.respond(head=head, body=body)
+            for handler in destinations:
+                self.send(message=answer, handler=handler)
+        except Exception as err:
             message = {
-                'head': 'IDPLY',
-                'body': {
-                    'name': name,
-                    'id': id_player
-                }
+                'head': 'ERR',
+                'body': err.args
             }
-            try:
-                self.write_message(json.dumps(message))
-            except websocket.WebSocketClosedError:
-                print('Ignore connection. Socket was killed before it initialized.')
-        elif head == 'CREATE':
-            time_code = int(time.time()) % 1000000
-            id_player = body['idPlayer']
-            id_game = time_code + id_player % 100000
-            try:
-                message = {
-                    'head': 'IDGAME',
-                    'body': {
-                        'id': id_game,
-                        'players': [{
-                            'name': body['name'],
-                            'id': id_player
-                        }]
-                    }
-                }
-                self.write_message(json.dumps(message))
-            except websocket.WebSocketClosedError:
-                print('Ignore connection. Socket was killed.')
-        elif head == 'JOIN':
-            name = body['name']
-            id_player = body['idPlayer']
-            id_game = body['idGame']
-            print(id_player, name, id_game)
-
+            self.send(message=message)
 
     def on_close(self):
         """Callend when a socket is closed."""
-        print('Connection closed')
+        print('Closing socket for player {}.'.format(self.player_id))
+
+    def send(self, message, handler=None):
+        try:
+            h = handler
+            if h is None:
+                h = self
+            h.write_message(json.dumps(message))
+        except websocket.WebSocketClosedError:
+            print('Ignore connection. Socket was killed.')
+
+    def respond(self, head, body):
+        answer = {}
+        destinations = []
+        if head == 'RESTART':
+            self.player_id = body['player']['id']
+            room = self.manager.revive_player(
+                room_id=body['roomId'],
+                player=body['player'],
+                handler_instance=self
+            )
+            answer = {
+                'head': 'ROOM',
+                'body': room.output()
+            }
+            destinations.append(self)
+        if head == 'INIT':
+            name = body['name']
+            player = self.manager.new_player(
+                name=name,
+                handler_instance=self
+            )
+            self.player_id = player['id']
+            answer = {
+                'head': 'PLY',
+                'body': player
+            }
+            destinations.append(self)
+        elif head == 'CREATE':
+            room = self.manager.new_room(player=body)
+            answer = {
+                'head': 'ROOM',
+                'body': room.output()
+            }
+            destinations.append(self)
+        elif head == 'JOIN':
+            room = self.manager.add_player(
+                room_id=body['roomId'],
+                player=body['player']
+            )
+            answer = {
+              'head': 'ROOM',
+              'body': room.output()
+            }
+            destinations = [self.manager.clients[p['id']] for p in room.players]
+        elif head == 'UPDATEPLY':
+            room = self.manager.upd_player(
+                room_id=body['roomId'],
+                player_id=body['player']['id'],
+                update_data=body['update']
+            )
+            answer = {
+                'head': 'ROOM',
+                'body': room.output()
+            }
+            destinations = [self.manager.clients[p['id']] for p in room.players]
+        elif head == 'QUIT':
+            room = self.manager.rm_player(player_id=self.player_id)
+            answer = {
+                'head': 'ROOM',
+                'body': room.output()
+            }
+            destinations = [self.manager.clients[p['id']] for p in room.players]
+        return answer, destinations
 
 
 def main(port=_DEFAULT_PORT_):
+    manager = Manager()
     app = web.Application([
-        (r'/ws', WSHandler),
-        (r'/', Server),
+        (r'/ws', WSHandler, dict(manager=manager)),
+        (r'/', RootServer),
         (r'/(.*)', web.StaticFileHandler, {
             'path': './out'
         }),
     ], **settings)
     app.listen(port)
-    print('Initializing server...\nListening to http://localhost:{}/'.format(port))
+    print('Initialized on http://localhost:{}/'.format(port))
     ioloop.IOLoop.current().start()
 
 
 if __name__ == '__main__':
     settings['debug'] = True
     main()
-

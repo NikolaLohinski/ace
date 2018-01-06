@@ -3,21 +3,24 @@
     <div class="content">
       <header>
         <div class="definition">Room ID</div>
-        <div class="room-id">{{ idGame }}</div>
+        <div class="room-id">{{ roomId }}</div>
       </header>
       <table class="players-list">
         <thead>
           <tr>
-            <th>Player ID</th><th>Name</th>
+            <th>Player ID</th><th>Name</th><th class="ready-tag">Ready</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in players">
-            <td class="idPlayer">{{ player['id'] }}</td>
-            <td class="name">{{ player['name'] }}</td>
+          <tr v-for="p in players">
+            <td>{{ p['id'] }}
+              <span class="you" v-if="p['id'] === player['id']">(You)</span>
+            </td>
+            <td>{{ p['name'] }}</td>
+            <td class="ready-tag">{{ (p['ready']) ? 'Yes' : 'No' }}</td>
           </tr>
           <tr v-for="i in (4 - players.length)">
-            <td colspan="2" class="waiting-for-players">
+            <td colspan="3" class="waiting-for-players">
               <div class="small-loader">
                 <div class="small-spinner"></div>
               </div>
@@ -42,14 +45,11 @@
       };
     },
     computed: {
-      idGame () {
-        return this.$store.getters.idGame;
+      roomId () {
+        return this.$store.getters.roomId;
       },
-      idPlayer () {
-        return this.$store.getters.idPlayer;
-      },
-      name () {
-        return this.$store.getters.name;
+      player () {
+        return this.$store.getters.player;
       },
       players () {
         return this.$store.getters.players;
@@ -57,12 +57,55 @@
     },
     store: global.store,
     methods: {
+      keepAlive (timeout) {
+        setTimeout(() => {
+          this.$store.dispatch('send', {
+            head: 'ALIVE',
+            body: {
+              player: this.player,
+              roomId: this.roomId
+            }
+          }).then(() => {
+            this.keepAlive(timeout);
+          }, (err) => {
+            console.error(err);
+          });
+        }, timeout);
+      },
       toggleReady () {
         this.ready = !this.ready;
+        this.$emit('disable-back-button', this.ready);
+        this.$store.dispatch('send', {
+          head: 'UPDATEPLY',
+          body: {
+            player: this.player,
+            update: {
+              key: 'ready',
+              value: this.ready
+            },
+            roomId: this.roomId
+          }
+        });
+      },
+      getMessageFromServer (data) {
+        const head = data['head'];
+        const body = data['body'];
+        if (head === 'ROOM') {
+          this.$store.commit('setPlayers', body['players']);
+          this.$store.commit('setLoading', false);
+        }
       }
     },
     components: {
       Spinner
+    },
+    mounted () {
+      this.$store.dispatch('registerListener', {
+        callback: this.getMessageFromServer
+      }).then(() => {
+        this.$store.commit('setSession');
+      });
+      this.keepAlive(30000);
     }
   };
 </script>
@@ -109,16 +152,26 @@
       table.players-list {
         text-align: center;
         margin: 15px auto 30px auto;
+        width: 75%;
         thead th {
           font-size: 15px;
           color: $lighter-text-color;
           font-weight: normal;
-          width: 50%;
+          width: 45%;
+          &.ready-tag {
+            width: 10%;
+          }
         }
         tbody td {
           position: relative;
           padding: 15px;
-          width: 50%;
+          width: 45%;
+          &.ready-tag {
+            width: 10%;
+          }
+          .you {
+            color: $lighter-text-color
+          }
           &.waiting-for-players {
             font-style: italic;
             color: $lighter-text-color;
