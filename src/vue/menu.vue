@@ -15,7 +15,7 @@
                v-for="link in links"
                :key="link.name"
                tag="div"
-               @tap="goTo(link.destination)">
+               @tap="goTo($event, link.destination)">
         {{link.name}}
       </v-touch>
     </nav>
@@ -34,7 +34,8 @@
       };
     },
     methods: {
-      goTo (destination) {
+      goTo (e, destination) {
+        e.preventDefault();
         this.$emit('redirect', destination);
       }
     }
@@ -82,8 +83,7 @@
     .nav-bar {
       text-align: center;
       margin: 20px 0;
-      @media screen and (min-height: 600px),
-      screen and (min-device-height: 600px) {
+      @media screen and (orientation: portrait) {
         margin: 0;
         position: absolute;
         top: 50%;

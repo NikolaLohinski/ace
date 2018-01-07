@@ -70,25 +70,25 @@ class Manager(object):
             already in it
         """
         try:
-            r_id = int(room_id)
+            room_id = int(room_id)
         except ValueError:
-            raise Exception('Room {} does not exist.'.format(r_id))
+            raise Exception('Room {} does not exist.'.format(room_id))
         finally:
-            if not self.room_id_free(room_id=r_id):
-                players = self.rooms.get(r_id).players
+            if not self.room_id_free(room_id=room_id):
+                players = self.rooms.get(room_id).players
                 if all(p['id'] != player['id'] for p in players):
                     if len(players) < 4:
-                        player['roomId'] = r_id
-                        self.rooms.get(r_id).players.append(player)
-                        return self.rooms[r_id]
+                        player['roomId'] = room_id
+                        self.rooms.get(room_id).players.append(player)
+                        return self.rooms[room_id]
                     else:
                         raise Exception('Room {} is full. Player {} can\'t' +
-                                        ' join.'.format(r_id, player['id']))
+                                        ' join.'.format(room_id, player['id']))
                 else:
                     raise Exception('Room {} already has player {}.'.
-                                    format(r_id, player['id']))
+                                    format(room_id, player['id']))
             else:
-                raise Exception('Room {} does not exist.'.format(r_id))
+                raise Exception('Room {} does not exist.'.format(room_id))
 
     def new_player(self, name, handler_instance):
         """Create a brand new player instance and store its reference.
@@ -151,6 +151,17 @@ class Manager(object):
         return None
 
     def revive_player(self, room_id, player, handler_instance):
+        """Revive a connection of a player if it exists.
+
+        Args:
+            room_id (int): identifier of the room
+            player (int): the player to revive
+            handler_instance(websocket.WebSocketHandler): websocket handler
+        Returns:
+            object: the created player
+        Raises:
+            Exception: if the player or the room does not exist anymore
+        """
         room = self.rooms.get(room_id)
         client = self.clients.get(player['id'])
         if client is None:
@@ -161,3 +172,13 @@ class Manager(object):
             raise Exception('Room {} does not exist anymore.'.format(room_id))
         self.clients[player['id']] = handler_instance
         return room
+
+    def is_alive(self, player_id):
+        """Check if a player is still alive. For now, a player is considered
+        to be always alive.
+
+        Args:
+            player_id (int): identifier of the player
+
+        """
+        return True

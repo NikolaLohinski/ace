@@ -91,6 +91,7 @@
         const head = data['head'];
         const body = data['body'];
         if (head === 'ROOM') {
+          this.$store.commit('setSession');
           this.$store.commit('setPlayers', body['players']);
           this.$store.commit('setLoading', false);
         }

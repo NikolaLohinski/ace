@@ -163,12 +163,21 @@ global.store = new Vuex.Store({
                 for (let i = 0; i < data['body'].length; i++) {
                   console.error(data['body'][i]);
                 }
+                state.commit('setLoading', false);
               }
             });
             socket.addEventListener('open', () => {
               resolve(socket);
             });
+            socket.addEventListener('error', (err) => {
+              console.error(err);
+              state.commit('setLoading', false);
+              state.commit('setError', 'The server seems to be unreachable');
+            });
           } catch (e) {
+            console.error(e);
+            state.commit('setLoading', false);
+            state.commit('setError', 'The server seems to be unreachable');
             reject(e);
           }
         }

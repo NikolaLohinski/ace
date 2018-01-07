@@ -1,7 +1,7 @@
 <template>
   <div class="join">
     <div class="title">
-      Please choose a name
+      Please choose your nickname
     </div>
     <form @submit.prevent="joinGame">
       <input type="text" v-model="name" maxlength="10" v-focus/>

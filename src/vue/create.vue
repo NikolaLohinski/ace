@@ -1,10 +1,10 @@
 <template>
   <div class="create">
     <div class="title">
-      Please choose a name
+      Please choose your nickname
     </div>
     <form @submit.prevent="createGame">
-      <input type="text" v-model="name" v-focus>
+      <input type="text" v-model="name" v-focus />
     </form>
     <v-touch tag="div"
              :disabled="name.length == 0"

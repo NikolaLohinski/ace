@@ -119,6 +119,10 @@ class WSHandler(websocket.WebSocketHandler):
                 'body': room.output()
             }
             destinations = [self.manager.clients[p['id']] for p in room.players]
+        elif head == 'ALIVE':
+            if not self.manager.is_alive(player_id=self.player_id):
+                self.respond(head='QUIT', body=None)
+                self.close()
         return answer, destinations
 
 

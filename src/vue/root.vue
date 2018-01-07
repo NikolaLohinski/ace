@@ -1,21 +1,19 @@
 <template>
   <div class="root">
-    <transition name="transition">
+    <transition name="transition" mode="out-in">
     <v-touch class="back-to-menu"
              tag="div"
              @tap="back"
              :disabled="disableBack"
              v-if="currentComponent !== 'game-menu'">Back</v-touch>
     </transition>
-    <transition name="transition">
+    <transition name="transition" mode="out-in">
       <component :is="currentComponent"
                  @disable-back-button="disableBackButton"
                  @redirect="redirectTo">
       </component>
     </transition>
-    <transition name="transition">
-      <error></error>
-    </transition>
+    <error></error>
   </div>
 </template>
 <script>
@@ -100,11 +98,9 @@
       }
     }
   }
-  .transition-leave-active {
-    transition: opacity .1s;
-  }
+  .transition-leave-active,
   .transition-enter-active {
-    transition: opacity .1s ease .1s;
+    transition: opacity .1s;
   }
 
   .transition-leave-to,
