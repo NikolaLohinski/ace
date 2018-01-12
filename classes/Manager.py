@@ -82,13 +82,17 @@ class Manager(object):
                         self.rooms.get(room_id).players.append(player)
                         return self.rooms[room_id]
                     else:
-                        raise Exception('Room {} is full. Player {} can\'t' +
-                                        ' join.'.format(room_id, player['id']))
+                        raise Exception('roomFull', {
+                            'roomId': room_id,
+                            'playerId': player['id']
+                        })
                 else:
-                    raise Exception('Room {} already has player {}.'.
-                                    format(room_id, player['id']))
+                    raise Exception('playerAlreadyInRoom', {
+                        'roomId': room_id,
+                        'playerId': player['id']
+                    })
             else:
-                raise Exception('Room {} does not exist.'.format(room_id))
+                raise Exception('invalidRoom', {'roomId': room_id})
 
     def new_player(self, name, handler_instance):
         """Create a brand new player instance and store its reference.
@@ -125,12 +129,13 @@ class Manager(object):
             update_data (object): a key/value object to specify the update
         Returns:
             Room: the updated room
+
         """
         key = update_data['key']
         value = update_data['value']
         players = self.rooms.get(room_id).players
         index = [i for i, x in enumerate(players) if x['id'] == player_id][0]
-        players[index][key] = value
+        self.rooms[room_id].players[index][key] = value
         return self.rooms[room_id]
 
     def rm_player(self, player_id):
@@ -165,11 +170,10 @@ class Manager(object):
         room = self.rooms.get(room_id)
         client = self.clients.get(player['id'])
         if client is None:
-            raise Exception('Player {} does not exist anymore.'
-                            .format(player['id']))
+            raise Exception('invalidPlayer', {'playerId': player['id']})
         if room is None:
             self.rm_player(player['id'])
-            raise Exception('Room {} does not exist anymore.'.format(room_id))
+            raise Exception('invalidRoom', {'roomId': room_id})
         self.clients[player['id']] = handler_instance
         return room
 

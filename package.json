@@ -13,9 +13,11 @@
   "dependencies": {
     "add-to-homescreen": "^3.2.6",
     "inobounce": "^0.1.5",
+    "v-offline": "^1.0.4",
     "vue": "^2.3.3",
     "vue-touch": "^2.0.0-beta.4",
-    "vuex": "^2.3.1"
+    "vuex": "^2.3.1",
+    "vuex-i18n": "^1.10.4"
   },
   "devDependencies": {
     "appcache-webpack-plugin": "^1.3.0",

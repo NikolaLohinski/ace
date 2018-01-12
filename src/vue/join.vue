@@ -1,13 +1,13 @@
 <template>
   <div class="join">
     <div class="title">
-      Please choose your nickname
+        {{ $t('join.chooseNickname') }}
     </div>
     <form @submit.prevent="joinGame">
       <input type="text" v-model="name" maxlength="10" v-focus/>
     </form>
       <div class="title">
-        Enter the ID of the game you wish to join
+        {{ $t('join.chooseRoomId') }}
       </div>
     <form @submit.prevent="joinGame">
       <input type="text" v-model="roomId" maxlength="6"/>
@@ -16,7 +16,12 @@
              :disabled="name.length === 0 || roomId.length === 0"
              class="continue"
              @tap="joinGame">
-      Continue
+      {{ $t('join.continue') }}
+    </v-touch>
+    <v-touch tag="div"
+             class="back"
+             @tap="$emit('back')">
+      {{ $t('join.back') }}
     </v-touch>
   </div>
 </template>
@@ -46,7 +51,7 @@
           // Set loading status
           this.$store.commit('setLoading', true);
           // Initialize socket
-          this.$store.dispatch('initPlayer', this.name).then(/* Success handler */ () => {
+          this.$store.dispatch('initPlayer', this.name).then(() => {
             // When it is done, register listener for the room
             this.$store.dispatch('registerListener', {
               callback: this.getMessageFromServer,
@@ -60,11 +65,11 @@
                   roomId: this.roomId
                 }
               }).then(null, (err) => {
-                window.console.error(err);
+                console.error(err);
               });
             });
-          }, /* Error handler */ (err) => {
-            window.console.error(err);
+          }, (err) => {
+            console.error(err);
           });
         }
       }
@@ -99,10 +104,16 @@
         text-align: center;
       }
     }
+    .back,
     .continue {
+      &.back {
+        left: 15px;
+      }
+      &.continue {
+        right: 15px;
+      }
       position: absolute;
       bottom: 15px;
-      right: 15px;
       cursor: pointer;
       &[disabled] {
         pointer-events: none;

@@ -1,7 +1,7 @@
 <template>
   <div class="create">
     <div class="title">
-      Please choose your nickname
+      {{ $t('join.chooseNickname') }}
     </div>
     <form @submit.prevent="createGame">
       <input type="text" v-model="name" v-focus />
@@ -10,7 +10,12 @@
              :disabled="name.length == 0"
              class="continue"
              @tap="createGame">
-      Continue
+      {{ $t('join.continue') }}
+    </v-touch>
+    <v-touch tag="div"
+             class="back"
+             @tap="$emit('back')">
+      {{ $t('join.back') }}
     </v-touch>
   </div>
 </template>
@@ -92,10 +97,16 @@
         text-align: center;
       }
     }
+    .back,
     .continue {
+      &.back {
+        left: 15px;
+      }
+      &.continue {
+        right: 15px;
+      }
       position: absolute;
       bottom: 15px;
-      right: 15px;
       cursor: pointer;
       &[disabled] {
         pointer-events: none;

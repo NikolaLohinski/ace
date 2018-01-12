@@ -3,7 +3,7 @@
   <div class="container" v-if="loading" :block="block" :cover="cover">
     <div class=loader>
       <div class=spinner></div>
-      <span class=text>{{ text }}</span>
+      <span class=text>{{ $t(text) }}</span>
     </div>
   </div>
   </transition>
@@ -34,21 +34,16 @@
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
-@import '../../scss/colors';
-@font-face {
-  src: url('./../../fonts/OpenSans-Light.ttf');
-  font-family: DefaultFont;
-}
+@import '../scss/general';
 .container {
     overflow: hidden;
     position: fixed;
-    z-index: 999999999;
+    z-index: 998;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(255, 255, 255, 0.1);
-    font-family: DefaultFont;
     opacity: 1;
     transition: opacity .2s;
     pointer-events: none;

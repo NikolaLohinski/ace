@@ -1,5 +1,5 @@
 <template>
-  <div class="menu">
+  <div class="home">
     <div class="header">
       <table>
         <tr class="title">
@@ -16,9 +16,18 @@
                :key="link.name"
                tag="div"
                @tap="goTo($event, link.destination)">
-        {{link.name}}
+        {{ $t(`home.${link.name}`) }}
       </v-touch>
     </nav>
+    <footer class="languages">
+      <v-touch tag="div"
+               v-for="lang in langs"
+               class="language"
+               :key="lang"
+               @tap="changeLang(lang)">
+        {{ $t(`home.${lang}`) }}
+      </v-touch>
+    </footer>
   </div>
 </template>
 <script>
@@ -27,13 +36,21 @@
       return {
         links: [
           { name: 'join room', destination: 'join' },
-          { name: 'create room', destination: 'create' },
-          { name: 'rules', destination: 'rules' },
-          { name: 'about', destination: 'about' }
+          { name: 'create room', destination: 'create' }
         ]
       };
     },
+    computed: {
+      langs () {
+        return this.$store.getters.langs;
+      }
+    },
+    store: global.store,
     methods: {
+      changeLang (lang) {
+        this.$store.commit('setLang', lang);
+        this.$store.dispatch('saveSettings');
+      },
       goTo (e, destination) {
         e.preventDefault();
         this.$emit('redirect', destination);
@@ -43,7 +60,7 @@
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../scss/general';
-  .menu {
+  .home {
     font-family: DefaultFont;
     color: $default-text-color;
     overflow-x: hidden;
@@ -83,7 +100,9 @@
     .nav-bar {
       text-align: center;
       margin: 20px 0;
-      @media screen and (orientation: portrait) {
+      @media screen and (orientation: portrait),
+      screen and (min-device-height: 600px),
+      screen and (min-height: 600px) {
         margin: 0;
         position: absolute;
         top: 50%;
@@ -94,6 +113,27 @@
         font-size: 20px;
         cursor: pointer;
         padding: 5px 0;
+        &:hover, &:active {
+          color: $link-text-color;
+        }
+        &:first-letter {
+          text-transform: capitalize;
+        }
+      }
+    }
+    footer.languages {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      .language {
+        display: inline-block;
+        margin: 5px;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 5px 0;
+        color: $lighter-text-color;
         &:hover, &:active {
           color: $link-text-color;
         }

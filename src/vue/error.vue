@@ -1,49 +1,41 @@
 <template>
-  <div class="error" :open="open">
+  <v-touch tag="div"  class="error" @tap="close" :open="open">
     <div class="box">
       <div class="header">
-        Something went wrong...
+        !
       </div>
       <div class="body">
-        <div class="message">{{ text }}</div>
-      </div>
-      <div class="footer">
-        <v-touch tag="div" class="close" @tap="close">Close</v-touch>
+        <div class="message">{{ $t(`errors.${ message }`, args) }}</div>
       </div>
     </div>
-  </div>
+  </v-touch>
 </template>
 <script>
   export default {
     data () {
       return {
-        open: false,
-        text: ''
+        open: false
       };
     },
     computed: {
-      message () {
+      error () {
         return this.$store.getters.error;
-      }
-    },
-    watch: {
-      message (newMessage) {
-        this.$store.commit('setLoading', false);
-        if (newMessage.length === 0) {
-          this.open = false;
-          setTimeout(() => {
-            this.text = '';
-          }, 200);
-        } else {
-          this.$store.commit('setLoading', false);
-          this.text = this.message;
+      },
+      message () {
+        if (this.error.length > 0) {
           this.open = true;
         }
+        return this.error[0] || '';
+      },
+      args () {
+        return this.error[1] || {};
       }
     },
     methods: {
-      close () {
-        this.$store.commit('setError', '');
+      close (e) {
+        e.preventDefault();
+        this.open = false;
+        setTimeout(() => this.$store.commit('setError', []), 200);
       }
     },
     store: global.store
@@ -54,37 +46,42 @@
   .error {
     position: fixed;
     z-index: 999;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     pointer-events: none;
     opacity: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: $default-text-color;
+    color: $notification-text-color;
+    background: rgba(0, 0, 0, 0.2);
     transition: opacity 200ms;
+    font-family: BoldFont;
     &[open] {
       opacity: 1;
       pointer-events: auto;
       .box {
-        top: 5%;
+        transform: translate(-50%, -50%) scale(1);
       }
     }
     .box {
-      position: absolute;
-      top: -50%;
-      left: 5%;
-      width: 90%;
-      height: 90%;
-      background-color: $general-background;
-      border: 1px solid $lighter-text-color;
-      border-radius: 3px;
-      transition: top 200ms;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 90vw;
+      max-width: 250px;
+      height: 90vw;
+      max-height: 250px;
+      background-color: $notification-background;
+      border-radius: 5px;
+      transition: transform 200ms;
+      transform: translate(-50%, -50%) scale(0.8);
       .header {
         position: absolute;
         top: 0;
         width: 100%;
         padding: 15px 0;
         text-align: center;
-        font-size: 20px;
+        font-size: 30px;
       }
       .body {
         width: 100%;
@@ -96,19 +93,6 @@
         font-size: 15px;
         .message {
           margin: 15px;
-        }
-      }
-      .footer {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-        padding: 15px 0;
-        .close {
-          cursor: pointer;
-          &:hover, &:active {
-            color: $link-text-color;
-          }
         }
       }
     }

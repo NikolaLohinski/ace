@@ -1,56 +1,50 @@
 <template>
   <div class="root">
     <transition name="transition" mode="out-in">
-    <v-touch class="back-to-menu"
-             tag="div"
-             @tap="back"
-             :disabled="disableBack"
-             v-if="currentComponent !== 'game-menu'">Back</v-touch>
-    </transition>
-    <transition name="transition" mode="out-in">
       <component :is="currentComponent"
-                 @disable-back-button="disableBackButton"
+                 @back="back"
                  @redirect="redirectTo">
       </component>
     </transition>
     <error></error>
+    <spinner :loading="loading" text="loading"></spinner>
   </div>
 </template>
 <script>
-  import Menu from './menu.vue';
+  import Home from './home.vue';
   import Create from './create.vue';
   import Join from './join.vue';
-  import Rules from './rules.vue';
-  import About from './about.vue';
   import Room from './room.vue';
+  import Game from './game.vue';
   import Error from './error.vue';
-  import Spinner from './utils/spinner.vue';
+  import Spinner from './spinner.vue';
   export default {
     data () {
       return {
-        disableBack: false,
         history: []
       };
     },
     computed: {
       currentComponent () {
         return this.$store.getters.currentView;
+      },
+      loading () {
+        return this.$store.getters.loading;
       }
     },
     components: {
-      'game-menu': Menu,
+      Home,
       Create,
       Join,
-      Rules,
-      About,
       Spinner,
       Room,
+      Game,
       Error
     },
     store: global.store,
     methods: {
       redirectTo (link) {
-        if (link === 'game-menu') {
+        if (link === 'home') {
           this.history = [];
         } else {
           this.history.push(this.currentComponent);
@@ -59,16 +53,14 @@
       },
       back () {
         let link = this.history.pop();
-        if (!link) link = 'game-menu';
+        if (!link) link = 'home';
         this.$store.commit('setCurrentView', link);
         this.$store.dispatch('killSocket');
-      },
-      disableBackButton (status) {
-        this.disableBack = status;
       }
     },
     mounted () {
-      this.$store.commit('setCurrentView', 'game-menu');
+      this.$store.dispatch('loadSettings');
+      this.$store.commit('setCurrentView', 'home');
     }
   };
 </script>
@@ -84,19 +76,6 @@
     background: $general-background;
     font-family: DefaultFont;
     color: $default-text-color;
-    .back-to-menu {
-      position: absolute;
-      bottom: 15px;
-      left: 15px;
-      cursor: pointer;
-      z-index: 99;
-      &[disabled] {
-        display: none;
-      }
-      &:hover, &:active {
-        color: $link-text-color;
-      }
-    }
   }
   .transition-leave-active,
   .transition-enter-active {

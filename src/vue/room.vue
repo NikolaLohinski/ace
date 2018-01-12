@@ -2,48 +2,55 @@
   <div class="room">
     <div class="content">
       <header>
-        <div class="definition">Room ID</div>
+        <div class="definition">{{ $t('room.roomId') }}</div>
         <div class="room-id">{{ roomId }}</div>
       </header>
       <table class="players-list">
         <thead>
           <tr>
-            <th>Player ID</th><th>Name</th><th class="ready-tag">Ready</th>
+            <th>{{ $t('room.playerId') }}</th>
+            <th>{{ $t('room.name') }}</th>
+            <th class="ready-tag">{{ $t('room.ready') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="p in players">
             <td>{{ p['id'] }}
-              <span class="you" v-if="p['id'] === player['id']">(You)</span>
+              <span class="you" v-if="p['id'] === player['id']">
+                {{ `(${$t('room.you')})` }}
+              </span>
             </td>
             <td>{{ p['name'] }}</td>
-            <td class="ready-tag">{{ (p['ready']) ? 'Yes' : 'No' }}</td>
+            <td class="ready-tag">
+              {{ (p['ready']) ? $t('room.yes') : $t('room.no') }}
+            </td>
           </tr>
           <tr v-for="i in (4 - players.length)">
             <td colspan="3" class="waiting-for-players">
               <div class="small-loader">
                 <div class="small-spinner"></div>
               </div>
-              Waiting for players ...</td>
+              {{ $t('room.waitingForPlayers') }}</td>
           </tr>
         </tbody>
       </table>
     </div>
     <v-touch tag="div"
-               class="ready"
+               class="continue"
                @tap="toggleReady">
-      {{ (ready) ? 'Cancel' : 'Ready' }}
+      {{ (player['ready']) ? $t('room.cancel') : $t('room.ready') }}
+    </v-touch>
+    <v-touch tag="div"
+             class="back"
+             :disabled="player['ready']"
+             @tap="$emit('back')">
+      {{ $t('room.back') }}
     </v-touch>
   </div>
 </template>
 <script>
-  import Spinner from './utils/spinner.vue';
+  import Spinner from './spinner.vue';
   export default {
-    data () {
-      return {
-        ready: false
-      };
-    },
     computed: {
       roomId () {
         return this.$store.getters.roomId;
@@ -72,16 +79,15 @@
           });
         }, timeout);
       },
-      toggleReady () {
-        this.ready = !this.ready;
-        this.$emit('disable-back-button', this.ready);
+      toggleReady (e) {
+        e.preventDefault();
         this.$store.dispatch('send', {
           head: 'UPDATEPLY',
           body: {
             player: this.player,
             update: {
               key: 'ready',
-              value: this.ready
+              value: !this.player['ready']
             },
             roomId: this.roomId
           }
@@ -91,8 +97,8 @@
         const head = data['head'];
         const body = data['body'];
         if (head === 'ROOM') {
-          this.$store.commit('setSession');
           this.$store.commit('setPlayers', body['players']);
+          this.$store.dispatch('saveSession');
           this.$store.commit('setLoading', false);
         }
       }
@@ -104,7 +110,7 @@
       this.$store.dispatch('registerListener', {
         callback: this.getMessageFromServer
       }).then(() => {
-        this.$store.commit('setSession');
+        this.$store.dispatch('saveSession');
       });
       this.keepAlive(30000);
     }
@@ -203,10 +209,16 @@
         }
       }
     }
-    .ready {
-      position: fixed;
+    .back,
+    .continue {
+      &.back {
+        left: 15px;
+      }
+      &.continue {
+        right: 15px;
+      }
+      position: absolute;
       bottom: 15px;
-      right: 15px;
       cursor: pointer;
       &[disabled] {
         pointer-events: none;
