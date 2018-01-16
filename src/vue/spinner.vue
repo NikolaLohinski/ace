@@ -38,7 +38,7 @@
 .container {
     overflow: hidden;
     position: fixed;
-    z-index: 998;
+    z-index: 990;
     top: 0;
     left: 0;
     width: 100%;

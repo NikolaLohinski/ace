@@ -7,6 +7,7 @@
       </component>
     </transition>
     <error></error>
+    <devtools></devtools>
     <spinner :loading="loading" text="loading"></spinner>
   </div>
 </template>
@@ -18,6 +19,7 @@
   import Game from './game.vue';
   import Error from './error.vue';
   import Spinner from './spinner.vue';
+  import Devtools from './devtools.vue';
   export default {
     data () {
       return {
@@ -39,7 +41,8 @@
       Spinner,
       Room,
       Game,
-      Error
+      Error,
+      Devtools
     },
     store: global.store,
     methods: {

@@ -25,10 +25,18 @@
         if (this.error.length > 0) {
           this.open = true;
         }
-        return this.error[0] || '';
+        if (this.error instanceof Array) {
+          return this.error[0] || '';
+        } else {
+          return this.error || '';
+        }
       },
       args () {
-        return this.error[1] || {};
+        if (this.error instanceof Array) {
+          return this.error[1] || {};
+        } else {
+          return {};
+        }
       }
     },
     methods: {

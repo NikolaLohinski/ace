@@ -21,11 +21,12 @@
     </nav>
     <footer class="languages">
       <v-touch tag="div"
-               v-for="lang in langs"
+               v-for="l in langs"
                class="language"
-               :key="lang"
-               @tap="changeLang(lang)">
-        {{ $t(`home.${lang}`) }}
+               :key="l"
+               :active="lang === l"
+               @tap="changeLang(l)">
+        {{ $t(`home.${l}`) }}
       </v-touch>
     </footer>
   </div>
@@ -43,6 +44,9 @@
     computed: {
       langs () {
         return this.$store.getters.langs;
+      },
+      lang () {
+        return this.$store.getters.lang;
       }
     },
     store: global.store,
@@ -68,6 +72,10 @@
     width: 100vw;
     height: 100vh;
     .header {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
       text-align: center;
       table {
         width: 100vw;
@@ -134,7 +142,7 @@
         cursor: pointer;
         padding: 5px 0;
         color: $lighter-text-color;
-        &:hover, &:active {
+        &:hover, &:active, &[active] {
           color: $link-text-color;
         }
         &:first-letter {

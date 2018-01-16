@@ -84,7 +84,7 @@ module.exports = {
     //   { from: 'src/json/content.json' }
     // ]),
     new AppCachePlugin({
-      network: ['*'],
+      network: ['*', '/check-connection'],
       output: 'cache.manifest'
     }),
     new Webpack.DefinePlugin({

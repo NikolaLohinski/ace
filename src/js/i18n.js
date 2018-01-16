@@ -32,8 +32,8 @@ const translations = {
     },
     errors: {
       'noWebsocket': 'Websocket is not supported by this browser. How about Mozilla Firefox ?',
-      'serverUnreachable': 'The server seems to be unreachable',
-      'lostConnection': 'Oops, it seems we have lost connection',
+      'serverUnreachable': 'The server seems to be unreachable. Try again later.',
+      'lostConnection': 'Oops, it seems we have lost connection.',
       'invalidRoom': 'Room {roomId} does not exist.',
       'invalidPlayer': 'Player {playerId} does not exist.',
       'playerAlreadyInRoom': 'Player {playerId} is already in room {roomId}.',
@@ -50,7 +50,7 @@ const translations = {
     },
     room: {
       'you': 'Vous',
-      'playerId': 'Identifiant joueur',
+      'playerId': 'Joueur',
       'roomId': 'Partie',
       'name': 'Nom',
       'ready': 'Prêt',
@@ -73,7 +73,7 @@ const translations = {
     },
     errors: {
       'noWebsocket': 'Les Websocket ne sont pas prises en charge par ce navigateur. Essayez Mozilla Firefox.',
-      'serverUnreachable': 'Le serveur est injoignable',
+      'serverUnreachable': 'Oops, le serveur semble injoignable. Réessayez plus tard.',
       'lostConnection': 'Oops, il semblerait que vous ayez des problèmes de connexion.',
       'invalidRoom': 'La partie {roomId} n\'existe pas.',
       'invalidPlayer': 'Le joueur {playerId} n\'existe pas.',

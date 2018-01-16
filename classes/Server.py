@@ -131,6 +131,7 @@ def main(port=_DEFAULT_PORT_):
     app = web.Application([
         (r'/ws', WSHandler, dict(manager=manager)),
         (r'/', RootServer),
+        (r'/not-cached', RootServer),
         (r'/(.*)', web.StaticFileHandler, {
             'path': './out'
         }),
