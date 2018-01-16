@@ -5,19 +5,13 @@ const Vm = {
     Root
   },
   mounted () {
-    this.$http.get('/not-cached', {
-      timeout: 3000
-    }).then(() => {
-      this.$store.dispatch('restart').then(() => {
-        this.$store.commit('setLoading', false);
-      }, (err) => {
-        if (err) console.error(err);
-        this.$store.commit('setLoading', false);
-      });
-    }, (err) => {
-      this.$store.commit('setError', 'serverUnreachable');
+    // to make vue-resource available in store directly
+    this.$store.commit('setHttp', this.$http);
+    this.$store.dispatch('restart').then(() => {
       this.$store.commit('setLoading', false);
-      console.error(err);
+    }, () => {
+      // if restart failed, check connection in case
+      this.$store.dispatch('testConnection');
     });
   }
 };

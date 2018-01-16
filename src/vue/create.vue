@@ -39,33 +39,21 @@
       },
       createGame () {
         if (this.name.length > 0) {
-          this.$http.get('/not-cached', {
-            timeout: 3000
-          }).then(() => {
-            // Set loading status
-            this.$store.commit('setLoading', true);
-            // Initialize socket
-            this.$store.dispatch('initPlayer', this.name).then(/* Success handler */ () => {
-              // When it is done, register listener for the room
-              this.$store.dispatch('registerListener', {
-                callback: this.getMessageFromServer,
-                once: true
-              }).then(() => {
-                // Finally create game
-                this.$store.dispatch('send', {
-                  head: 'CREATE',
-                  body: this.$store.getters.player
-                }).then(null, (err) => {
-                  window.console.error(err);
-                });
+          // Set loading status
+          this.$store.commit('setLoading', true);
+          // Initialize socket
+          this.$store.dispatch('initPlayer', this.name).then(() => {
+            // When it is done, register listener for the room
+            this.$store.dispatch('registerListener', {
+              callback: this.getMessageFromServer,
+              once: true
+            }).then(() => {
+              // Finally create game
+              this.$store.dispatch('send', {
+                head: 'CREATE',
+                body: this.$store.getters.player
               });
-            }, /* Error handler */ (err) => {
-              window.console.error(err);
             });
-          }, (err) => {
-            this.$store.commit('setError', 'serverUnreachable');
-            this.$store.commit('setLoading', false);
-            console.error(err);
           });
         }
       }

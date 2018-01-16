@@ -8,9 +8,13 @@ const Store = {
     error: [],
     langs: [],
     lang: 'english',
-    currentView: null
+    currentView: null,
+    http: null
   },
   getters: {
+    http (state) {
+      return state.http;
+    },
     currentView (state) {
       return state.currentView;
     },
@@ -42,6 +46,9 @@ const Store = {
     }
   },
   mutations: {
+    setHttp (state, http) {
+      state.http = http;
+    },
     setCurrentView (state, view) {
       state.currentView = view;
     },
@@ -79,7 +86,9 @@ const Store = {
           state.getters.socket.send(JSON.stringify(message));
           resolve();
         } else {
-          reject(['[ACTION: send]: no socket']);
+          console.error('[ACTION: send]: no socket');
+          state.commit('setLoading', false);
+          reject('[ACTION: send]: no socket');
         }
       });
     },
@@ -92,8 +101,6 @@ const Store = {
             localStorage['session'] = '';
             state.getters.socket.close();
             state.commit('setSocket', undefined);
-          }, (err) => {
-            console.error(err);
           });
         }
       });
@@ -106,12 +113,14 @@ const Store = {
           }, { once: args['once'] });
           resolve();
         } else {
-          reject(['[ACTION: registerListener]: no socket']);
+          state.commit('setLoading', false);
+          console.error('[ACTION: registerListener]: no socket');
+          reject('[ACTION: registerListener]: no socket');
         }
       });
     },
     initPlayer (state, name) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         state.dispatch('init').then((socket) => {
           socket.addEventListener('message', (msg) => {
             const data = JSON.parse(msg['data']);
@@ -127,9 +136,6 @@ const Store = {
               name: name
             }
           }));
-        }, (errors) => {
-          errors.push('[ACTION: initPlayer]: impossible to init');
-          reject(errors);
         });
       });
     },
@@ -137,38 +143,47 @@ const Store = {
       return new Promise((resolve, reject) => {
         if (navigator.onLine) {
           if (!('WebSocket' in window)) {
+            console.error('[ACTION: init]: socket not supported');
             state.commit('setError', 'noWebsocket');
-            reject(['[ACTION: init]: socket not supported']);
+            state.commit('setLoading', false);
+            reject('[ACTION: init]: socket not supported');
           } else {
             try {
-              // Try to connect and send init command
-              const socket = new WebSocket('ws://' + window.location.host + '/ws');
-              socket.addEventListener('message', (msg) => {
-                const data = JSON.parse(msg['data']);
-                if (data['head'] === 'ERR') {
-                  state.commit('setError', data['body']);
-                  for (let i = 0; i < data['body'].length; i++) {
-                    console.error(data['body'][i]);
+              state.dispatch('testConnection').then(() => {
+                // Try to connect and send init command
+                const socket = new WebSocket('ws://' + window.location.host + '/ws');
+                socket.addEventListener('message', (msg) => {
+                  const data = JSON.parse(msg['data']);
+                  if (data['head'] === 'ERR') {
+                    state.commit('setError', data['body']);
+                    for (let i = 0; i < data['body'].length; i++) {
+                      console.error(data['body'][i]);
+                    }
+                    state.commit('setLoading', false);
                   }
+                });
+                socket.addEventListener('open', () => {
+                  resolve(socket);
+                });
+                socket.addEventListener('error', (err) => {
+                  console.error(err);
                   state.commit('setLoading', false);
-                }
-              });
-              socket.addEventListener('open', () => {
-                resolve(socket);
-              });
-              socket.addEventListener('error', (err) => {
-                console.error(err);
+                  state.commit('setError', 'serverUnreachable');
+                });
+              }, () => {
+                console.error('[ACTION: init]: server unreachable');
                 state.commit('setLoading', false);
-                state.commit('setError', 'serverUnreachable');
+                reject(['[ACTION: init]: server unreachable']);
               });
             } catch (e) {
-              console.error(e);
+              console.error('[ACTION: init]: server unreachable');
               state.commit('setLoading', false);
               state.commit('setError', 'serverUnreachable');
               reject(['[ACTION: init]: server unreachable']);
             }
           }
         } else {
+          console.error('[ACTION: init]: no connection');
           state.commit('setLoading', false);
           state.commit('setError', 'lostConnection');
           reject(['[ACTION: init]: no connection']);
@@ -193,21 +208,27 @@ const Store = {
               state.dispatch('send', {
                 head: 'RESTART',
                 body: session
-              }).then(() => resolve(), (errors) => {
-                errors.push('[ACTION: restart]: impossible to send');
-                reject(errors);
+              }).then(() => {
+                resolve();
+              }, () => {
+                console.error('[ACTION: restart]: impossible to send');
+                state.commit('setLoading', false);
+                reject('[ACTION: restart]: impossible to send');
               });
-            }, (errors) => {
-            errors.push('[ACTION: restart]: impossible to init');
-            reject(errors);
+            }, () => {
+            console.error('[ACTION: restart]: impossible to init');
+            state.commit('setLoading', false);
+            reject('[ACTION: restart]: impossible to init');
           });
         } else {
+          console.error('[ACTION: restart]: no session saved');
+          state.commit('setLoading', false);
           reject(['[ACTION: restart]: no session saved']);
         }
       });
     },
     saveSession (state) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         localStorage['session'] = JSON.stringify({
           player: state.getters.player,
           roomId: state.getters.roomId,
@@ -218,7 +239,7 @@ const Store = {
       });
     },
     loadSession (state, session) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         state.commit('setPlayer', session['player']);
         state.commit('setRoomId', session['roomId']);
         state.commit('setPlayers', session['players']);
@@ -227,7 +248,7 @@ const Store = {
       });
     },
     saveSettings (state) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         localStorage['settings'] = JSON.stringify({
           lang: state.getters.lang
         });
@@ -241,8 +262,24 @@ const Store = {
           state.commit('setLang', settings['lang']);
           resolve();
         } else {
-          reject(['[ACTION: loadSettings]: no settings saved']);
+          state.commit('setLoading', false);
+          console.error('[ACTION: loadSettings]: no settings saved');
+          reject('[ACTION: loadSettings]: no settings saved');
         }
+      });
+    },
+    testConnection (state) {
+      return new Promise((resolve, reject) => {
+        state.getters.http.get('/reach', {
+          timeout: 3000
+        }).then(() => {
+          resolve();
+        }, (err) => {
+          console.error(err);
+          state.commit('setLoading', false);
+          state.commit('setError', 'serverUnreachable');
+          reject('[ACTION: testConnection]: server unreachable');
+        });
       });
     }
   }

@@ -11,7 +11,7 @@
                @panmove="drag">
       </v-touch>
     </div>
-    <nav class="devtools-menu">
+    <nav class="devtools-menu" :hide="inputOpen || openErrors">
       <v-touch tag="div" class="tool" @tap="reload">
         Reload
       </v-touch>
@@ -24,11 +24,33 @@
       <v-touch tag="div" class="tool" @tap="clear('session')">
         Clear session
       </v-touch>
-      <v-touch tag="div" class="tool" @tap="clear('devtools')">
-        Clear devtools
+      <v-touch tag="div" class="tool" @tap="openErrors = true">
+        See last console errors
+      </v-touch>
+      <v-touch tag="div" class="tool" @tap="openInput('setCurrentView')">
+        Go to view
       </v-touch>
       <v-touch tag="div" class="tool" @tap="opened = false">
         Cancel
+      </v-touch>
+    </nav>
+    <nav class="devtools-menu input" :hide="!inputOpen">
+      <form @submit.prevent="commit">
+        <input type="text" v-model="textInput" v-if="inputOpen" v-focus>
+      </form>
+        <v-touch tag="div" class="tool" @tap="commit">
+        Set
+      </v-touch>
+      <v-touch tag="div" class="tool" @tap="inputOpen = false">
+        Back
+      </v-touch>
+    </nav>
+    <nav class="devtools-menu input" :hide="!openErrors">
+      <ul>
+        <li v-for="e in errors">{{ e }}</li>
+      </ul>
+      <v-touch tag="div" class="tool" @tap="openErrors = false">
+        Back
       </v-touch>
     </nav>
   </v-touch>
@@ -36,20 +58,49 @@
 <script>
   export default {
     data () {
+      let x = 0;
+      let y = 0;
+      if (localStorage['devtools']) {
+        const devtoolsOptions = JSON.parse(localStorage['devtools']);
+        x = devtoolsOptions['x'];
+        y = devtoolsOptions['y'];
+      }
       return {
         max: {
           x: window.innerWidth,
           y: window.innerHeight
         },
-        x: 0,
-        y: 0,
+        x: x,
+        y: y,
         toggled: false,
         opened: false,
-        idDraggable: 'devtools-menu-id'
+        idDraggable: 'devtools-menu-id',
+        textInput: '',
+        inputOpen: false,
+        setter: '',
+        openErrors: false,
+        errors: []
       };
     },
     store: global.store,
     methods: {
+      logError (error) {
+        if (this.errors.length > 10) {
+          this.errors.pop();
+          this.errors.splice(0, 0, error);
+        } else {
+          this.errors.push(error);
+        }
+      },
+      commit () {
+        this.$store.commit(this.setter, this.textInput);
+        this.inputOpen = false;
+        this.opened = false;
+      },
+      openInput (setter) {
+        this.setter = setter;
+        this.inputOpen = true;
+      },
       reload (hard) {
         window.location.reload(hard);
       },
@@ -98,11 +149,12 @@
       }
     },
     mounted () {
-      if (localStorage['devtools']) {
-        const devtoolsOptions = JSON.parse(localStorage['devtools']);
-        this.x = devtoolsOptions['x'];
-        this.y = devtoolsOptions['y'];
-      }
+      const originalLog = console.error;
+      console.error = (error) => {
+        this.logError(error);
+        originalLog(error);
+      };
+      window.addEventListener('error', (e) => console.log(e));
       this.move(this.x, this.y);
       window.addEventListener('resize', () => {
         this.max.x = window.innerWidth;
@@ -143,18 +195,45 @@
       }
     }
     .devtools-menu {
-      position: absolute;
+      position: fixed;
       left: 0;
       transform: translateY(100%);
       bottom: 0;
       opacity: 0;
       width: 100vw;
-      height: 100vh;
+      max-height: 100vh;
       pointer-events: none;
       transition: opacity 200ms ease, transform 200ms ease;
       text-align: center;
       overflow-y: scroll;
       -webkit-overflow-scrolling: touch;
+      &[hide] {
+        transform: translateY(100%) !important;
+      }
+      input {
+        font-size: 30px;
+        max-width: 90vw;
+        width: 250px;
+        margin: 15px auto;
+        border-radius: 5px;
+        color: $lighter-text-color;
+        border: none;
+        border-bottom: 1px solid $lighter-text-color;
+        padding: 15px;
+        background: none;
+        text-align: center;
+      }
+      ul {
+        text-align: center;
+        color: red;
+        font-size: 15px;
+        padding: 0;
+        max-width: 600px;
+        margin: 15px auto;
+        li {
+          margin: 5px auto;
+        }
+      }
       .tool {
         cursor: pointer;
         font-size: 20px;

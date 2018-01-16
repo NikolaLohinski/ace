@@ -49,35 +49,23 @@
       joinGame () {
         if (this.name.length > 0 && this.roomId.length !== 0) {
           // Set loading status
-          this.$http.get('/not-cached', {
-            timeout: 3000
-          }).then(() => {
-            this.$store.commit('setLoading', true);
-            // Initialize socket
-            this.$store.dispatch('initPlayer', this.name).then(() => {
-              // When it is done, register listener for the room
-              this.$store.dispatch('registerListener', {
-                callback: this.getMessageFromServer,
-                once: true
-              }).then(() => {
-                // Finally create game
-                this.$store.dispatch('send', {
-                  head: 'JOIN',
-                  body: {
-                    player: this.$store.getters.player,
-                    roomId: this.roomId
-                  }
-                }).then(null, (err) => {
-                  console.error(err);
-                });
+          this.$store.commit('setLoading', true);
+          // Initialize socket
+          this.$store.dispatch('initPlayer', this.name).then(() => {
+            // When it is done, register listener for the room
+            this.$store.dispatch('registerListener', {
+              callback: this.getMessageFromServer,
+              once: true
+            }).then(() => {
+              // Finally create game
+              this.$store.dispatch('send', {
+                head: 'JOIN',
+                body: {
+                  player: this.$store.getters.player,
+                  roomId: this.roomId
+                }
               });
-            }, (err) => {
-              console.error(err);
             });
-          }, (err) => {
-            this.$store.commit('setError', 'serverUnreachable');
-            this.$store.commit('setLoading', false);
-            console.error(err);
           });
         }
       }

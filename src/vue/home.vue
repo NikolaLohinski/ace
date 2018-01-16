@@ -140,7 +140,7 @@
         margin: 5px;
         font-size: 15px;
         cursor: pointer;
-        padding: 5px 0;
+        padding: 5px 10px;
         color: $lighter-text-color;
         &:hover, &:active, &[active] {
           color: $link-text-color;

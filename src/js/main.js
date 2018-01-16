@@ -3,9 +3,9 @@
 import 'inobounce';
 import Vue from 'vue';
 import VueX from 'vuex';
-import VueResource from 'vue-resource';
 import VueTouch from 'vue-touch';
 import VuexI18n from 'vuex-i18n';
+import VueResource from 'vue-resource';
 import Store from './store.js';
 import Vm from './vm.js';
 import I18n from './i18n.js';
