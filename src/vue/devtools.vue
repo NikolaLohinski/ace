@@ -3,7 +3,12 @@
            :opened="opened"
            @tap="set">
     <div class="draggable" :id="idDraggable">
-      <v-touch class="pin" tag="div" @press="toggleMove" @tap="tap">
+      <v-touch class="pin" tag="div"
+               @press="toggleMove"
+               @tap="tap"
+               :pan-options="{threshold: 30}"
+               @panend="set"
+               @panmove="drag">
       </v-touch>
     </div>
     <nav class="devtools-menu">
@@ -32,8 +37,10 @@
   export default {
     data () {
       return {
-        maxX: window.innerWidth,
-        maxY: window.innerHeight,
+        max: {
+          x: window.innerWidth,
+          y: window.innerHeight
+        },
         x: 0,
         y: 0,
         toggled: false,
@@ -71,18 +78,23 @@
         const el = document.getElementById(this.idDraggable);
         const elW2 = Math.round(el.clientWidth / 2) + 5;
         const elH2 = Math.round(el.clientHeight / 2) + 5;
-        this.x = (x < this.maxX - elW2 && x > elW2) ? x : (x < elW2) ? elW2 : this.maxX - elW2;
-        this.y = (y < this.maxY - elH2 && y > elH2) ? y : (y < elH2) ? elH2 : this.maxY - elH2;
+        this.x = (x < this.max.x - elW2 && x > elW2) ? x : (x < elW2) ? elW2 : this.max.x - elW2;
+        this.y = (y < this.max.y - elH2 && y > elH2) ? y : (y < elH2) ? elH2 : this.max.y - elH2;
         el.style.left = `${this.x - elW2 + 5}px`;
         el.style.top = `${this.y - elH2 + 5}px`;
+      },
+      drag ($event) {
+        if (this.toggled) {
+          this.move($event.center.x, $event.center.y);
+        }
       }
     },
     watch: {
-      maxX () {
-        this.move(this.x, this.y);
-      },
-      maxY () {
-        this.move(this.x, this.y);
+      max: {
+        deep: true,
+        handler () {
+          this.move(this.x, this.y);
+        }
       }
     },
     mounted () {
@@ -92,10 +104,9 @@
         this.y = devtoolsOptions['y'];
       }
       this.move(this.x, this.y);
-      setTimeout(() => document.getElementById(this.idDraggable).setAttribute('fluid-transition', ''), 200);
       window.addEventListener('resize', () => {
-        this.maxX = window.innerWidth;
-        this.maxY = window.innerHeight;
+        this.max.x = window.innerWidth;
+        this.max.y = window.innerHeight;
       });
     }
   };
@@ -167,9 +178,7 @@
       }
     }
     .draggable {
-      &[fluid-transition] {
-        transition: opacity 200ms, transform 200ms, top ease 200ms, left ease 200ms;
-      }
+      transition: opacity 200ms;
       position: absolute;
       pointer-events: auto;
       width: 45px;
