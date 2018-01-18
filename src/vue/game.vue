@@ -1,19 +1,22 @@
 <template>
   <div class="game">
     <div class="center-logo">
-      <div class="bet">{{ bet }}</div>
-      <div class="family" :family="family"></div>
     </div>
+    <bets :bet="bet" :family="family"></bets>
   </div>
 </template>
 
 <script>
+  import Bets from './bets.vue';
   export default {
     data () {
       return {
-        family: null,
-        bet: null
+        family: 'h',
+        bet: 130
       };
+    },
+    components: {
+      Bets
     }
   };
 </script>
@@ -41,42 +44,6 @@
       height: 25vw;
       max-width: 300px;
       max-height: 300px;
-      .bet {
-        position: absolute;
-        text-align: center;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 15%;
-        height: 15%;
-        margin-top: -8px;
-        display: inline-table;
-      }
-      .family {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 15%;
-        height: 15%;
-        margin-top: 12px;
-        &[family='s'] {
-          background: $spades;
-          background-size: 100% 100%
-        }
-        &[family='c'] {
-          background: $clubs;
-          background-size: 100% 100%
-        }
-        &[family='d'] {
-          background: $diamonds;
-          background-size: 100% 100%
-        }
-        &[family='h'] {
-          background: $hearths;
-          background-size: 100% 100%
-        }
-      }
     }
   }
 </style>

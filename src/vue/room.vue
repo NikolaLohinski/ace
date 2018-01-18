@@ -3,7 +3,7 @@
     <div class="content">
       <header>
         <div class="definition">{{ $t('room.roomId') }}</div>
-        <div class="room-id">{{ roomId }}</div>
+        <div class="room-id">{{ room['id'] }}</div>
       </header>
       <table class="players-list">
         <thead>
@@ -14,10 +14,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="p in players">
+          <tr v-for="p in room['players']">
             <td>{{ p['id'] }}
-              <span class="you" v-if="p['id'] === player['id']">
-                {{ `(${$t('room.you')})` }}
+              <span class="admin" v-if="p['id'] === room['adminId']">
+                {{ `(${$t('room.admin')})` }}
               </span>
             </td>
             <td>{{ p['name'] }}</td>
@@ -25,7 +25,7 @@
               {{ (p['ready']) ? $t('room.yes') : $t('room.no') }}
             </td>
           </tr>
-          <tr v-for="i in (4 - players.length)">
+          <tr v-for="i in (4 - room['players'].length)">
             <td colspan="3" class="waiting-for-players">
               <div class="small-loader">
                 <div class="small-spinner"></div>
@@ -52,14 +52,11 @@
   import Spinner from './spinner.vue';
   export default {
     computed: {
-      roomId () {
-        return this.$store.getters.roomId;
-      },
       player () {
         return this.$store.getters.player;
       },
-      players () {
-        return this.$store.getters.players;
+      room () {
+        return this.$store.getters.room || {};
       }
     },
     store: global.store,
@@ -70,7 +67,7 @@
             head: 'ALIVE',
             body: {
               player: this.player,
-              roomId: this.roomId
+              roomId: this.room['id']
             }
           }).then(() => {
             this.keepAlive(timeout);
@@ -82,14 +79,11 @@
       toggleReady (e) {
         e.preventDefault();
         this.$store.dispatch('send', {
-          head: 'UPDATEPLY',
+          head: 'RDY',
           body: {
             player: this.player,
-            update: {
-              key: 'ready',
-              value: !this.player['ready']
-            },
-            roomId: this.roomId
+            ready: !this.player['ready'],
+            roomId: this.room['id']
           }
         });
       },
@@ -97,9 +91,14 @@
         const head = data['head'];
         const body = data['body'];
         if (head === 'ROOM') {
-          this.$store.commit('setPlayers', body['players']);
+          this.$store.commit('setRoom', body);
           this.$store.dispatch('saveSession');
           this.$store.commit('setLoading', false);
+        } else if (head === 'GAME') {
+          this.$store.commit('setGame', body);
+          this.$store.dispatch('saveSession');
+          this.$store.commit('setLoading', false);
+          this.$emit('setCurrentView', 'game');
         }
       }
     },
@@ -176,7 +175,7 @@
           &.ready-tag {
             width: 10%;
           }
-          .you {
+          .admin {
             color: $lighter-text-color
           }
           &.waiting-for-players {

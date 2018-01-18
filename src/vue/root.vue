@@ -58,7 +58,7 @@
         let link = this.history.pop();
         if (!link) link = 'home';
         this.$store.commit('setCurrentView', link);
-        this.$store.dispatch('killSocket');
+        this.$store.dispatch('quit');
       }
     },
     mounted () {

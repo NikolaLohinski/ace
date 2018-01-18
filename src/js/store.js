@@ -2,16 +2,22 @@ const Store = {
   state: {
     loading: true,
     socket: null,
-    roomId: null,
     player: {},
-    players: [],
     error: [],
     langs: [],
     lang: 'english',
     currentView: null,
-    http: null
+    http: null,
+    room: {},
+    game: {}
   },
   getters: {
+    game (state) {
+      return state.game;
+    },
+    room (state) {
+      return state.room;
+    },
     http (state) {
       return state.http;
     },
@@ -23,12 +29,6 @@ const Store = {
     },
     player (state) {
       return state.player;
-    },
-    roomId (state) {
-      return state.roomId;
-    },
-    players (state) {
-      return state.players;
     },
     loading (state) {
       return state.loading;
@@ -46,6 +46,16 @@ const Store = {
     }
   },
   mutations: {
+    setRoom (state, room) {
+      const i = room['players'].findIndex((e) => state.player['id'] === e['id']);
+      if (i !== -1) state.player = room['players'][i];
+      state.room = room;
+    },
+    setGame (state, game) {
+      const i = game['players'].findIndex((e) => state.player['id'] === e['id']);
+      if (i !== -1) state.player = game['players'][i];
+      state.game = game;
+    },
     setHttp (state, http) {
       state.http = http;
     },
@@ -60,13 +70,6 @@ const Store = {
     },
     setPlayer (state, player) {
       state.player = player;
-    },
-    setRoomId (state, idGame) {
-      state.roomId = idGame;
-    },
-    setPlayers (state, players) {
-      state.players = players;
-      state.player = players.find((p) => p['id'] === state.player['id']);
     },
     setLoading (state, value) {
       state.loading = value;
@@ -92,16 +95,25 @@ const Store = {
         }
       });
     },
-    killSocket (state) {
+    quit (state) {
       return new Promise(() => {
         if (state.getters.socket) {
+          localStorage['session'] = '';
           state.dispatch('send', {
             head: 'QUIT'
-          }).then(() => {
-            localStorage['session'] = '';
+          }).then(null, null);
+        }
+      });
+    },
+    stop (state) {
+      return new Promise(() => {
+        if (state.getters.socket) {
+          try {
             state.getters.socket.close();
-            state.commit('setSocket', undefined);
-          });
+          } catch (e) {
+            console.error(e);
+          }
+          state.commit('setSocket', undefined);
         }
       });
     },
@@ -160,6 +172,12 @@ const Store = {
                       console.error(data['body'][i]);
                     }
                     state.commit('setLoading', false);
+                  } else if (data['head'] === 'RESET') {
+                    if (data['body']) {
+                      state.commit('setError', data['body']);
+                    }
+                    state.dispatch('stop');
+                    state.commit('setCurrentView', 'home');
                   }
                 });
                 socket.addEventListener('open', () => {
@@ -198,10 +216,12 @@ const Store = {
             (socket) => {
               socket.addEventListener('message', (msg) => {
                 const data = JSON.parse(msg['data']);
-                if (data['head'] !== 'ERR') {
+                if (data['head'] === 'ERR') {
+                  state.dispatch('quit');
+                } else if (data['head'] === 'ROOM') {
+                  state.commit('setRoom', data['body']);
+                  state.commit('setCurrentView', 'room');
                   state.dispatch('loadSession', session);
-                } else {
-                  state.dispatch('killSocket');
                 }
               }, { once: true });
               state.commit('setSocket', socket);
@@ -231,9 +251,7 @@ const Store = {
       return new Promise((resolve) => {
         localStorage['session'] = JSON.stringify({
           player: state.getters.player,
-          roomId: state.getters.roomId,
-          players: state.getters.players,
-          currentView: state.getters.currentView
+          roomId: state.getters.room['id']
         });
         resolve();
       });
@@ -242,8 +260,6 @@ const Store = {
       return new Promise((resolve) => {
         state.commit('setPlayer', session['player']);
         state.commit('setRoomId', session['roomId']);
-        state.commit('setPlayers', session['players']);
-        state.commit('setCurrentView', session['currentView']);
         resolve();
       });
     },
@@ -256,15 +272,10 @@ const Store = {
       });
     },
     loadSettings (state) {
-      return new Promise((resolve, reject) => {
+      return new Promise(() => {
         if (localStorage['settings']) {
           const settings = JSON.parse(localStorage['settings']);
           state.commit('setLang', settings['lang']);
-          resolve();
-        } else {
-          state.commit('setLoading', false);
-          console.error('[ACTION: loadSettings]: no settings saved');
-          reject('[ACTION: loadSettings]: no settings saved');
         }
       });
     },
@@ -274,8 +285,8 @@ const Store = {
           timeout: 3000
         }).then(() => {
           resolve();
-        }, (err) => {
-          console.error(err);
+        }, () => {
+          console.error('[ACTION: testConnection]: server unreachable');
           state.commit('setLoading', false);
           state.commit('setError', 'serverUnreachable');
           reject('[ACTION: testConnection]: server unreachable');

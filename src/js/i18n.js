@@ -8,7 +8,7 @@ const translations = {
       'english': 'En'
     },
     room: {
-      'you': 'You',
+      'admin': 'Admin',
       'playerId': 'Player ID',
       'roomId': 'Room ID',
       'name': 'Name',
@@ -37,7 +37,8 @@ const translations = {
       'invalidRoom': 'Room {roomId} does not exist.',
       'invalidPlayer': 'Player {playerId} does not exist.',
       'playerAlreadyInRoom': 'Player {playerId} is already in room {roomId}.',
-      'roomFull': 'The room {roomId} is full.'
+      'roomFull': 'The room {roomId} is full.',
+      'adminLeft': 'The admin left the game.'
     }
   },
   french: {
@@ -49,7 +50,7 @@ const translations = {
       'english': 'En'
     },
     room: {
-      'you': 'Vous',
+      'admin': 'Hôte',
       'playerId': 'Joueur',
       'roomId': 'Partie',
       'name': 'Nom',
@@ -78,7 +79,8 @@ const translations = {
       'invalidRoom': 'La partie {roomId} n\'existe pas.',
       'invalidPlayer': 'Le joueur {playerId} n\'existe pas.',
       'playerAlreadyInRoom': 'Le joueur {playerId} est déjà dans la partie {roomId}.',
-      'roomFull': 'La partie {roomId} est pleine.'
+      'roomFull': 'La partie {roomId} est pleine.',
+      'adminLeft': 'L\'hôte a quitté la partie.'
     }
   }
 };

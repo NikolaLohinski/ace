@@ -34,9 +34,12 @@ class WSHandler(websocket.WebSocketHandler):
         head = action.get('head')
         body = action.get('body')
         try:
-            answer, destinations = self.respond(head=head, body=body)
-            for handler in destinations:
+            answer, destinations, own_msg = self.respond(head=head, body=body)
+            # To always inform everyone before informing myself
+            for handler in [d for d in destinations if d != self]:
                 self.send(message=answer, handler=handler)
+            if self in destinations:
+                self.send(message=own_msg if own_msg else answer)
         except Exception as err:
             message = {
                 'head': 'ERR',
@@ -60,6 +63,7 @@ class WSHandler(websocket.WebSocketHandler):
     def respond(self, head, body):
         answer = {}
         destinations = []
+        own_msg = None
         if head == 'RESTART':
             self.player_id = body['player']['id']
             room = self.manager.revive_player(
@@ -101,11 +105,11 @@ class WSHandler(websocket.WebSocketHandler):
               'body': room.output()
             }
             destinations = [self.manager.clients[p['id']] for p in room.players]
-        elif head == 'UPDATEPLY':
-            room = self.manager.upd_player(
+        elif head == 'RDY':
+            room = self.manager.ready_player(
                 room_id=body['roomId'],
                 player_id=body['player']['id'],
-                update_data=body['update']
+                ready=body['ready']
             )
             answer = {
                 'head': 'ROOM',
@@ -113,17 +117,34 @@ class WSHandler(websocket.WebSocketHandler):
             }
             destinations = [self.manager.clients[p['id']] for p in room.players]
         elif head == 'QUIT':
-            room = self.manager.rm_player(player_id=self.player_id)
-            answer = {
-                'head': 'ROOM',
-                'body': room.output()
-            }
-            destinations = [self.manager.clients[p['id']] for p in room.players]
+            room, players = self.manager.rm_player(player_id=self.player_id)
+            if room is None:
+                p = next(filter(lambda x: x['id'] == self.player_id, players))
+                if p['admin']:
+                    own_msg = {
+                        'head': 'RESET'
+                    }
+                answer = {
+                    'head': 'RESET',
+                    'body': 'adminLeft'
+                }
+            else:
+                answer = {
+                    'head': 'ROOM',
+                    'body': room.output()
+                }
+            destinations = [
+                self.manager.clients.get(p['id'])
+                for p in players
+                if self.manager.clients.get(p['id'])
+            ]
+            if not destinations:
+                destinations = [self]
         elif head == 'ALIVE':
             if not self.manager.is_alive(player_id=self.player_id):
                 self.respond(head='QUIT', body=None)
                 self.close()
-        return answer, destinations
+        return answer, destinations, own_msg
 
 
 def main(port=_DEFAULT_PORT_):

@@ -11,7 +11,7 @@
                @panmove="drag">
       </v-touch>
     </div>
-    <nav class="devtools-menu" :hide="inputOpen || openErrors">
+    <nav class="devtools-menu" :hide="inputOpen || openErrors || viewsOpened">
       <v-touch tag="div" class="tool" @tap="reload">
         Reload
       </v-touch>
@@ -27,25 +27,25 @@
       <v-touch tag="div" class="tool" @tap="openErrors = true">
         See last console errors
       </v-touch>
-      <v-touch tag="div" class="tool" @tap="openInput('setCurrentView')">
+      <v-touch tag="div" class="tool" @tap="viewsOpened = true">
         Go to view
       </v-touch>
       <v-touch tag="div" class="tool" @tap="opened = false">
         Cancel
       </v-touch>
     </nav>
-    <nav class="devtools-menu input" :hide="!inputOpen">
-      <form @submit.prevent="commit">
-        <input type="text" v-model="textInput" v-if="inputOpen" v-focus>
-      </form>
-        <v-touch tag="div" class="tool" @tap="commit">
-        Set
+    <div class="devtools-menu" :hide="!viewsOpened">
+      <v-touch tag="div" class="tool small"
+               v-for="v in views"
+               :key="v"
+               @tap="closeAll(() => $store.commit('setCurrentView', v.toLowerCase()))">
+        {{ v }}
       </v-touch>
-      <v-touch tag="div" class="tool" @tap="inputOpen = false">
-        Back
+      <v-touch tag="div" class="tool" @tap="viewsOpened = false">
+        Cancel
       </v-touch>
-    </nav>
-    <nav class="devtools-menu input" :hide="!openErrors">
+    </div>
+    <nav class="devtools-menu" :hide="!openErrors">
       <ul>
         <li v-for="e in errors">{{ e }}</li>
       </ul>
@@ -79,7 +79,9 @@
         inputOpen: false,
         setter: '',
         openErrors: false,
-        errors: []
+        errors: [],
+        viewsOpened: false,
+        views: ['Home', 'Join', 'Create', 'Room', 'Game']
       };
     },
     store: global.store,
@@ -92,14 +94,16 @@
           this.errors.push(error);
         }
       },
-      commit () {
-        this.$store.commit(this.setter, this.textInput);
+      closeAll (lastAction) {
         this.inputOpen = false;
         this.opened = false;
+        this.viewsOpened = false;
+        if (lastAction) lastAction();
       },
-      openInput (setter) {
-        this.setter = setter;
-        this.inputOpen = true;
+      commit () {
+        this.$store.commit(this.setter, this.textInput);
+        this.textInput = '';
+        this.closeAll();
       },
       reload (hard) {
         window.location.reload(hard);
@@ -197,7 +201,7 @@
     .devtools-menu {
       position: fixed;
       left: 0;
-      transform: translateY(100%);
+      transform: translateY(0%);
       bottom: 0;
       opacity: 0;
       width: 100vw;
@@ -210,21 +214,9 @@
       &[hide] {
         transform: translateY(100%) !important;
       }
-      input {
-        font-size: 30px;
-        max-width: 90vw;
-        width: 250px;
-        margin: 15px auto;
-        border-radius: 5px;
-        color: $lighter-text-color;
-        border: none;
-        border-bottom: 1px solid $lighter-text-color;
-        padding: 15px;
-        background: none;
-        text-align: center;
-      }
       ul {
         text-align: center;
+        list-style: none;
         color: red;
         font-size: 15px;
         padding: 0;

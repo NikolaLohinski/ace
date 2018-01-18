@@ -53,7 +53,8 @@ class Manager(object):
         room_id = (time_code + player['id']) % 1000000
         while not self.room_id_free(room_id):
             room_id = (room_id + 1) % 1000000
-        self.rooms[room_id] = Room(room_id=room_id)
+        player['admin'] = True
+        self.rooms[room_id] = Room(room_id=room_id, admin_id=player['id'])
         self.add_player(room_id=room_id, player=player)
         return self.rooms[room_id]
 
@@ -117,26 +118,50 @@ class Manager(object):
             'name': name,
             'id': player_id,
             'ready': False,
-            'roomId': -1
+            'roomId': -1,
+            'admin': False
         }
 
-    def upd_player(self, room_id, player_id, update_data):
+    def ready_player(self, room_id, player_id, ready):
         """Update a player given update data.
 
         Args:
             room_id (int): identifier of the room
             player_id (int): identifier of the player
-            update_data (object): a key/value object to specify the update
+            ready (Boolean): wheter the player is ready or not
         Returns:
             Room: the updated room
 
         """
-        key = update_data['key']
-        value = update_data['value']
         players = self.rooms.get(room_id).players
         index = [i for i, x in enumerate(players) if x['id'] == player_id][0]
-        self.rooms[room_id].players[index][key] = value
+        self.rooms[room_id].players[index]['ready'] = ready
         return self.rooms[room_id]
+
+    def is_room_rdy(self, room):
+        """Check whether a room is ready to start a game or not.
+
+        Args:
+            room (Room): the room to check
+        Returns:
+            boolean: True if room is ready and false otherwise
+
+        """
+        if all([x['ready'] for x in room.players]) and len(room.players) == 4:
+            return True
+        return False
+
+    def find_player(self, player_id):
+        player = self.clients.get(player_id),
+        room = None
+        for key in self.rooms:
+            if next(filter(
+                        lambda p: p['id'] == player_id,
+                        self.rooms[key].players
+            ), None):
+                room = self.rooms[key]
+                break
+        return player, room
 
     def rm_player(self, player_id):
         """Delete a player and any reference to it. If player is last in room,
@@ -145,15 +170,19 @@ class Manager(object):
         Args:
             player_id (int): identifier of the player
         """
-        self.clients.pop(player_id)
-        for key in self.rooms:
-            room = self.rooms[key]
+        player, room = self.find_player(player_id=player_id)
+        if player is None or room is None:
+            return None, [{'id': player_id}]
+        else:
+            players = room.players
             removed = room.rm_player(player_id)
-            if removed:
-                if room.is_empty():
-                    self.rooms.pop(key)
-                return room
-        return None
+            if room.is_empty() or not removed:
+                self.del_room(room)
+                room = None
+            return room, players
+
+    def del_room(self, room):
+        return self.rooms.pop(room.id)
 
     def revive_player(self, room_id, player, handler_instance):
         """Revive a connection of a player if it exists.
@@ -172,7 +201,6 @@ class Manager(object):
         if client is None:
             raise Exception('invalidPlayer', {'playerId': player['id']})
         if room is None:
-            self.rm_player(player['id'])
             raise Exception('invalidRoom', {'roomId': room_id})
         self.clients[player['id']] = handler_instance
         return room

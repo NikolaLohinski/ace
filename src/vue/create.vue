@@ -31,8 +31,7 @@
         const head = data['head'];
         const body = data['body'];
         if (head === 'ROOM') {
-          this.$store.commit('setRoomId', body['id']);
-          this.$store.commit('setPlayers', body['players']);
+          this.$store.commit('setRoom', body);
           this.$store.commit('setLoading', false);
           this.$emit('redirect', 'room');
         }
