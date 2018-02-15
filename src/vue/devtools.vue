@@ -12,12 +12,19 @@
       </v-touch>
     </div>
     <nav class="devtools-menu" :hide="inputOpen || openErrors || viewsOpened">
-      <v-touch tag="div" class="tool" @tap="reload">
-        Reload
+      <v-touch tag="div" class="tool" @tap="reload(hardReload)"
+               @pressup="reload(hardReload)"
+               @press="hardReload = true">
+        {{ (hardReload) ? 'Hard reload' : 'Reload'}}
       </v-touch>
-      <v-touch tag="div" class="tool" @tap="reload(true)">
-        Hard reload
-      </v-touch>
+      <div class="tool double-tool-holder">
+        <v-touch tag="div" class="tool" @tap="viewsOpened = true">
+          Go to
+        </v-touch>
+        <v-touch tag="div" class="tool" @tap="goToView(goView)">
+          {{ goView }}
+        </v-touch>
+      </div>
       <v-touch tag="div" class="tool" @tap="clear('settings')">
         Clear settings
       </v-touch>
@@ -25,24 +32,24 @@
         Clear session
       </v-touch>
       <v-touch tag="div" class="tool" @tap="openErrors = true">
-        See last console errors
+        Console errors
       </v-touch>
-      <v-touch tag="div" class="tool" @tap="viewsOpened = true">
-        Go to view
+      <v-touch tag="div" class="tool" @tap="$store.dispatch('vibrate')">
+        Vibrate
       </v-touch>
       <v-touch tag="div" class="tool" @tap="opened = false">
-        Cancel
+        Back
       </v-touch>
     </nav>
     <div class="devtools-menu" :hide="!viewsOpened">
-      <v-touch tag="div" class="tool small"
+      <v-touch tag="div" class="tool"
                v-for="v in views"
                :key="v"
-               @tap="closeAll(() => $store.commit('setCurrentView', v.toLowerCase()))">
+               @tap="goToView(v)">
         {{ v }}
       </v-touch>
       <v-touch tag="div" class="tool" @tap="viewsOpened = false">
-        Cancel
+        Back
       </v-touch>
     </div>
     <nav class="devtools-menu" :hide="!openErrors">
@@ -66,6 +73,7 @@
         y = devtoolsOptions['y'];
       }
       return {
+        hardReload: false,
         max: {
           x: window.innerWidth,
           y: window.innerHeight
@@ -81,11 +89,29 @@
         openErrors: false,
         errors: [],
         viewsOpened: false,
+        goView: 'Home',
         views: ['Home', 'Join', 'Create', 'Room', 'Game']
       };
     },
     store: global.store,
     methods: {
+      goToView (view) {
+        if (localStorage['devtools']) {
+          const devtoolsOptions = JSON.parse(localStorage['devtools']);
+          devtoolsOptions['view'] = view;
+          localStorage['devtools'] = JSON.stringify(devtoolsOptions);
+        } else {
+          localStorage['devtools'] = JSON.stringify({
+            x: this.x,
+            y: this.y,
+            view: view
+          });
+        }
+        this.goView = view;
+        this.closeAll(() => {
+          this.$store.commit('setCurrentView', view.toLowerCase());
+        });
+      },
       logError (error) {
         if (this.errors.length > 10) {
           this.errors.pop();
@@ -107,6 +133,7 @@
       },
       reload (hard) {
         window.location.reload(hard);
+        this.hardReload = false;
       },
       clear (section) {
         localStorage[section] = '';
@@ -126,7 +153,11 @@
         if (this.toggled) {
           this.toggled = false;
           this.move($event.center.x, $event.center.y);
-          localStorage['devtools'] = JSON.stringify({ x: this.x, y: this.y });
+          localStorage['devtools'] = JSON.stringify({
+            x: this.x,
+            y: this.y,
+            view: this.goView
+          });
         }
       },
       move (x, y) {
@@ -154,6 +185,10 @@
     },
     mounted () {
       const originalLog = console.error;
+      if (localStorage['devtools']) {
+        const stored = JSON.parse(localStorage['devtools']);
+        this.goView = (stored['view']) ? stored['view'] : 'Home';
+      }
       console.error = (error) => {
         this.logError(error);
         originalLog(error);
@@ -245,6 +280,26 @@
         }
         &:first-child {
           margin-top: 30px;
+        }
+        &.double-tool-holder {
+          border: none;
+          padding: 0;
+          width: 282px;
+          &:hover, &:active {
+            background-color: transparent;
+            color: initial;
+          }
+          .tool {
+            display: inline-block;
+            width: 104px;
+            margin: 0 2px;
+            &:first-child {
+              margin-left: 0;
+            }
+            &:last-child {
+              margin-right: 0;
+            }
+          }
         }
       }
     }

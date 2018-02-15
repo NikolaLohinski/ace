@@ -1,7 +1,7 @@
 <template>
   <div class="create">
     <div class="title">
-      {{ $t('join.chooseNickname') }}
+      {{ $t('create.chooseNickname') }}
     </div>
     <form @submit.prevent="createGame">
       <input type="text" v-model="name" v-focus />
@@ -10,12 +10,12 @@
              :disabled="name.length == 0"
              class="continue"
              @tap="createGame">
-      {{ $t('join.continue') }}
+      {{ $t('continue') }}
     </v-touch>
     <v-touch tag="div"
              class="back"
              @tap="$emit('back')">
-      {{ $t('join.back') }}
+      {{ $t('back') }}
     </v-touch>
   </div>
 </template>

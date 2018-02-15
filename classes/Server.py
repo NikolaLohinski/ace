@@ -34,12 +34,9 @@ class WSHandler(websocket.WebSocketHandler):
         head = action.get('head')
         body = action.get('body')
         try:
-            answer, destinations, own_msg = self.respond(head=head, body=body)
-            # To always inform everyone before informing myself
-            for handler in [d for d in destinations if d != self]:
+            answers = self.respond(head=head, body=body)
+            for handler, answer in [d for d in answers]:
                 self.send(message=answer, handler=handler)
-            if self in destinations:
-                self.send(message=own_msg if own_msg else answer)
         except Exception as err:
             message = {
                 'head': 'ERR',
@@ -61,90 +58,56 @@ class WSHandler(websocket.WebSocketHandler):
             print('Ignore connection. Socket was killed.')
 
     def respond(self, head, body):
-        answer = {}
-        destinations = []
-        own_msg = None
+        messages = []
         if head == 'RESTART':
             self.player_id = body['player']['id']
-            room = self.manager.revive_player(
-                room_id=body['roomId'],
-                player=body['player'],
-                handler_instance=self
+            messages.append((
+                self,
+                'ROOM',
+                self.manager.revive_player(
+                    room_id=body['roomId'],
+                    player=body['player'],
+                    handler_instance=self
+                ).output())
             )
-            answer = {
-                'head': 'ROOM',
-                'body': room.output()
-            }
-            destinations.append(self)
         if head == 'INIT':
-            name = body['name']
             player = self.manager.new_player(
-                name=name,
+                name=body['name'],
                 handler_instance=self
             )
             self.player_id = player['id']
-            answer = {
-                'head': 'PLY',
-                'body': player
-            }
-            destinations.append(self)
+            messages.append((
+                self,
+                'PLY',
+                player
+            ))
         elif head == 'CREATE':
-            room = self.manager.new_room(player=body)
-            answer = {
-                'head': 'ROOM',
-                'body': room.output()
-            }
-            destinations.append(self)
+            messages.append((
+                self,
+                'ROOM',
+                self.manager.new_room(player=body).output()
+            ))
         elif head == 'JOIN':
-            room = self.manager.add_player(
+            messages = self.manager.add_player(
                 room_id=body['roomId'],
                 player=body['player']
             )
-            answer = {
-              'head': 'ROOM',
-              'body': room.output()
-            }
-            destinations = [self.manager.clients[p['id']] for p in room.players]
         elif head == 'RDY':
-            room = self.manager.ready_player(
+            messages = self.manager.ready_player(
                 room_id=body['roomId'],
                 player_id=body['player']['id'],
                 ready=body['ready']
             )
-            answer = {
-                'head': 'ROOM',
-                'body': room.output()
-            }
-            destinations = [self.manager.clients[p['id']] for p in room.players]
         elif head == 'QUIT':
-            room, players = self.manager.rm_player(player_id=self.player_id)
-            if room is None:
-                p = next(filter(lambda x: x['id'] == self.player_id, players))
-                if p['admin']:
-                    own_msg = {
-                        'head': 'RESET'
-                    }
-                answer = {
-                    'head': 'RESET',
-                    'body': 'adminLeft'
-                }
-            else:
-                answer = {
-                    'head': 'ROOM',
-                    'body': room.output()
-                }
-            destinations = [
-                self.manager.clients.get(p['id'])
-                for p in players
-                if self.manager.clients.get(p['id'])
-            ]
-            if not destinations:
-                destinations = [self]
-        elif head == 'ALIVE':
-            if not self.manager.is_alive(player_id=self.player_id):
-                self.respond(head='QUIT', body=None)
-                self.close()
-        return answer, destinations, own_msg
+            messages = self.manager.rm_player(player_id=self.player_id)
+        elif head == 'START':
+            messages = self.manager.start_game(room_data=body['room'])
+        return [
+            (handler, {
+                'head': head,
+                'body': body
+            }) for handler, head, body in messages
+        ]
 
 
 def main(port=_DEFAULT_PORT_):

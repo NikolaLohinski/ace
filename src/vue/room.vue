@@ -22,10 +22,10 @@
             </td>
             <td>{{ p['name'] }}</td>
             <td class="ready-tag">
-              {{ (p['ready']) ? $t('room.yes') : $t('room.no') }}
+              {{ (p['ready']) ? $t('yes') : $t('no') }}
             </td>
           </tr>
-          <tr v-for="i in (4 - room['players'].length)">
+          <tr v-for="i in (4 - ((room['players']) ? room['players'].length : 0))">
             <td colspan="3" class="waiting-for-players">
               <div class="small-loader">
                 <div class="small-spinner"></div>
@@ -38,19 +38,29 @@
     <v-touch tag="div"
                class="continue"
                @tap="toggleReady">
-      {{ (player['ready']) ? $t('room.cancel') : $t('room.ready') }}
+      <span class="text" :hide="loading">
+        {{ (player['ready']) ? $t('cancel') : $t('room.ready') }}
+      </span>
+      <div :hide="!loading" class="small-loader">
+        <div class="small-spinner"></div>
+      </div>
     </v-touch>
     <v-touch tag="div"
              class="back"
              :disabled="player['ready']"
              @tap="$emit('back')">
-      {{ $t('room.back') }}
+      {{ $t('back') }}
     </v-touch>
   </div>
 </template>
 <script>
   import Spinner from './spinner.vue';
   export default {
+    data () {
+      return {
+        loading: false
+      };
+    },
     computed: {
       player () {
         return this.$store.getters.player;
@@ -78,6 +88,7 @@
       },
       toggleReady (e) {
         e.preventDefault();
+        this.loading = true;
         this.$store.dispatch('send', {
           head: 'RDY',
           body: {
@@ -91,14 +102,26 @@
         const head = data['head'];
         const body = data['body'];
         if (head === 'ROOM') {
+          this.loading = false;
           this.$store.commit('setRoom', body);
           this.$store.dispatch('saveSession');
           this.$store.commit('setLoading', false);
+          const plys = this.room['players'];
+          if (this.player['admin']) {
+            if (plys.length === 4 && plys.every((p) => p['ready'])) {
+              this.$store.dispatch('send', {
+                head: 'START',
+                body: {
+                  room: this.room
+                }
+              });
+            }
+          }
         } else if (head === 'GAME') {
           this.$store.commit('setGame', body);
           this.$store.dispatch('saveSession');
           this.$store.commit('setLoading', false);
-          this.$emit('setCurrentView', 'game');
+          this.$store.commit('setCurrentView', 'game');
         }
       }
     },
@@ -181,28 +204,12 @@
           &.waiting-for-players {
             font-style: italic;
             color: $lighter-text-color;
-          }
-          .small-loader {
-            transform: translateY(-3px);
-            text-align: center;
-            display: inline-block;
-            vertical-align: middle;
-            margin: 0 15px;
-            > .small-spinner {
-              display: block;
-              margin: 2.5px auto;
-              width: 15px;
-              height: 15px;
-              border-radius: 50%;
-              background: 0 0;
-              border: 4px solid #ddd;
-              border-bottom-color: #777;
-              animation: loading 1.2s infinite linear
-            }
-            @keyframes loading {
-              to {
-                transform: rotate(360deg)
-              }
+            .small-loader {
+              display: inline-block;
+              position: initial;
+              margin: 0 15px;
+              vertical-align: middle;
+              transform: translateY(-3px);
             }
           }
         }
@@ -210,6 +217,10 @@
     }
     .back,
     .continue {
+      *[hide] {
+        opacity: 0;
+        pointer-events: none;
+      }
       &.back {
         left: 15px;
       }
@@ -225,6 +236,29 @@
       }
       &:hover, &:active {
         color: $link-text-color;
+      }
+    }
+    .small-loader {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      transition: opacity 200ms;
+      > .small-spinner {
+        display: block;
+        margin: 2.5px auto;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: 0 0;
+        border: 4px solid #ddd;
+        border-bottom-color: #777;
+        animation: loading 1.2s infinite linear;
+      }
+      @keyframes loading {
+        to {
+          transform: rotate(360deg)
+        }
       }
     }
   }

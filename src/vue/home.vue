@@ -36,8 +36,8 @@
     data () {
       return {
         links: [
-          { name: 'join room', destination: 'join' },
-          { name: 'create room', destination: 'create' }
+          { name: 'joinRoom', destination: 'join' },
+          { name: 'createRoom', destination: 'create' }
         ]
       };
     },

@@ -3,10 +3,14 @@
 @import './images';
 
 // Extra-small screens
-$max-xs-width: 576px;
+$max-xxs-width: 444px;
+
+// Very small screens
+$min-xs-width: 444px;
+$max-xs-width: 562px;
 
 // Small screens
-$min-s-width: 576px;
+$min-s-width: 562px;
 $max-s-width: 768px;
 
 // Medium screens

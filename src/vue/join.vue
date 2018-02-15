@@ -10,18 +10,18 @@
         {{ $t('join.chooseRoomId') }}
       </div>
     <form @submit.prevent="joinGame">
-      <input type="text" v-model="roomId" maxlength="6"/>
+      <input type="tel" v-model="roomId" maxlength="6"/>
     </form>
     <v-touch tag="div"
              :disabled="name.length === 0 || roomId.length === 0"
              class="continue"
              @tap="joinGame">
-      {{ $t('join.continue') }}
+      {{ $t('continue') }}
     </v-touch>
     <v-touch tag="div"
              class="back"
              @tap="$emit('back')">
-      {{ $t('join.back') }}
+      {{ $t('back') }}
     </v-touch>
   </div>
 </template>

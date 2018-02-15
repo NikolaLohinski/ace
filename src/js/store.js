@@ -282,7 +282,7 @@ const Store = {
     testConnection (state) {
       return new Promise((resolve, reject) => {
         state.getters.http.get('/reach', {
-          timeout: 3000
+          timeout: 5000
         }).then(() => {
           resolve();
         }, () => {
@@ -291,6 +291,16 @@ const Store = {
           state.commit('setError', 'serverUnreachable');
           reject('[ACTION: testConnection]: server unreachable');
         });
+      });
+    },
+    vibrate () {
+      return new Promise((resolve) => {
+        const root = document.getElementById('root-identifier');
+        root.setAttribute('vibrate', 'true');
+        setTimeout(() => {
+          root.removeAttribute('vibrate');
+        }, 1000);
+        resolve();
       });
     }
   }

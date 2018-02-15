@@ -65,7 +65,8 @@ class Manager(object):
             room_id (int): identifier of the room
             player (object): player object who is joining the room
         Returns:
-            Room: the updated room
+            (list<tuple(WSHandler, str,obj)>): list of triples of player socket
+            handler, head and body
         Raises:
             Exception: if the room does not exist, is full or the player is
             already in it
@@ -81,7 +82,11 @@ class Manager(object):
                     if len(players) < 4:
                         player['roomId'] = room_id
                         self.rooms.get(room_id).players.append(player)
-                        return self.rooms[room_id]
+                        room = self.rooms.get(room_id)
+                        return [
+                            (self.clients.get(p['id']), 'ROOM', room.output())
+                            for p in room.players
+                        ]
                     else:
                         raise Exception('roomFull', {
                             'roomId': room_id,
@@ -129,14 +134,19 @@ class Manager(object):
             room_id (int): identifier of the room
             player_id (int): identifier of the player
             ready (Boolean): wheter the player is ready or not
-        Returns:
-            Room: the updated room
+         Returns:
+            (list<tuple(WSHandler, str,obj)>): list of triples of player socket
+            handler, head and body
 
         """
         players = self.rooms.get(room_id).players
         index = [i for i, x in enumerate(players) if x['id'] == player_id][0]
         self.rooms[room_id].players[index]['ready'] = ready
-        return self.rooms[room_id]
+        room = self.rooms.get(room_id)
+        return [
+            (self.clients.get(p['id']), 'ROOM', room.output())
+            for p in room.players
+        ]
 
     def is_room_rdy(self, room):
         """Check whether a room is ready to start a game or not.
@@ -169,17 +179,29 @@ class Manager(object):
 
         Args:
             player_id (int): identifier of the player
+
+        Returns:
+            (list<tuple(WSHandler, str,obj)>): list of triples of player socket
+            handler, head and body
         """
         player, room = self.find_player(player_id=player_id)
-        if player is None or room is None:
-            return None, [{'id': player_id}]
-        else:
-            players = room.players
-            removed = room.rm_player(player_id)
-            if room.is_empty() or not removed:
+        output = []
+        if player is not None and room is not None:
+            if room.admin_id == player_id:
                 self.del_room(room)
-                room = None
-            return room, players
+                output = [
+                    (self.clients.get(p['id']), 'RESET', 'adminLeft')
+                    for p in room.players if p['id'] != room.admin_id
+                ]
+            else:
+                room.rm_player(player_id)
+                if room.is_empty():
+                    self.del_room(room)
+                output = [
+                    (self.clients.get(p['id']), 'ROOM', room.output())
+                    for p in room.players
+                ]
+        return output
 
     def del_room(self, room):
         return self.rooms.pop(room.id)
@@ -214,3 +236,21 @@ class Manager(object):
 
         """
         return True
+
+    def start_game(self, room_data):
+        """
+        Returns:
+            (list<tuple(WSHandler, str,obj)>): list of triples of player socket
+            handler, head and body
+        """
+        room = self.rooms.get(room_data['id'])
+        output = []
+        if room:
+            room.start_game(data=room_data)
+            output = [
+                (self.clients.get(p['id']), 'GAME', room.output())
+                for p in room.players
+            ]
+        else:
+            raise Exception('invalidRoom', {'roomId': room_data['id']})
+        return output
