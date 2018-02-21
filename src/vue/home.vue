@@ -21,10 +21,10 @@
     </nav>
     <footer class="languages">
       <v-touch tag="div"
-               v-for="l in langs"
+               v-for="l in settings.langs"
                class="language"
                :key="l"
-               :active="lang === l"
+               :active="settings.lang === l"
                @tap="changeLang(l)">
         {{ $t(`home.${l}`) }}
       </v-touch>
@@ -42,18 +42,17 @@
       };
     },
     computed: {
-      langs () {
-        return this.$store.getters.langs;
-      },
-      lang () {
-        return this.$store.getters.lang;
+      settings () {
+        return this.$store.getters.settings;
       }
     },
     store: global.store,
     methods: {
       changeLang (lang) {
-        this.$store.commit('setLang', lang);
-        this.$store.dispatch('saveSettings');
+        this.$store.commit('setSettings', {
+          setting: 'lang',
+          value: lang
+        });
       },
       goTo (e, destination) {
         e.preventDefault();

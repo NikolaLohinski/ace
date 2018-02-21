@@ -27,12 +27,10 @@ const store = new VueX.Store(Store());
 // Initialize plugin
 Vue.use(VuexI18n.plugin, store);
 // The second argument is the default language
-const allLanguages = I18n(Vue, 'english');
-// Keep track of available languages
-store.commit('setLangs', allLanguages);
+I18n(Vue, 'english');
 store.i18n = Vue.i18n;
 /* 5. Create Vue Virtual machine instance */
-// Create virtual machine
+// Create Vue machine
 global['vm'] = new Vue(Vm(store));
 
 /* 6. Save store instance globally */

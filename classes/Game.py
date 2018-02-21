@@ -1,156 +1,134 @@
-from classes.Engine import Engine
+from time import time as UNIX_TIME_NOW
+from classes.Player import Player
+import random
+
+GAME_STATE_ROOM = 0
+GAME_STATE_BETS = 1
+GAME_STATE_PLAY = 2
+GAME_STATE_INTER = 3
+GAME_STATE_END = 4
 
 
 class Game(object):
-    """Class that defines the game"""
-
-    def __init__(self, players, team1, dealer):
-        """Constructor"
-
+    """Room class to define a play room"""
+    def __init__(self, game_id):
+        """Constructor
         Args:
-            players (list<int>): list of player ids
-            team1 (list<int>): list of the players of the first team
-            dealer (int): index in the players' list of the dealer
+            game_id (int): unique identifier of the room
         """
-        self.players = []
-        self.teams = []
-        self.engine = None
-        for p in players:
-            self.add_player(player_id=p)
-        self.team_up(player1=team1[0], player2=team1[1])
-        self.init_game_engine(dealer=dealer)
+        self.id = game_id
+        self.ts = int(UNIX_TIME_NOW())
+        self.admin_id = None
+        self.players = dict()
+        self.state = GAME_STATE_ROOM
+        self.dealer = None
+        self.order = None
+        self.scores = None
+        self.turn = None
 
-    def add_player(self, player_id):
-        """Adds a player to the game.
-
+    def output_for_client(self, client_id):
+        """Output to JSON friendly object the game to a given client
         Args:
-            player_id (int): id of the player to add to the game
-        """
-
-        if player_id in self.players:
-            raise Exception(
-                'Player {} is already in the game.'.format(player_id)
-            )
-        else:
-            if isinstance(player_id, int):
-                self.players.append(player_id)
-            else:
-                raise TypeError(
-                    'Player id {} is not an integer.'.format(player_id)
-                )
-
-    def team_up(self, player1, player2):
-        """Team up players in a game.
-
-        Args:
-            player1 (int): first player of the team
-            player2 (int): second player of the team
-        """
-
-        if player1 not in self.players:
-            raise Exception('Player {} is not in the game.'.format(player1))
-        elif player2 not in self.players:
-            raise Exception('Player {} is not in the game.'.format(player2))
-        elif all(player1 not in t and player2 not in t for t in self.teams):
-            self.teams.append([player1, player2])
-            other_team = [
-                x for x in self.players
-                if x not in [player1, player2]
-            ]
-            self.players = [player1, other_team[0], player2, other_team[1]]
-            self.teams = [[0, 2], [1, 3]]
-        else:
-            raise Exception(
-                'One of the players is already affected.'
-            )
-
-    def get_type(self):
-        """Returns the type of the game, 'bets' or 'game'
-        or None if no game has been started.
-
+            client_id (int): id of the client destination
         Returns:
-            str/None: the type
+            (object): JSON friendly and filtered object for a given client
         """
-        game_type = None
-        if self.engine is not None:
-            game_state = self.engine.current_game_state
-            game_type = game_state['game-data']['type']
-        return game_type
+        output = {
+            'id': self.id,
+            'state': self.state,
+            'players': {
+                i: ply.output(
+                    private=True if i == client_id else False,
+                    admin=self.admin_id == i,
+                    dealer=self.dealer == i,
+                    turn=self.turn == i
+                )
+                for i, ply in self.players.items()
+            }
+        }
+        if self.order is not None:
+            me = self.order.index(client_id)
+            output['others'] = [
+                self.players[self.order[(me + i) % 4]].name
+                for i in range(1, 4)
+            ]
+            if self.scores is not None:
+                output['us'] = self.scores[client_id]
+                output['them'] = self.scores[
+                    self.order[(self.order.index(client_id) + 1) % 4]
+                ]
+        return output
 
-    def init_game_engine(self, dealer):
-        """Intialize the game engine. Possible only when
-        we have 4 players and 2 teams.
-
+    def new_player(self, client, name, is_admin=False):
+        """Add player to game
         Args:
-            dealer (int): dealer of the game
+            client (Client): client reference of the player
+            name (str): name of the new player
+            is_admin (bool): if the client is an admin or not
         """
+        if self.players.get(client.id) is not None:
+            raise Exception('playerAlreadyInRoom', {
+                'game_id': self.id,
+                'player_id': client.id
+            })
+        if self.admin_id is not None and is_admin:
+            raise Exception('adminAlreadyInRoom', {
+                'game_id': self.id,
+                'admin_id': self.admin_id
+            })
+        if is_admin:
+            self.admin_id = client.id
+        player = Player(client_id=client.id, name=name)
+        self.players[client.id] = player
+        client.game_id = self.id
 
-        if len(self.players) != 4 \
-                or len(self.teams) != 2 \
-                or dealer not in self.players:
-            raise Exception(
-                'Game has not been set properly to start the engine.'
-            )
-        else:
-            self.engine = Engine(
-                players=self.players,
-                teams=self.teams,
-                dealer=self.players.index(dealer)
-            )
-
-    def start_bets(self, input_callback, end_callback):
-        """Starts the bets phase and calls the callback
-        whenever something is needed.
-
+    def rm_player(self, client):
+        """Remove player from game
         Args:
-            input_callback (fun): function to call when an input is needed
-            end_callback (fun): function to call when the betting phase is done
+            client (Client): client reference of the player
         """
-        state, player, possibles = self.engine.deal()
-        while state['game-data']['type'] == 'bet':
-            cards = state['actors']['cards'][player]
-            leading_ply, leading_bet = self.engine.leading_bet()
-            bet = input_callback(
-                player=self.players[player],
-                cards=cards,
-                possibles=possibles,
-                lead=(self.players[leading_ply], leading_bet)
-            )
-            state, player, possibles = self.engine.bet(playing=player, bet=bet)
-            if player == -1:
-                break
-        end_callback(state=state, player=player)
+        player = self.players.get(client.id)
+        if player is None:
+            raise Exception('playerNotInRoom', {
+                'game_id': self.id,
+                'player_id': client.id
+            })
+        self.players.pop(client.id)
+        if self.admin_id == client.id:
+            self.admin_id = None
 
-    def start_play(self, input_callback, end_callback):
-        """Starts the playing phase and calls the callback
-        whenever something is needed.
+    def update_player(self, client, key, value):
+        player = self.players.get(client.id)
+        if player is None:
+            raise Exception('playerNotInRoom', {
+                'game_id': self.id,
+                'player_id': client.id
+            })
+        setattr(player, key, value)
 
+    def is_empty(self):
+        """Says if room is empty or not
+        Returns:
+            (bool): True if room is empty
+        """
+        return len(self.players) == 0
+
+    def start(self, client):
+        """Start the game
         Args:
-            input_callback (fun): function to call when an input is needed
-            end_callback (fun): function to call when the playing phase is done
+            client (Client): client reference of the game starter
         """
-        state, player, possibles = self.engine.init_play()
-        leading_ply = -1
-        leading_bet = None
-        while self.get_type() is not None:
-            turn_index = self.engine.get_current_turn_index()
-            fold = self.engine.current_game_state['past']['turns'][turn_index]
-            cards = state['actors']['cards'][player]
-            leading_ply, leading_bet = self.engine.leading_bet()
-            scores = self.engine.current_game_state['past']['score']
-            if player in self.engine.current_game_state['actors']['teams'][1]:
-                scores = scores[::-1]
-            card = input_callback(
-                fold=fold,
-                player=self.players[player],
-                cards=cards,
-                possibles=possibles[player],
-                lead=(self.players[leading_ply], leading_bet),
-                scores=scores
-            )
-            state, player, possibles = self.engine.play(
-                playing=player,
-                card_index=card
-            )
+        if client.id != self.admin_id:
+            raise Exception('startAdminOnly')
+        self.state = GAME_STATE_BETS
+        if self.dealer is None:
+            self.dealer = random.choice([k for k in self.players.keys()])
+        if self.order is None:
+            ids = self.players.keys()
+            self.order = random.sample(ids, len(ids))
+        if self.scores is None:
+            self.scores = dict({
+                i: 0 for i in self.order
+            })
+        self.turn = self.order[(self.order.index(self.dealer) + 1) % 4]
 
-        end_callback(state=state, lead=(self.players[leading_ply], leading_bet))

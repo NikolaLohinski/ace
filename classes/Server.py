@@ -23,7 +23,6 @@ class WSHandler(websocket.WebSocketHandler):
     def __init__(self, *args, manager, **kwargs):
         super(WSHandler, self).__init__(*args, **kwargs)
         self.manager = manager
-        self.player_id = -1
 
     def open(self):
         """Called when a socket is opened."""
@@ -31,83 +30,39 @@ class WSHandler(websocket.WebSocketHandler):
     def on_message(self, message):
         """Called when a socket transmitted a message."""
         action = json.loads(message)
-        head = action.get('head')
-        body = action.get('body')
+        head = action.get('H')
+        body = action.get('B')
         try:
-            answers = self.respond(head=head, body=body)
-            for handler, answer in [d for d in answers]:
-                self.send(message=answer, handler=handler)
+            result = self.respond(head=head, body=body)
+            for r in result:
+                ws_handler, message = r
+                self.send(message=message, handler=ws_handler)
         except Exception as err:
-            message = {
-                'head': 'ERR',
-                'body': err.args
-            }
-            self.send(message=message)
+            self.send(message={'H': 'ERROR', 'B': err.args}, handler=self)
 
     def on_close(self):
-        """Callend when a socket is closed."""
-        print('Closing socket for player {}.'.format(self.player_id))
+        """Called when a socket is closed."""
 
-    def send(self, message, handler=None):
-        try:
-            h = handler
-            if h is None:
-                h = self
-            h.write_message(json.dumps(message))
-        except websocket.WebSocketClosedError:
-            print('Ignore connection. Socket was killed.')
+    def send(self, message, handler):
+        handler.write_message(json.dumps(message))
 
     def respond(self, head, body):
-        messages = []
-        if head == 'RESTART':
-            self.player_id = body['player']['id']
-            messages.append((
-                self,
-                'ROOM',
-                self.manager.revive_player(
-                    room_id=body['roomId'],
-                    player=body['player'],
-                    handler_instance=self
-                ).output())
-            )
-        if head == 'INIT':
-            player = self.manager.new_player(
-                name=body['name'],
-                handler_instance=self
-            )
-            self.player_id = player['id']
-            messages.append((
-                self,
-                'PLY',
-                player
-            ))
-        elif head == 'CREATE':
-            messages.append((
-                self,
-                'ROOM',
-                self.manager.new_room(player=body).output()
-            ))
+        if head == 'CREATE':
+            return self.manager.create(socket=self, args=body)
         elif head == 'JOIN':
-            messages = self.manager.add_player(
-                room_id=body['roomId'],
-                player=body['player']
-            )
-        elif head == 'RDY':
-            messages = self.manager.ready_player(
-                room_id=body['roomId'],
-                player_id=body['player']['id'],
-                ready=body['ready']
-            )
+            return self.manager.join(socket=self, args=body)
+        elif head == 'UPDATE':
+            return self.manager.update(args=body)
         elif head == 'QUIT':
-            messages = self.manager.rm_player(player_id=self.player_id)
+            return self.manager.quit(args=body)
+        elif head == 'RESTART':
+            return self.manager.restart(socket=self, args=body)
         elif head == 'START':
-            messages = self.manager.start_game(room_data=body['room'])
-        return [
-            (handler, {
-                'head': head,
-                'body': body
-            }) for handler, head, body in messages
-        ]
+            return self.manager.start(args=body)
+        elif head == 'ALIVE':
+            return []
+        else:
+            raise Exception('badRequest')
 
 
 def main(port=_DEFAULT_PORT_):

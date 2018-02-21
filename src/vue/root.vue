@@ -1,9 +1,9 @@
 <template>
   <div class="root" id="root-identifier">
     <transition name="transition" mode="out-in">
-      <component :is="currentComponent"
+      <component :is="view"
                  @back="back"
-                 @redirect="redirectTo">
+                 @redirect="redirect">
       </component>
     </transition>
     <error></error>
@@ -27,8 +27,8 @@
       };
     },
     computed: {
-      currentComponent () {
-        return this.$store.getters.currentView;
+      view () {
+        return this.$store.getters.view;
       },
       loading () {
         return this.$store.getters.loading;
@@ -46,24 +46,26 @@
     },
     store: global.store,
     methods: {
-      redirectTo (link) {
+      redirect (link) {
         if (link === 'home') {
           this.history = [];
         } else {
-          this.history.push(this.currentComponent);
+          this.history.push(this.view);
         }
-        this.$store.commit('setCurrentView', link);
+        this.$store.commit('setView', link);
       },
       back () {
         let link = this.history.pop();
         if (!link) link = 'home';
-        this.$store.commit('setCurrentView', link);
-        this.$store.dispatch('quit');
+        this.$store.commit('setView', link);
       }
     },
     mounted () {
-      this.$store.dispatch('loadSettings');
-      this.$store.commit('setCurrentView', 'home');
+      this.$store.dispatch('loadSettings').then(() => {
+        this.$store.dispatch('loadSession').then(() => {
+          this.$store.commit('setLoading', false);
+        });
+      });
     }
   };
 </script>

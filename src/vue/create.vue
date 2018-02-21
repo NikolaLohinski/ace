@@ -3,18 +3,16 @@
     <div class="title">
       {{ $t('create.chooseNickname') }}
     </div>
-    <form @submit.prevent="createGame">
+    <form @submit.prevent="create(name.length > 0)">
       <input type="text" v-model="name" v-focus />
     </form>
-    <v-touch tag="div"
-             :disabled="name.length == 0"
-             class="continue"
-             @tap="createGame">
-      {{ $t('continue') }}
+    <v-touch tag="div" :disabled="name.length == 0" class="continue" @tap="create(name.length > 0)">
+      <span v-if="!spin">{{ $t('create.create') }}</span>
+      <div v-else class="small-loader">
+        <div class="small-spinner"></div>
+      </div>
     </v-touch>
-    <v-touch tag="div"
-             class="back"
-             @tap="$emit('back')">
+    <v-touch tag="div" class="back" @tap="$emit('back')">
       {{ $t('back') }}
     </v-touch>
   </div>
@@ -23,34 +21,36 @@
   export default {
     data () {
       return {
-        name: ''
+        name: '',
+        spin: false
       };
     },
     methods: {
-      getMessageFromServer (data) {
-        const head = data['head'];
-        const body = data['body'];
-        if (head === 'ROOM') {
-          this.$store.commit('setRoom', body);
-          this.$store.commit('setLoading', false);
+      listener (H, B) {
+        this.spin = false;
+        if (H === 'GAME') {
+          this.$store.commit('setSession', B);
           this.$emit('redirect', 'room');
         }
       },
-      createGame () {
-        if (this.name.length > 0) {
-          // Set loading status
-          this.$store.commit('setLoading', true);
-          // Initialize socket
-          this.$store.dispatch('initPlayer', this.name).then(() => {
-            // When it is done, register listener for the room
+      create (authorize) {
+        if (authorize) {
+          this.spin = true;
+          this.$store.dispatch('initSocket').then(() => {
             this.$store.dispatch('registerListener', {
-              callback: this.getMessageFromServer,
+              callback: this.listener,
+              H: 'GAME||ERROR',
               once: true
             }).then(() => {
-              // Finally create game
               this.$store.dispatch('send', {
-                head: 'CREATE',
-                body: this.$store.getters.player
+                H: 'CREATE',
+                B: {
+                  'player_name': this.name
+                }
+              }).then(null);
+              this.$store.commit('setSettings', {
+                setting: 'name',
+                value: this.name
               });
             });
           });
@@ -59,9 +59,7 @@
     },
     store: global.store,
     mounted () {
-      if (this.$store.getters.name) {
-        this.name = this.$store.getters.name;
-      }
+      this.name = this.$store.getters.settings.name;
     }
   };
 </script>
@@ -99,6 +97,32 @@
       }
       &.continue {
         right: 15px;
+        min-width: 30px;
+        min-height: 20px;
+        text-align: right;
+        .small-loader {
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          position: absolute;
+          transition: opacity 200ms;
+          > .small-spinner {
+            display: block;
+            margin: 2.5px auto;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: 0 0;
+            border: 4px solid #ddd;
+            border-bottom-color: #777;
+            animation: loading 1.2s infinite linear;
+          }
+          @keyframes loading {
+            to {
+              transform: rotate(360deg)
+            }
+          }
+        }
       }
       position: absolute;
       bottom: 15px;

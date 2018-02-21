@@ -3,138 +3,199 @@
     <div class="content">
       <header>
         <div class="definition">{{ $t('room.roomId') }}</div>
-        <div class="room-id">{{ room['id'] }}</div>
+        <div class="room-id">{{ gameId }}</div>
       </header>
       <table class="players-list">
         <thead>
           <tr>
-            <th>{{ $t('room.playerId') }}</th>
             <th>{{ $t('room.name') }}</th>
             <th class="ready-tag">{{ $t('room.ready') }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="p in room['players']">
-            <td>{{ p['id'] }}
-              <span class="admin" v-if="p['id'] === room['adminId']">
+          <tr v-for="p in players">
+            <td>{{ p.name }}
+              <span class="admin" v-if="p.admin">
                 {{ `(${$t('room.admin')})` }}
               </span>
             </td>
-            <td>{{ p['name'] }}</td>
             <td class="ready-tag">
-              {{ (p['ready']) ? $t('yes') : $t('no') }}
+              {{ (p.state) ? $t('yes') : $t('no') }}
             </td>
           </tr>
-          <tr v-for="i in (4 - ((room['players']) ? room['players'].length : 0))">
-            <td colspan="3" class="waiting-for-players">
+          <tr v-for="i in (4 - ((players) ? players.length : 0))">
+            <td colspan="2" class="waiting-for-players">
               <div class="small-loader">
                 <div class="small-spinner"></div>
               </div>
-              {{ $t('room.waitingForPlayers') }}</td>
+              {{ $t('room.waitingForPlayers') }}
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <v-touch tag="div"
-               class="continue"
-               @tap="toggleReady">
-      <span class="text" :hide="loading">
-        {{ (player['ready']) ? $t('cancel') : $t('room.ready') }}
-      </span>
-      <div :hide="!loading" class="small-loader">
+    <div class="start-window" :show="ready">
+      <div class="header">
+        {{ time }}
+      </div>
+      <div class="message">
+        {{ $t('room.everyoneHereShallStart') }}
+      </div>
+      <v-touch tag="div" class="back" @tap="updateState">
+        {{ $t('back') }}
+      </v-touch>
+      <div class="continue">
+        <v-touch tag="span" @tap="start" class="text">
+          {{ $t('start') }}
+        </v-touch>
+      </div>
+    </div>
+    <div class="continue" :disabled="ready">
+      <v-touch tag="span" @tap="updateState" class="text" v-if="!spin">
+        {{ (me.state) ? $t('cancel') : $t('room.ready') }}
+      </v-touch>
+      <div v-else class="small-loader">
         <div class="small-spinner"></div>
       </div>
-    </v-touch>
-    <v-touch tag="div"
-             class="back"
-             :disabled="player['ready']"
-             @tap="$emit('back')">
+    </div>
+    <v-touch tag="div" class="back" :disabled="me.state > 0" @tap="quit">
       {{ $t('back') }}
     </v-touch>
   </div>
 </template>
 <script>
+  const PLAYER_STATE_PAUSE = 0;
+  const PLAYER_STATE_READY = 1;
   import Spinner from './spinner.vue';
   export default {
     data () {
       return {
-        loading: false
+        spin: false,
+        timeout: null,
+        countDownTimeOut: null,
+        time: 5,
+        player: {},
+        room: {}
       };
     },
-    computed: {
-      player () {
-        return this.$store.getters.player;
-      },
-      room () {
-        return this.$store.getters.room || {};
-      }
-    },
     store: global.store,
-    methods: {
-      keepAlive (timeout) {
-        setTimeout(() => {
-          this.$store.dispatch('send', {
-            head: 'ALIVE',
-            body: {
-              player: this.player,
-              roomId: this.room['id']
-            }
-          }).then(() => {
-            this.keepAlive(timeout);
-          }, (err) => {
-            console.error(err);
-          });
-        }, timeout);
+    computed: {
+      session () {
+        return this.$store.getters.session;
       },
-      toggleReady (e) {
-        e.preventDefault();
-        this.loading = true;
-        this.$store.dispatch('send', {
-          head: 'RDY',
-          body: {
-            player: this.player,
-            ready: !this.player['ready'],
-            roomId: this.room['id']
-          }
-        });
+      game () {
+        return (this.session) ? this.session.game : {};
       },
-      getMessageFromServer (data) {
-        const head = data['head'];
-        const body = data['body'];
-        if (head === 'ROOM') {
-          this.loading = false;
-          this.$store.commit('setRoom', body);
-          this.$store.dispatch('saveSession');
-          this.$store.commit('setLoading', false);
-          const plys = this.room['players'];
-          if (this.player['admin']) {
-            if (plys.length === 4 && plys.every((p) => p['ready'])) {
-              this.$store.dispatch('send', {
-                head: 'START',
-                body: {
-                  room: this.room
-                }
-              });
-            }
-          }
-        } else if (head === 'GAME') {
-          this.$store.commit('setGame', body);
-          this.$store.dispatch('saveSession');
-          this.$store.commit('setLoading', false);
-          this.$store.commit('setCurrentView', 'game');
-        }
+      gameId () {
+        return this.game['id'];
+      },
+      players () {
+        return (this.game['players']) ? Object.values(this.game['players']) : [];
+      },
+      ready () {
+        return typeof this.players.find((p) => {
+          return p.state === 0;
+        }) === 'undefined' && this.me.admin && this.players.length === 4;
+      },
+      adminId () {
+        return this.game['admin_id'];
+      },
+      me () {
+        return (this.session) ? this.game.players[this.session.client.id] : {};
+      },
+      state () {
+        return this.game['state'];
       }
     },
     components: {
       Spinner
     },
+    watch: {
+      state (state) {
+        this.$store.commit('setLoading', false);
+        clearTimeout(this.countDownTimeOut);
+        if (state === 0) {
+          this.$emit('redirect', 'room');
+        } else {
+          this.$emit('redirect', 'game');
+        }
+      }
+    },
+    methods: {
+      updateState () {
+        this.$store.dispatch('send', {
+          H: 'UPDATE',
+          B: {
+            'id': this.$store.getters.session.client['id'],
+            'game_id': this.$store.getters.session.client['game_id'],
+            'target': 'PLAYER',
+            'key': 'state',
+            'value': (this.me.state) ? PLAYER_STATE_PAUSE : PLAYER_STATE_READY
+          }
+        }).then(() => {
+          clearTimeout(this.countDownTimeOut);
+          this.spin = true;
+        });
+      },
+      countDown (start) {
+        this.time = start;
+        if (start > 0) {
+          this.countDownTimeOut = setTimeout(() => {
+            this.countDown(start - 1);
+          }, 1000);
+        } else {
+          this.start();
+        }
+      },
+      start () {
+        this.$store.commit('setLoading', true);
+        clearTimeout(this.countDownTimeOut);
+        this.$store.dispatch('send', {
+          H: 'START',
+          B: this.$store.getters.session.client
+        }).then(null);
+      },
+      quit () {
+        if (this.timeout) clearTimeout(this.timeout);
+        this.$emit('back');
+        this.$store.dispatch('quit').then(null);
+      },
+      listener (H, B) {
+        this.spin = false;
+        if (H === 'GAME') {
+          this.$store.commit('setSession', B);
+          if (this.ready) {
+            this.countDown(5);
+          }
+        } else if (H === 'RESET') {
+          this.$store.commit('setError', 'adminLeft');
+          this.$store.commit('setSession', null);
+          if (this.timeout) clearTimeout(this.timeout);
+          this.$emit('back');
+        }
+      },
+      keepAlive (timeout) {
+        this.timeout = setTimeout(() => {
+          this.$store.dispatch('send', {
+            H: 'ALIVE',
+            B: {}
+          }).then(() => {
+            this.keepAlive(timeout);
+          }, () => {
+            clearTimeout(this.timeout);
+          });
+        }, timeout);
+      }
+    },
     mounted () {
       this.$store.dispatch('registerListener', {
-        callback: this.getMessageFromServer
-      }).then(() => {
-        this.$store.dispatch('saveSession');
+        callback: this.listener,
+        H: 'GAME||RESET'
       });
-      this.keepAlive(30000);
+      this.keepAlive(15000);
+      if (this.ready) {
+        this.countDown(5);
+      }
     }
   };
 </script>
@@ -186,17 +247,13 @@
           font-size: 15px;
           color: $lighter-text-color;
           font-weight: normal;
-          width: 45%;
-          &.ready-tag {
-            width: 10%;
-          }
         }
         tbody td {
           position: relative;
-          padding: 15px;
-          width: 45%;
+          padding: 15px 0;
+          width: 50%;
           &.ready-tag {
-            width: 10%;
+            width: 50%;
           }
           .admin {
             color: $lighter-text-color
@@ -215,17 +272,54 @@
         }
       }
     }
+    .start-window {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 90vw;
+      max-width: 250px;
+      height: 90vw;
+      max-height: 250px;
+      background-color: $notification-background;
+      border-radius: 5px;
+      color: $notification-text-color;
+      font-family: BoldFont;
+      .header {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        padding: 15px 0;
+        text-align: center;
+        font-size: 30px;
+      }
+      .message {
+        text-align: center;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        transform: translate(-50%, -50%);
+      }
+      transition: opacity 200ms, transform 200ms;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+      &[show] {
+        pointer-events: auto;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
     .back,
     .continue {
-      *[hide] {
-        opacity: 0;
-        pointer-events: none;
-      }
       &.back {
         left: 15px;
       }
       &.continue {
         right: 15px;
+        min-width: 30px;
+        min-height: 20px;
+        text-align: right;
       }
       position: absolute;
       bottom: 15px;
