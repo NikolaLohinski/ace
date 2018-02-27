@@ -26,22 +26,26 @@
       };
     },
     methods: {
-      listener (H, B) {
+      listener (socketStream) {
         this.spin = false;
-        if (H === 'GAME') {
-          this.$store.commit('setSession', B);
-          this.$emit('redirect', 'room');
-        }
+        this.$store.dispatch('readSocket', {
+          headers: 'GAME||ERROR',
+          socketStream: socketStream
+        }).then((data) => {
+          if (data.H === 'GAME') {
+            this.$store.commit('setSession', data.B);
+            this.$emit('redirect', 'room');
+          }
+        }, null);
+        this.$store.dispatch('removeListener', this.listener).then(null);
       },
       create (authorize) {
         if (authorize) {
           this.spin = true;
           this.$store.dispatch('initSocket').then(() => {
-            this.$store.dispatch('registerListener', {
-              callback: this.listener,
-              H: 'GAME||ERROR',
-              once: true
-            }).then(() => {
+            this.$store.dispatch(
+              'registerListener', this.listener
+            ).then(() => {
               this.$store.dispatch('send', {
                 H: 'CREATE',
                 B: {

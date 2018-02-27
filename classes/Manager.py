@@ -24,11 +24,10 @@ class Manager(object):
             (int): new unused client ID
         """
         client_id = randint(0, 99999999)
-        return client_id \
-            if \
-            self.clients.get(client_id) is None \
-            else \
-            self.new_client_id()
+        if self.clients.get(client_id) is None:
+            return client_id
+        else:
+            return self.new_client_id()
 
     def new_game_id(self):
         """Create new game id
@@ -36,11 +35,10 @@ class Manager(object):
             (int): new unused game ID
         """
         game_id = randint(0, 999999)
-        return game_id \
-            if \
-            self.games.get(game_id) is None \
-            else \
-            self.new_game_id()
+        if self.games.get(game_id) is None:
+            return game_id
+        else:
+            return self.new_game_id()
 
     def new_client(self, socket):
         """Create new client and store in memory
@@ -106,7 +104,7 @@ class Manager(object):
         game_id = int(args['game_id'])
         game = self.games.get(game_id)
         if game is None:
-            raise Exception('invalidRoom', {'game_id': game_id})
+            raise Exception('invalidRoom')
         client_id = self.new_client(socket=socket)
         client = self.clients.get(client_id)
         game.new_player(
@@ -144,9 +142,9 @@ class Manager(object):
         client_id = int(args['id'])
         client = self.clients.get(client_id)
         if game is None:
-            raise Exception('invalidRoom', {'game_id': game_id})
+            raise Exception('invalidRoom')
         if client is None:
-            raise Exception('invalidPlayer', {'player_id': client_id})
+            raise Exception('invalidPlayer')
         game.rm_player(client=client)
         self.clients.pop(client_id)
         output = []
@@ -194,9 +192,9 @@ class Manager(object):
         client_id = int(args['id'])
         client = self.clients.get(client_id)
         if game is None:
-            raise Exception('invalidRoom', {'game_id': game_id})
+            raise Exception('invalidRoom')
         if client is None:
-            raise Exception('invalidPlayer', {'player_id': client_id})
+            raise Exception('invalidPlayer')
         if args['target'] == 'PLAYER':
             game.update_player(client, args['key'], args['value'])
         else:
@@ -262,9 +260,9 @@ class Manager(object):
         client_id = int(args['id'])
         client = self.clients.get(client_id)
         if game is None:
-            raise Exception('invalidRoom', {'game_id': game_id})
+            raise Exception('invalidRoom')
         if client is None:
-            raise Exception('invalidPlayer', {'player_id': client_id})
+            raise Exception('invalidPlayer')
         game.start(client=client)
         output = []
         for ply_id, player in game.players.items():

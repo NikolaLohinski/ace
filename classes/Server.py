@@ -1,4 +1,4 @@
-import json
+import jsonpickle
 import os.path
 from tornado import ioloop, web, websocket
 
@@ -29,7 +29,7 @@ class WSHandler(websocket.WebSocketHandler):
 
     def on_message(self, message):
         """Called when a socket transmitted a message."""
-        action = json.loads(message)
+        action = jsonpickle.decode(message)
         head = action.get('H')
         body = action.get('B')
         try:
@@ -44,7 +44,7 @@ class WSHandler(websocket.WebSocketHandler):
         """Called when a socket is closed."""
 
     def send(self, message, handler):
-        handler.write_message(json.dumps(message))
+        handler.write_message(jsonpickle.encode(message, unpicklable=False))
 
     def respond(self, head, body):
         if head == 'CREATE':

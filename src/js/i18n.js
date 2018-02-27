@@ -8,6 +8,7 @@ const translations = {
     cancel: 'Cancel',
     quit: 'Quit',
     start: 'Start',
+    ok: 'Ok',
     home: {
       'joinRoom': 'Join room',
       'createRoom': 'Create room',
@@ -35,24 +36,31 @@ const translations = {
     game: {
       'menu': 'Menu',
       'scores': 'Scores',
-      'bet': 'Bet',
-      'pass': 'Pass'
+      'bet': 'Bid',
+      'pass': 'Pass',
+      'wouldLikeToBet': 'Would you like to place a bid ?',
+      'pleaseChoosePrice': 'Please choose a price for your bid on',
+      'cap': 'All',
+      'gen': 'Alone',
+      'confirmBet': 'Please confirm your bid:'
     },
     errors: {
       'noWebsocket': 'Websocket is not supported by this browser. How about Mozilla Firefox ?',
       'serverUnreachable': 'The server seems to be unreachable. Try again later.',
       'lostConnection': 'Oops, it seems we have lost connection.',
-      'invalidRoom': 'Room {game_id} does not exist.',
-      'invalidPlayer': 'Player {player_id} does not exist.',
-      'playerAlreadyInRoom': 'Player {player_id} is already in room {game_id}.',
-      'playerNotInRoom': 'Player {player_id} is not in room {game_id}.',
-      'adminAlreadyInRoom': 'Player {admin_id} is already admin of room {game_id}.',
-      'roomFull': 'The room {game_id} is full.',
-      'adminLeft': 'The admin left the game.',
-      'updateDownloading': 'An update is available. The app will restart in a few seconds.',
+      'invalidRoom': 'Room you want to join does not exist.',
+      'invalidPlayer': 'Given player does not exist anymore.',
+      'playerAlreadyInRoom': 'The given player is already in the room.',
+      'playerNotInRoom': 'The given player is not in the room.',
+      'adminAlreadyInRoom': 'There is already an admin in the room.',
+      'roomFull': 'Room is full.',
       'badRequest': 'An error occurred. The server rejected your request.',
       'invalidRestart': 'Impossible to reload last game.',
       'startAdminOnly': 'The admin only can start the game.'
+    },
+    notifications: {
+      'adminLeft': 'The admin left the game.',
+      'updateDownloading': 'An update is available. The app will restart in a few seconds.'
     }
   },
   french: {
@@ -64,6 +72,7 @@ const translations = {
     cancel: 'Annuler',
     quit: 'Quitter',
     start: 'Démarrer',
+    ok: 'Ok',
     home: {
       'joinRoom': 'Rejoindre une partie',
       'createRoom': 'Créer une partie',
@@ -92,23 +101,32 @@ const translations = {
       'menu': 'Menu',
       'scores': 'Scores',
       'bet': 'Annoncer',
-      'pass': 'Passer'
+      'pass': 'Passer',
+      'wouldLikeToBet': 'Voulez-vous faire une annonce ?',
+      'pleaseChoosePrice': 'Choissisez une valeur pour votre annonce à',
+      'cap': 'Capot',
+      'gen': 'Générale',
+      'confirmBet': 'Veuillez confirmer votre annonce :'
     },
     errors: {
       'noWebsocket': 'Les Websocket ne sont pas prises en charge par ce navigateur. Essayez Mozilla Firefox.',
       'serverUnreachable': 'Oops, le serveur semble injoignable. Réessayez plus tard.',
       'lostConnection': 'Oops, il semblerait que vous ayez des problèmes de connexion.',
-      'invalidRoom': 'La partie {game_id} n\'existe pas.',
-      'invalidPlayer': 'Le joueur {player_id} n\'existe pas.',
-      'playerAlreadyInRoom': 'Le joueur {player_id} est déjà dans la partie {game_id}.',
-      'playerNotInRoom': 'Le joueur {player_id} n\'est pas dans la partie {game_id}.',
-      'adminAlreadyInRoom': 'Le joueur {admin_id} est déjà hôte de la partie {game_id}.',
-      'roomFull': 'La partie {game_id} est pleine.',
+      'invalidRoom': 'La partie que vous tentez de rejoindre n\'existe pas.',
+      'invalidPlayer': 'Votre identifiant joueur n\'existe plus.',
+      'playerAlreadyInRoom': 'Vous êtes déjà dans la partie.',
+      'playerNotInRoom': 'Le joueur n\'est pas dans la partie.',
+      'adminAlreadyInRoom': 'Il y a déjà un hôte dans la partie.',
+      'roomFull': 'La partie est pleine.',
       'adminLeft': 'L\'hôte a quitté la partie.',
       'updateDownloading': 'Une mise-à-jour est disponible. L\'app va bientôt redémarrer.',
       'badRequest': 'Une erreur est survenue. Le serveur n\'a pas compris votre requête.',
       'invalidRestart': 'Impossible de charger la dernière partie.',
       'startAdminOnly': 'Seul l\'hôte peut démarrer la partie.'
+    },
+    notifications: {
+      'adminLeft': 'L\'hôte a quitté la partie.',
+      'updateDownloading': 'Une mise-à-jour est disponible. L\'app va bientôt redémarrer.'
     }
   }
 };

@@ -7,6 +7,7 @@
       </component>
     </transition>
     <error></error>
+    <notification></notification>
     <devtools></devtools>
     <spinner :loading="loading" text="loading"></spinner>
   </div>
@@ -20,6 +21,14 @@
   import Error from './error.vue';
   import Spinner from './spinner.vue';
   import Devtools from './devtools.vue';
+  import Notification from './notification.vue';
+
+  global.GAME_STATE_ROOM = 0;
+  global.GAME_STATE_BETS = 1;
+  global.PLAYER_DISCONNECTED = -1;
+  global.PLAYER_STATE_PAUSE = 0;
+  global.PLAYER_STATE_READY = 1;
+
   export default {
     data () {
       return {
@@ -42,7 +51,8 @@
       Room,
       Game,
       Error,
-      Devtools
+      Devtools,
+      Notification
     },
     store: global.store,
     methods: {

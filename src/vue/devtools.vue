@@ -11,7 +11,7 @@
                @panmove="drag">
       </v-touch>
     </div>
-    <nav class="devtools-menu" :hide="inputOpen || openErrors || viewsOpened">
+    <nav class="devtools-menu" :hide="inputOpen || openErrors || viewsOpened || openSessions">
       <v-touch tag="div" class="tool" @tap="reload(hardReload)"
                @pressup="reload(hardReload)"
                @press="hardReload = true">
@@ -28,11 +28,11 @@
       <v-touch tag="div" class="tool" @tap="clear('settings')">
         Clear settings
       </v-touch>
-      <v-touch tag="div" class="tool" @tap="clear('session')">
-        Clear session
-      </v-touch>
       <v-touch tag="div" class="tool" @tap="openErrors = true">
         Console errors
+      </v-touch>
+      <v-touch tag="div" class="tool" @tap="openSessions = true">
+        Sessions
       </v-touch>
       <v-touch tag="div" class="tool" @tap="$store.dispatch('vibrate')">
         Vibrate
@@ -57,6 +57,20 @@
         <li v-for="e in errors">{{ e }}</li>
       </ul>
       <v-touch tag="div" class="tool" @tap="openErrors = false">
+        Back
+      </v-touch>
+    </nav>
+    <nav class="devtools-menu" :hide="!openSessions">
+      <v-touch tag="div" class="tool" @tap="clear('session')">
+        Clear session
+      </v-touch>
+      <v-touch tag="div" class="tool" @tap="saveSession">
+        Save session
+      </v-touch>
+      <v-touch tag="div" class="tool" @tap="loadSession">
+        Load session
+      </v-touch>
+      <v-touch tag="div" class="tool" @tap="openSessions = false">
         Back
       </v-touch>
     </nav>
@@ -87,6 +101,7 @@
         inputOpen: false,
         setter: '',
         openErrors: false,
+        openSessions: false,
         errors: [],
         viewsOpened: false,
         goView: 'Home',
@@ -95,6 +110,45 @@
     },
     store: global.store,
     methods: {
+      saveSession () {
+        if (this.$store.getters.session) {
+          localStorage['devtools'] = JSON.stringify({
+            x: this.x,
+            y: this.y,
+            view: this.goView,
+            session: this.$store.getters.session
+          });
+          this.$store.commit('setNotification', {
+            title: 'Dev\'Tools',
+            body: 'Current session was saved'
+          });
+        } else {
+          this.$store.commit('setNotification', {
+            title: 'Dev\'Tools',
+            body: 'No session to save'
+          });
+        }
+      },
+      loadSession () {
+        if (localStorage['devtools']) {
+          const devtoolsOptions = JSON.parse(localStorage['devtools']);
+          const session = devtoolsOptions['session'];
+          if (session) {
+            this.$store.commit('setSession', session);
+            this.closeAll();
+          } else {
+            this.$store.commit('setNotification', {
+              title: 'Dev\'Tools',
+              body: 'No session saved'
+            });
+          }
+        } else {
+          this.$store.commit('setNotification', {
+            title: 'Dev\'Tools',
+            body: 'No session saved'
+          });
+        }
+      },
       goToView (view) {
         if (localStorage['devtools']) {
           const devtoolsOptions = JSON.parse(localStorage['devtools']);
@@ -104,12 +158,13 @@
           localStorage['devtools'] = JSON.stringify({
             x: this.x,
             y: this.y,
-            view: view
+            view: view,
+            session: this.$store.getters.session
           });
         }
         this.goView = view;
         this.closeAll(() => {
-          this.$store.commit('setCurrentView', view.toLowerCase());
+          this.$store.commit('setView', view.toLowerCase());
         });
       },
       logError (error) {
@@ -124,6 +179,7 @@
         this.inputOpen = false;
         this.opened = false;
         this.viewsOpened = false;
+        this.openSessions = false;
         if (lastAction) lastAction();
       },
       commit () {
@@ -137,7 +193,10 @@
       },
       clear (section) {
         localStorage[section] = '';
-        this.$store.commit('setError', `dev-notification:\n section '${section}' was cleared from localStorage.`);
+        this.$store.commit('setNotification', {
+          title: 'Dev\'Tools',
+          body: `section '${section}' was cleared from localStorage.`
+        });
       },
       toggleMove () {
         this.toggled = !this.toggled;
@@ -156,7 +215,8 @@
           localStorage['devtools'] = JSON.stringify({
             x: this.x,
             y: this.y,
-            view: this.goView
+            view: this.goView,
+            session: this.$store.getters.session
           });
         }
       },

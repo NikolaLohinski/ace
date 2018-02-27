@@ -1,15 +1,15 @@
 <template>
   <div class="cards">
-    <div class="own">
+    <div class="own" :auction="auction" :moveup="moveup">
       <div class="line bot-line" :reup="hand.length < 5">
         <card v-for="(c, i) in hand"
-              :card="c" v-if="c && i < 4" :key="c"
+              :card="c" v-if="c && i < 4" :key="c.value + c.family"
               @tap="chooseCard(c)">
         </card>
       </div>
       <div class="line top-line">
         <card v-for="(c, i) in hand"
-              :card="c" v-if="c && i > 3" :key="c"
+              :card="c" v-if="c && i > 3" :key="c.value + c.family"
               @tap="chooseCard(c)">
         </card>
       </div>
@@ -37,18 +37,31 @@
   export default {
     data () {
       return {
-        hand: [],
         me: null,
         left: null,
         top: null,
         right: null
       };
     },
+    props: {
+      hand: {
+        type: Array,
+        default () {
+          return [];
+        }
+      },
+      moveup: {
+        type: Boolean,
+        default: false
+      },
+      auction: {
+        type: Boolean,
+        default: false
+      }
+    },
     methods: {
       chooseCard (card) {
-        const index = this.hand.indexOf(card);
-        this.me = card;
-        this.hand.splice(index, 1);
+        console.log(this.hand.indexOf(card), card);
       }
     },
     components: {
@@ -71,6 +84,13 @@
       bottom: 0;
       width: 100%;
       text-align: center;
+      transition: all 200ms;
+      &[auction] {
+        bottom: 80px;
+        &[moveup] {
+          bottom: calc(100vh - 170px);
+        }
+      }
       .line {
         position: relative;
         display: inline-block;
@@ -107,6 +127,11 @@
     (orientation: landscape) and (max-height: 400px){
       .own {
         transform: translateY(40%);
+        &[auction] {
+          &[moveup] {
+            bottom: calc(100vh - 70px);
+          }
+        }
       }
     }
     @media screen and (max-device-width: $max-s-width),
@@ -140,6 +165,9 @@
         screen and (max-width: $max-xxs-width) {
           .own {
             transform: translateY(20%);
+            &[auction] {
+              transform: translateY(-4px);
+            }
             .line {
               display: block;
               width: 100%;

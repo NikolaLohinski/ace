@@ -1,6 +1,8 @@
-from time import time as UNIX_TIME_NOW
-from classes.Player import Player
 import random
+from time import time as UNIX_TIME_NOW
+
+from classes.Player import Player
+from classes.Engine import Engine
 
 GAME_STATE_ROOM = 0
 GAME_STATE_BETS = 1
@@ -25,6 +27,7 @@ class Game(object):
         self.order = None
         self.scores = None
         self.turn = None
+        self.engine = None
 
     def output_for_client(self, client_id):
         """Output to JSON friendly object the game to a given client
@@ -36,27 +39,42 @@ class Game(object):
         output = {
             'id': self.id,
             'state': self.state,
-            'players': {
-                i: ply.output(
-                    private=True if i == client_id else False,
-                    admin=self.admin_id == i,
-                    dealer=self.dealer == i,
-                    turn=self.turn == i
-                )
-                for i, ply in self.players.items()
-            }
+            'players': []
         }
         if self.order is not None:
-            me = self.order.index(client_id)
-            output['others'] = [
-                self.players[self.order[(me + i) % 4]].name
-                for i in range(1, 4)
-            ]
+            nb_ply = len(self.players)
+            me_index = self.order.index(client_id)
+            for i in range(nb_ply):
+                ply = self.players.get(self.order[(me_index + i) % nb_ply])
+                output['players'].append(
+                    ply.output(
+                        private=True if ply.id == client_id else False,
+                        admin=self.admin_id == ply.id,
+                        dealer=self.dealer == ply.id,
+                        turn=self.turn == ply.id
+                    )
+                )
             if self.scores is not None:
-                output['us'] = self.scores[client_id]
-                output['them'] = self.scores[
-                    self.order[(self.order.index(client_id) + 1) % 4]
-                ]
+                output['scores'] = {
+                    'us': self.scores[client_id],
+                    'them': self.scores[
+                        self.order[(self.order.index(client_id) + 1) % 4]
+                    ]
+                }
+        else:
+            nb_ply = len(self.players)
+            players = [p for p in self.players.values()]
+            me_index = players.index(self.players.get(client_id))
+            for i in range(nb_ply):
+                ply = players[(me_index + i) % nb_ply]
+                output['players'].append(
+                    ply.output(
+                        private=True if ply.id == client_id else False,
+                        admin=self.admin_id == ply.id,
+                        dealer=self.dealer == ply.id,
+                        turn=self.turn == ply.id
+                    )
+                )
         return output
 
     def new_player(self, client, name, is_admin=False):
@@ -67,15 +85,9 @@ class Game(object):
             is_admin (bool): if the client is an admin or not
         """
         if self.players.get(client.id) is not None:
-            raise Exception('playerAlreadyInRoom', {
-                'game_id': self.id,
-                'player_id': client.id
-            })
+            raise Exception('playerAlreadyInRoom')
         if self.admin_id is not None and is_admin:
-            raise Exception('adminAlreadyInRoom', {
-                'game_id': self.id,
-                'admin_id': self.admin_id
-            })
+            raise Exception('adminAlreadyInRoom')
         if is_admin:
             self.admin_id = client.id
         player = Player(client_id=client.id, name=name)
@@ -89,10 +101,7 @@ class Game(object):
         """
         player = self.players.get(client.id)
         if player is None:
-            raise Exception('playerNotInRoom', {
-                'game_id': self.id,
-                'player_id': client.id
-            })
+            raise Exception('playerNotInRoom')
         self.players.pop(client.id)
         if self.admin_id == client.id:
             self.admin_id = None
@@ -100,10 +109,7 @@ class Game(object):
     def update_player(self, client, key, value):
         player = self.players.get(client.id)
         if player is None:
-            raise Exception('playerNotInRoom', {
-                'game_id': self.id,
-                'player_id': client.id
-            })
+            raise Exception('playerNotInRoom')
         setattr(player, key, value)
 
     def is_empty(self):
@@ -120,6 +126,8 @@ class Game(object):
         """
         if client.id != self.admin_id:
             raise Exception('startAdminOnly')
+        if self.state > GAME_STATE_ROOM:
+            raise Exception('[start]: game already started.')
         self.state = GAME_STATE_BETS
         if self.dealer is None:
             self.dealer = random.choice([k for k in self.players.keys()])
@@ -131,4 +139,9 @@ class Game(object):
                 i: 0 for i in self.order
             })
         self.turn = self.order[(self.order.index(self.dealer) + 1) % 4]
-
+        self.engine = Engine()
+        self.engine.deal(
+            players=self.players,
+            order=self.order,
+            dealer=self.dealer
+        )

@@ -20,7 +20,7 @@
               </span>
             </td>
             <td class="ready-tag">
-              {{ (p.state) ? $t('yes') : $t('no') }}
+              <span class="state" :status="p.state"></span>
             </td>
           </tr>
           <tr v-for="i in (4 - ((players) ? players.length : 0))">
@@ -64,8 +64,6 @@
   </div>
 </template>
 <script>
-  const PLAYER_STATE_PAUSE = 0;
-  const PLAYER_STATE_READY = 1;
   import Spinner from './spinner.vue';
   export default {
     data () {
@@ -75,7 +73,8 @@
         countDownTimeOut: null,
         time: 5,
         player: {},
-        room: {}
+        room: {},
+        started: false
       };
     },
     store: global.store,
@@ -90,18 +89,15 @@
         return this.game['id'];
       },
       players () {
-        return (this.game['players']) ? Object.values(this.game['players']) : [];
+        return (this.game['players']) ? this.game['players'] : [];
       },
       ready () {
         return typeof this.players.find((p) => {
           return p.state === 0;
         }) === 'undefined' && this.me.admin && this.players.length === 4;
       },
-      adminId () {
-        return this.game['admin_id'];
-      },
       me () {
-        return (this.session) ? this.game.players[this.session.client.id] : {};
+        return (this.session) ? this.game.players[0] : {};
       },
       state () {
         return this.game['state'];
@@ -113,16 +109,14 @@
     watch: {
       state (state) {
         this.$store.commit('setLoading', false);
-        clearTimeout(this.countDownTimeOut);
-        if (state === 0) {
-          this.$emit('redirect', 'room');
-        } else {
+        if (state !== global.GAME_STATE_ROOM) {
           this.$emit('redirect', 'game');
         }
       }
     },
     methods: {
       updateState () {
+        clearTimeout(this.countDownTimeOut);
         this.$store.dispatch('send', {
           H: 'UPDATE',
           B: {
@@ -130,10 +124,9 @@
             'game_id': this.$store.getters.session.client['game_id'],
             'target': 'PLAYER',
             'key': 'state',
-            'value': (this.me.state) ? PLAYER_STATE_PAUSE : PLAYER_STATE_READY
+            'value': (this.me.state) ? global.PLAYER_STATE_PAUSE : global.PLAYER_STATE_READY
           }
         }).then(() => {
-          clearTimeout(this.countDownTimeOut);
           this.spin = true;
         });
       },
@@ -148,31 +141,39 @@
         }
       },
       start () {
-        this.$store.commit('setLoading', true);
-        clearTimeout(this.countDownTimeOut);
-        this.$store.dispatch('send', {
-          H: 'START',
-          B: this.$store.getters.session.client
-        }).then(null);
+        if (!this.started) {
+          this.$store.commit('setLoading', true);
+          this.$store.dispatch('send', {
+            H: 'START',
+            B: this.$store.getters.session.client
+          }).then(() => {
+            this.started = true;
+          });
+        }
       },
       quit () {
-        if (this.timeout) clearTimeout(this.timeout);
         this.$emit('back');
         this.$store.dispatch('quit').then(null);
       },
-      listener (H, B) {
+      listener (socketStream) {
         this.spin = false;
-        if (H === 'GAME') {
-          this.$store.commit('setSession', B);
-          if (this.ready) {
-            this.countDown(5);
+        this.$store.dispatch('readSocket', {
+          headers: 'GAME||RESET',
+          socketStream: socketStream
+        }).then((data) => {
+          if (data.H === 'GAME') {
+            this.$store.commit('setSession', data.B);
+            if (this.ready) {
+              this.countDown(5);
+            }
+          } else if (data.H === 'RESET') {
+            this.$store.commit('setNotification', {
+              body: this.$t('notifications.adminLeft')
+            });
+            this.$store.commit('setSession', null);
+            this.$emit('back');
           }
-        } else if (H === 'RESET') {
-          this.$store.commit('setError', 'adminLeft');
-          this.$store.commit('setSession', null);
-          if (this.timeout) clearTimeout(this.timeout);
-          this.$emit('back');
-        }
+        }, null);
       },
       keepAlive (timeout) {
         this.timeout = setTimeout(() => {
@@ -188,14 +189,18 @@
       }
     },
     mounted () {
-      this.$store.dispatch('registerListener', {
-        callback: this.listener,
-        H: 'GAME||RESET'
+      this.$store.dispatch('registerListener', this.listener).then(() => {
+        this.keepAlive(15000);
+        if (this.ready) {
+          this.countDown(5);
+        }
       });
-      this.keepAlive(15000);
-      if (this.ready) {
-        this.countDown(5);
-      }
+    },
+    beforeDestroy () {
+      this.$store.dispatch('removeListener', this.listener).then(() => {
+        clearTimeout(this.timeout);
+        clearTimeout(this.countDownTimeOut);
+      });
     }
   };
 </script>
@@ -254,6 +259,20 @@
           width: 50%;
           &.ready-tag {
             width: 50%;
+            .state {
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              background-color: red;
+              display: inline-block;
+              box-shadow: inset -1px 1px 2px rgba(0,0,0,0.2);
+              &[status='0'] {
+                background-color: #ffff00;
+              }
+              &[status='1'] {
+                background-color: #00d516;
+              }
+            }
           }
           .admin {
             color: $lighter-text-color

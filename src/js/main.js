@@ -40,7 +40,9 @@ global['store'] = store;
 /* 7. Set auto reload tool on cache update */
 // To reload page whenever cache has been updated
 window.applicationCache.addEventListener('downloading', () => {
-  store.commit('setError', 'updateDownloading');
+  store.commit('setNotification', {
+    body: store.i18n.translate('notifications.updateDownloading')
+  });
 }, { once: true });
 window.applicationCache.addEventListener('updateready', () => {
   window.location.reload();

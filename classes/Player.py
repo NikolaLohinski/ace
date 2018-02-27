@@ -39,6 +39,13 @@ class Player(object):
             'turn': turn
         }
         if private:
-            output['id'] = self.id,
+            output['id'] = self.id
             output['hand'] = self.hand
         return output
+
+    def add_cards(self, cards):
+        """Give cards to player
+        Args:
+            cards (list(Card)): list of cards
+        """
+        self.hand += cards

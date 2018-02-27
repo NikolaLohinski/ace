@@ -23,3 +23,39 @@ $max-l-width: 1200px;
 
 // Extra-large screens
 $min-xl-width: 1200px;
+
+@mixin distribute-on-circle(
+  $nb-items,
+  $circle-size,
+  $item-size
+) {
+  $half-item: ($item-size / 2);
+  $half-parent: ($circle-size / 2);
+
+  width:  $circle-size;
+  height: $circle-size;
+  padding: 0;
+  border-radius: 50%;
+  list-style: none; /* 2 */
+  box-sizing: content-box; /* 3 */
+
+  > * { /* 4 */
+    display: block;
+    position: absolute;
+    top:  50%;
+    left: 50%;
+    width:  $item-size;
+    height: $item-size;
+    margin: -$half-item;
+  }
+
+  $angle: (360 / $nb-items);
+  $rot: 120;
+
+  @for $i from 1 through $nb-items {
+    > :nth-of-type(#{$i}) {
+      transform: rotate($rot * 1deg) translate($half-parent) rotate($rot * -1deg);
+    }
+    $rot: ($rot + $angle);
+  }
+}

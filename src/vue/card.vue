@@ -3,7 +3,7 @@
            class="card"
            @tap="$emit('tap', $event)">
     <div class="face"
-           :hide="num === 'hide' || family === 'hide'"
+           :hide="value === 'hide' || family === 'hide'"
            :style="style">
     </div>
   </v-touch>
@@ -12,7 +12,7 @@
   export default {
     data () {
       return {
-        nums: {
+        values: {
           '7': 0,
           '8': -81,
           '9': -162,
@@ -34,22 +34,24 @@
     },
     props: {
       card: {
-        type: String,
-        default: 'hide'
+        type: Object,
+        default () {
+          return {};
+        }
       }
     },
     computed: {
       xOffset () {
-        return this.nums[this.num];
+        return this.values[this.value];
       },
       yOffset () {
         return this.families[this.family];
       },
-      num () {
-        return (this.card !== 'hide') ? this.card.split(',')[0] : 'hide';
+      value () {
+        return (this.card) ? this.card.value : 'hide';
       },
       family () {
-        return (this.card !== 'hide') ? this.card.split(',')[1] : 'hide';
+        return (this.card) ? this.card.family : 'hide';
       },
       style () {
         return {
