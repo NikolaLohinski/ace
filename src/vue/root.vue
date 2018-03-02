@@ -6,7 +6,6 @@
                  @redirect="redirect">
       </component>
     </transition>
-    <error></error>
     <notification></notification>
     <devtools></devtools>
     <spinner :loading="loading" text="loading"></spinner>
@@ -18,7 +17,6 @@
   import Join from './join.vue';
   import Room from './room.vue';
   import Game from './game.vue';
-  import Error from './error.vue';
   import Spinner from './spinner.vue';
   import Devtools from './devtools.vue';
   import Notification from './notification.vue';
@@ -50,7 +48,6 @@
       Spinner,
       Room,
       Game,
-      Error,
       Devtools,
       Notification
     },

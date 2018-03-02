@@ -244,14 +244,22 @@
       }
     },
     mounted () {
-      const originalLog = console.error;
+      const originalLog = console.log;
+      const originalLogError = console.error;
       if (localStorage['devtools']) {
         const stored = JSON.parse(localStorage['devtools']);
         this.goView = (stored['view']) ? stored['view'] : 'Home';
       }
+      console.log = (...args) => {
+        this.$store.commit('setNotification', {
+          title: 'console.log',
+          body: args.join(`<br/>`)
+        });
+        originalLog(...args);
+      };
       console.error = (error) => {
         this.logError(error);
-        originalLog(error);
+        originalLogError(error);
       };
       window.addEventListener('error', (e) => console.log(e));
       this.move(this.x, this.y);

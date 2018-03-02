@@ -2,7 +2,6 @@ const Store = {
   state: {
     socket: null,
     loading: true,
-    error: [],
     notification: {},
     view: null,
     http: null,
@@ -29,9 +28,6 @@ const Store = {
     view (state) {
       return state.view;
     },
-    error (state) {
-      return state.error;
-    },
     loading (state) {
       return state.loading;
     },
@@ -56,9 +52,6 @@ const Store = {
     setView (state, view) {
       state.view = view;
       localStorage['view'] = view;
-    },
-    setError (state, error) {
-      state.error = error;
     },
     setLoading (state, value) {
       state.loading = value;
@@ -208,10 +201,12 @@ const Store = {
                     state.commit('setNotification', {
                       body: this.i18n.translate(`errors.${data['B']}`)
                     });
-                    for (let i = 0; i < data['B'].length; i++) {
-                      console.error(data['B'][i]);
-                    }
+                    console.error(data['B']);
                     state.commit('setLoading', false);
+                  } else if (data['H'] === 'NOTIF') {
+                    state.commit('setNotification', {
+                      body: this.i18n.translate(`notifications.${data['B']}`)
+                    });
                   }
                 });
                 socket.addEventListener('error', (err) => {

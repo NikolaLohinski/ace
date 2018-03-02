@@ -62,11 +62,29 @@ class Manager(object):
         self.games[new_id] = new_game
         return new_id
 
+    def disconnect_client(self, socket):
+        """Disconnect client when socket is closed from clients' side
+        Args:
+            socket (WSHandler): reference of client's socket
+        Returns:
+            (list): output object response to notify other players
+        """
+        output = []
+        for client_id, client in self.clients.items():
+            if client.socket == socket:
+                game_id = client.game_id
+                game = self.games.get(game_id)
+                if game is not None:
+                    game.disconnect_player(client)
+                    output = self.output_game_to_all(game_id=game_id)
+                break
+        return output
+
     def create(self, socket, args):
         """Create new client and game and store in memory
         Args:
             socket (WSHandler): reference of client's socket
-            args (object): arguments to create the game
+            args (dict): arguments to create the game
         Returns:
             (list): output object response to notify of game creation
         """
@@ -75,33 +93,20 @@ class Manager(object):
         client = self.clients.get(client_id)
         self.games.get(game_id).new_player(
             client=client,
-            name=args['player_name'],
+            name=args.get('player_name'),
             is_admin=True
         )
-        B = {
-            'game': self.games.get(game_id).output_for_client(client_id),
-            'client': client.output()
-        }
-        output = [
-            (
-                client.socket,
-                {
-                    'H': 'GAME',
-                    'B': B
-                }
-            )
-        ]
-        return output
+        return self.output_game_to_all(game_id=game_id)
 
     def join(self, socket, args):
         """Create new client and store in memory
         Args:
             socket (WSHandler): reference of client's socket
-            args (object): arguments to create the game
+            args (dict): arguments to create the game
         Returns:
             (list): output object response to notify of game joining
         """
-        game_id = int(args['game_id'])
+        game_id = int(args.get('game_id'))
         game = self.games.get(game_id)
         if game is None:
             raise Exception('invalidRoom')
@@ -109,37 +114,21 @@ class Manager(object):
         client = self.clients.get(client_id)
         game.new_player(
             client=client,
-            name=args['player_name'],
+            name=args.get('player_name'),
             is_admin=False
         )
-        output = []
-        for ply_id, player in game.players.items():
-            client = self.clients.get(ply_id)
-            B = {
-                'game': game.output_for_client(ply_id),
-                'client': client.output()
-            }
-            output.append(
-                (
-                    client.socket,
-                    {
-                        'H': 'GAME',
-                        'B': B
-                    }
-                )
-            )
-        return output
+        return self.output_game_to_all(game_id=game_id)
 
     def quit(self, args):
         """Quit game for client and delete its reference
         Args:
-            args (object): arguments to delete the client
+            args (dict): arguments to delete the client
         Returns:
             (list): output object response to notify of client's leave
         """
-        game_id = int(args['game_id'])
+        game_id = int(args.get('game_id'))
         game = self.games.get(game_id)
-        client_id = int(args['id'])
+        client_id = int(args.get('id'))
         client = self.clients.get(client_id)
         if game is None:
             raise Exception('invalidRoom')
@@ -148,21 +137,119 @@ class Manager(object):
         game.rm_player(client=client)
         self.clients.pop(client_id)
         output = []
-        players = game.players.copy().items()
-        for ply_id, player in players:
-            client = self.clients.get(ply_id)
-            if game.admin_id is None:
-                output.append(
-                    (
-                        client.socket,
-                        {
-                            'H': 'RESET'
-                        }
+        if game.admin_id is None:
+            for ply_id, player in game.players:
+                if player.is_connected():
+                    client = self.clients.get(ply_id)
+                    output.append(
+                        (
+                            client.socket,
+                            {
+                                'H': 'RESET'
+                            }
+                        )
                     )
-                )
-                game.rm_player(client=client)
-                self.clients.pop(client.id)
-            else:
+                    game.rm_player(client=client)
+                    self.clients.pop(client.id)
+        else:
+            output = self.output_game_to_all(game_id=game_id)
+        if game.is_empty():
+            self.games.pop(game_id)
+        return output
+
+    def update(self, args):
+        """Create update game given an action as input
+        Args:
+            args (dict): arguments to update the game
+        Returns:
+            (list): output object response to notify of game update
+        """
+        game_id = int(args.get('game_id'))
+        game = self.games.get(game_id)
+        client_id = int(args.get('id'))
+        client = self.clients.get(client_id)
+        if game is None:
+            raise Exception('invalidRoom')
+        if client is None:
+            raise Exception('invalidPlayer')
+        if args.get('target') == 'PLAYER':
+            game.update_player(client, args.get('key'), args.get('value'))
+        else:
+            raise Exception('badRequest')
+        return self.output_game_to_all(game_id=game_id)
+
+    def restart(self, socket, args):
+        """Restart player
+        Args:
+            socket (WSHandler): reference of client's socket
+            args (dict): arguments to revive a disconnected player
+        Returns:
+            (list): output object response to notify of player revival
+        """
+        game_id = int(args.get('game_id'))
+        game = self.games.get(game_id)
+        client_id = int(args.get('id'))
+        client = self.clients.get(client_id)
+        if game is None or client is None:
+            raise Exception('invalidRestart')
+        client.socket = socket
+        game.reconnect_player(client=client)
+        return self.output_game_to_all(game_id=game_id)
+
+    def start(self, args):
+        """Start game
+        Args:
+            args (dict): arguments to start the game
+        Returns:
+            (list): output object response to notify of game start
+        """
+        game_id = int(args.get('game_id'))
+        game = self.games.get(game_id)
+        client_id = int(args.get('id'))
+        client = self.clients.get(client_id)
+        if game is None:
+            raise Exception('invalidRoom')
+        if client is None:
+            raise Exception('invalidPlayer')
+        game.start_bets(client=client)
+        return self.output_game_to_all(game_id=game_id)
+
+    def play(self, args):
+        """Play something in the game. Can be a bet, a card, a coinche etc...
+         Args:
+            args (dict): arguments to start the game
+        Returns:
+            (list): output object response to notify of game start
+        """
+        game_id = int(args.get('game_id'))
+        game = self.games.get(game_id)
+        client_id = int(args.get('id'))
+        client = self.clients.get(client_id)
+        if game is None:
+            raise Exception('invalidRoom')
+        if client is None:
+            raise Exception('invalidPlayer')
+        target = args.get('target')
+        if target == 'BET':
+            game.bet(client=client, bet=args.get('bet'))
+        elif target == 'COINCHE':
+            game.coinche(client=client)
+        else:
+            raise Exception('badRequest')
+        return self.output_game_to_all(game_id=game_id)
+
+    def output_game_to_all(self, game_id):
+        """Output game to all players in game
+        Args:
+            game_id (int): identifier of the game
+        Returns:
+            (list): output object response for each player
+        """
+        game = self.games.get(game_id)
+        output = []
+        for ply_id, player in game.players.items():
+            if player.is_connected():
+                client = self.clients.get(ply_id)
                 B = {
                     'game': game.output_for_client(ply_id),
                     'client': client.output()
@@ -176,108 +263,4 @@ class Manager(object):
                         }
                     )
                 )
-        if game.is_empty():
-            self.games.pop(game_id)
-        return output
-
-    def update(self, args):
-        """Create update game given an action as input
-        Args:
-            args (object): arguments to update the game
-        Returns:
-            (list): output object response to notify of game update
-        """
-        game_id = int(args['game_id'])
-        game = self.games.get(game_id)
-        client_id = int(args['id'])
-        client = self.clients.get(client_id)
-        if game is None:
-            raise Exception('invalidRoom')
-        if client is None:
-            raise Exception('invalidPlayer')
-        if args['target'] == 'PLAYER':
-            game.update_player(client, args['key'], args['value'])
-        else:
-            raise Exception('badRequest')
-        output = []
-        for ply_id, player in game.players.items():
-            client = self.clients.get(ply_id)
-            B = {
-                'game': game.output_for_client(ply_id),
-                'client': client.output()
-            }
-            output.append(
-                (
-                    client.socket,
-                    {
-                        'H': 'GAME',
-                        'B': B
-                    }
-                )
-            )
-        return output
-
-    def restart(self, socket, args):
-        """Restart player
-        Args:
-            socket (WSHandler): reference of client's socket
-            args (object): arguments to revive a disconnected player
-        Returns:
-            (list): output object response to notify of player revival
-        """
-        game_id = int(args['game_id'])
-        game = self.games.get(game_id)
-        client_id = int(args['id'])
-        client = self.clients.get(client_id)
-        if game is None or client is None:
-            raise Exception('invalidRestart')
-        client.socket = socket
-        output = []
-        B = {
-            'game': game.output_for_client(client.id),
-            'client': client.output()
-        }
-        output.append(
-            (
-                client.socket,
-                {
-                    'H': 'GAME',
-                    'B': B
-                }
-            )
-        )
-        return output
-
-    def start(self, args):
-        """Start game
-        Args:
-            args (object): arguments to start the game
-        Returns:
-            (list): output object response to notify of game start
-        """
-        game_id = int(args['game_id'])
-        game = self.games.get(game_id)
-        client_id = int(args['id'])
-        client = self.clients.get(client_id)
-        if game is None:
-            raise Exception('invalidRoom')
-        if client is None:
-            raise Exception('invalidPlayer')
-        game.start(client=client)
-        output = []
-        for ply_id, player in game.players.items():
-            client = self.clients.get(ply_id)
-            B = {
-                'game': game.output_for_client(ply_id),
-                'client': client.output()
-            }
-            output.append(
-                (
-                    client.socket,
-                    {
-                        'H': 'GAME',
-                        'B': B
-                    }
-                )
-            )
         return output

@@ -4,13 +4,14 @@
     </cards>
     <gamemenu @pause="updateState" @quit="quit">
     </gamemenu>
-    <buzzer>
+    <buzzer :coinche-available="me.can_coinche" @coinche="coinche">
     </buzzer>
     <auctions v-if="bets" :show="me.turn"
+              :forbidden-prices="me.forbidden_bets"
               @bidding="(e) => bidding = e"
-              @pass="" @bet="">
+              @bid="bid">
     </auctions>
-    <actors :players="players">
+    <actors :players="players" :bets="bets">
     </actors>
   </div>
 </template>
@@ -38,6 +39,12 @@
       players () {
         return (this.game['players']) ? this.game['players'] : [];
       },
+      turn () {
+        return this.players.find(p => p.turn);
+      },
+      admin () {
+        return this.players.find(p => p.admin);
+      },
       me () {
         return (this.session) ? this.game.players[0] : {};
       },
@@ -63,9 +70,35 @@
         if (state === global.GAME_STATE_ROOM) {
           this.$emit('redirect', 'room');
         }
+      },
+      turn (turn) {
+        // If it is no ones turn and game is still bets, then set a timer of
+        // 3s in case of coinche to start game
+        if (!turn && this.state === global.GAME_STATE_BETS) {}
       }
     },
     methods: {
+      coinche () {
+        this.$store.dispatch('send', {
+          H: 'PLAY',
+          B: {
+            'target': 'COINCHE',
+            'id': this.$store.getters.session.client.id,
+            'game_id': this.$store.getters.session.client.game_id
+          }
+        });
+      },
+      bid (bid) {
+        this.$store.dispatch('send', {
+          H: 'PLAY',
+          B: {
+            'target': 'BET',
+            'bet': bid,
+            'id': this.$store.getters.session.client.id,
+            'game_id': this.$store.getters.session.client.game_id
+          }
+        });
+      },
       quit () {
         this.$store.dispatch('send', {
           H: 'UPDATE',

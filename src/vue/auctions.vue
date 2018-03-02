@@ -5,10 +5,11 @@
     <v-touch tag="div" class="container" :moveup="showBets" @swipeup="showBets = true">
       <div class="actions">
         <v-touch tag="div" class="bid action" @tap="clickButtonOne">
-          {{ (showBets) ? $t('back') : $t('game.bet') }}
+          {{ (family) ? $t('game.change') : (showBets) ? $t('back') : $t('game.bet') }}
+          <div class="show-family" :family="family" v-if="family"></div>
         </v-touch>
         <v-touch tag="div" class="pass action" @tap="pass">
-          {{ $t('game.pass') }}
+          {{ $t('game.toPass') }}
         </v-touch>
       </div>
       <div class="bidding" :hide="!showBets">
@@ -22,17 +23,20 @@
             <div class="show-family" :family="family"></div>
             <ul class="list-of-prices">
               <li v-for="p in prices" :key="p">
-                <v-touch tag="div" class="price value" @tap="price = p">
+                <v-touch :disabled="forbiddenPrices.includes(p)"
+                        tag="div" class="price value" @tap="price = p">
                   {{ p }}
                 </v-touch>
               </li>
             </ul>
           </div>
           <div class="special-prices">
-              <v-touch tag="div" @tap="price = 'gen'" class="special-price value left">
+              <v-touch tag="div" :disabled="forbiddenPrices.includes('gen')"
+                       @tap="price = 'gen'" class="special-price value left">
                 {{ $t('game.gen')}}
               </v-touch>
-              <v-touch tag="div" @tap="price = 'cap'" class="special-price value right">
+              <v-touch tag="div" :disabled="forbiddenPrices.includes('cap')"
+                       @tap="price = 'cap'" class="special-price value right">
                 {{ $t('game.cap')}}
               </v-touch>
            </div>
@@ -60,6 +64,12 @@
       show: {
         type: Boolean,
         default: false
+      },
+      forbiddenPrices: {
+        type: Array,
+        default () {
+          return [];
+        }
       }
     },
     watch: {
@@ -85,7 +95,7 @@
             if (!value) {
               self.showBets = true;
             } else {
-              self.$emit('bet', {
+              self.$emit('bid', {
                 price: self.price,
                 family: self.family
               });
@@ -107,7 +117,7 @@
         }
       },
       pass () {
-        this.$emit('pass');
+        this.$emit('bid', null);
       }
     }
   };
@@ -126,13 +136,16 @@
     z-index: 5;
     &[show] {
       opacity: 1;
-      pointer-events: auto;
+      .container {
+        pointer-events: auto;
+      }
     }
     .show-cards {
       position: absolute;
       top: 0;
       width: 100vw;
       height: 170px;
+      pointer-events: auto;
     }
     .container {
       position: absolute;
@@ -142,6 +155,7 @@
       height: calc(100vh - 170px);
       background-color: $notification-background;
       transition: top 200ms, height 200ms;
+      pointer-events: none;
       &[moveup] {
         top: 170px;
       }
@@ -160,9 +174,17 @@
           max-width: 250px;
           color: $lighter-text-color;
           border: 1px solid $lighter-text-color;
+          white-space: nowrap;
           &:active {
             background-color: $default-text-color;
             color: #ddd;
+          }
+          .show-family {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            position: relative;
+            top: 3px;
           }
         }
       }
@@ -284,6 +306,10 @@
           &:active {
             color: white;
             transform: scale(1.2);
+          }
+          &[disabled] {
+            pointer-events: none;
+            opacity: 0.25;
           }
         }
       }

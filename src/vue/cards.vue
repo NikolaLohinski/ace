@@ -85,8 +85,10 @@
       width: 100%;
       text-align: center;
       transition: all 200ms;
+      z-index: 1;
       &[auction] {
         bottom: 80px;
+        pointer-events: none;
         &[moveup] {
           bottom: calc(100vh - 170px);
         }

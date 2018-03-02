@@ -38,12 +38,24 @@ class WSHandler(websocket.WebSocketHandler):
                 ws_handler, message = r
                 self.send(message=message, handler=ws_handler)
         except Exception as err:
-            self.send(message={'H': 'ERROR', 'B': err.args}, handler=self)
+            self.send(message={'H': 'ERROR', 'B': err.args})
 
     def on_close(self):
-        """Called when a socket is closed."""
+        """Called when a socket is closed from client side."""
+        result = self.manager.disconnect_client(socket=self)
+        for r in result:
+            ws_handler, message = r
+            self.send(message=message, handler=ws_handler)
 
-    def send(self, message, handler):
+    def send(self, message, handler=None):
+        """Send message through socket
+        Args:
+            message (dict): message to send {'H': ... 'B': ...}
+            handler (WSHandler or None): socket handler to use. If None provided
+            then use self
+        """
+        if handler is None:
+            handler = self
         handler.write_message(jsonpickle.encode(message, unpicklable=False))
 
     def respond(self, head, body):
@@ -59,6 +71,8 @@ class WSHandler(websocket.WebSocketHandler):
             return self.manager.restart(socket=self, args=body)
         elif head == 'START':
             return self.manager.start(args=body)
+        elif head == 'PLAY':
+            return self.manager.play(args=body)
         elif head == 'ALIVE':
             return []
         else:

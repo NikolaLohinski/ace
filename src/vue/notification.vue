@@ -1,18 +1,18 @@
 <template>
-  <v-touch tag="div"  class="notification" :show="!hide" @tap="clear">
-    <div class="box">
+  <v-touch tag="div"  class="notification" :show="!bufferEmpty && show" @tap="clear">
+    <div class="box" v-if="!bufferEmpty">
       <header class="title">
-        <span v-if="args['title'] && !args['timer']">
-          {{ args.title }}
+        <span v-if="activeNotification['title'] && !activeNotification['timer']">
+          {{ activeNotification.title }}
         </span>
-        <span v-else-if="args['timer']">{{ timer }}</span>
+        <span v-else-if="activeNotification['timer']">{{ timer }}</span>
         <span v-else>!</span>
       </header>
-      <div class="body" v-if="args['body']">
-        <div class="message" v-html="args.body">
+      <div class="body" v-if="activeNotification['body']">
+        <div class="message" v-html="activeNotification.body">
         </div>
       </div>
-      <footer class="actions" v-if="args['callback']">
+      <footer class="actions" v-if="activeNotification['callback']">
         <v-touch tag="div" class="action infirm" @tap="act(false)">
           {{ $t('back') }}
         </v-touch>
@@ -28,38 +28,64 @@
     data () {
       return {
         timer: null,
-        timeout: null
+        timeout: null,
+        buffer: [],
+        show: false
       };
     },
     store: global.store,
     computed: {
-      hide () {
-        return !this.args['body'];
+      bufferEmpty () {
+        return this.buffer.length === 0;
+      },
+      activeNotification () {
+        return (this.bufferEmpty) ? null : this.buffer[0];
       },
       args () {
         return this.$store.getters.notification;
       }
     },
     watch: {
+      buffer: {
+        deep: true,
+        handler () {
+          if (this.activeNotification) {
+            if (this.activeNotification.timer) {
+              this.countDown(
+                this.activeNotification.timer.timeout,
+                this.activeNotification.timer.value
+              );
+            }
+          }
+        }
+      },
       args: {
         handler (newArgs) {
-          if (newArgs['timer']) {
-            this.countDown(newArgs.timer.timeout, newArgs.timer.value);
+          if (newArgs) {
+            this.show = true;
+            this.buffer.push(newArgs);
           }
         }
       }
     },
     methods: {
       act (action) {
-        this.args.callback(action);
+        this.activeNotification.callback(action);
         clearTimeout(this.timeout);
         this.timer = null;
-        this.$store.commit('setNotification', {});
+        this.removeNotification();
       },
       clear () {
-        if (!this.args['callback']) {
-          this.$store.commit('setNotification', {});
+        if (!this.activeNotification.callback) {
+          this.removeNotification();
         }
+      },
+      removeNotification () {
+        this.show = false;
+        this.buffer.shift();
+        setTimeout(() => {
+          if (!this.bufferEmpty) this.show = true;
+        }, 200);
       },
       countDown (timer, value) {
         this.timer = timer;
@@ -124,6 +150,8 @@
         display: inline-block;
         text-align: center;
         font-size: 15px;
+        max-height: 140px;
+        overflow-y: auto;
         .message {
           margin: 15px;
         }

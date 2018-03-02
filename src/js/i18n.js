@@ -37,7 +37,9 @@ const translations = {
       'menu': 'Menu',
       'scores': 'Scores',
       'bet': 'Bid',
-      'pass': 'Pass',
+      'pass': 'pass',
+      'toPass': 'Pass',
+      'change': 'Change',
       'wouldLikeToBet': 'Would you like to place a bid ?',
       'pleaseChoosePrice': 'Please choose a price for your bid on',
       'cap': 'All',
@@ -56,7 +58,8 @@ const translations = {
       'roomFull': 'Room is full.',
       'badRequest': 'An error occurred. The server rejected your request.',
       'invalidRestart': 'Impossible to reload last game.',
-      'startAdminOnly': 'The admin only can start the game.'
+      'startAdminOnly': 'The admin only can start the game.',
+      'gameStartedAlready': 'The game already started.'
     },
     notifications: {
       'adminLeft': 'The admin left the game.',
@@ -101,7 +104,9 @@ const translations = {
       'menu': 'Menu',
       'scores': 'Scores',
       'bet': 'Annoncer',
-      'pass': 'Passer',
+      'toPass': 'Passer',
+      'pass': 'passe',
+      'change': 'Changer',
       'wouldLikeToBet': 'Voulez-vous faire une annonce ?',
       'pleaseChoosePrice': 'Choissisez une valeur pour votre annonce à',
       'cap': 'Capot',
@@ -122,7 +127,8 @@ const translations = {
       'updateDownloading': 'Une mise-à-jour est disponible. L\'app va bientôt redémarrer.',
       'badRequest': 'Une erreur est survenue. Le serveur n\'a pas compris votre requête.',
       'invalidRestart': 'Impossible de charger la dernière partie.',
-      'startAdminOnly': 'Seul l\'hôte peut démarrer la partie.'
+      'startAdminOnly': 'Seul l\'hôte peut démarrer la partie.',
+      'gameStartedAlready': 'La partie a déjà démarré.'
     },
     notifications: {
       'adminLeft': 'L\'hôte a quitté la partie.',

@@ -34,22 +34,6 @@
         </tbody>
       </table>
     </div>
-    <div class="start-window" :show="ready">
-      <div class="header">
-        {{ time }}
-      </div>
-      <div class="message">
-        {{ $t('room.everyoneHereShallStart') }}
-      </div>
-      <v-touch tag="div" class="back" @tap="updateState">
-        {{ $t('back') }}
-      </v-touch>
-      <div class="continue">
-        <v-touch tag="span" @tap="start" class="text">
-          {{ $t('start') }}
-        </v-touch>
-      </div>
-    </div>
     <div class="continue" :disabled="ready">
       <v-touch tag="span" @tap="updateState" class="text" v-if="!spin">
         {{ (me.state) ? $t('cancel') : $t('room.ready') }}
@@ -70,8 +54,6 @@
       return {
         spin: false,
         timeout: null,
-        countDownTimeOut: null,
-        time: 5,
         player: {},
         room: {},
         started: false
@@ -93,7 +75,7 @@
       },
       ready () {
         return typeof this.players.find((p) => {
-          return p.state === 0;
+          return p.state <= 0;
         }) === 'undefined' && this.me.admin && this.players.length === 4;
       },
       me () {
@@ -116,7 +98,6 @@
     },
     methods: {
       updateState () {
-        clearTimeout(this.countDownTimeOut);
         this.$store.dispatch('send', {
           H: 'UPDATE',
           B: {
@@ -129,16 +110,6 @@
         }).then(() => {
           this.spin = true;
         });
-      },
-      countDown (start) {
-        this.time = start;
-        if (start > 0) {
-          this.countDownTimeOut = setTimeout(() => {
-            this.countDown(start - 1);
-          }, 1000);
-        } else {
-          this.start();
-        }
       },
       start () {
         if (!this.started) {
@@ -155,6 +126,19 @@
         this.$emit('back');
         this.$store.dispatch('quit').then(null);
       },
+      authorize () {
+        const self = this;
+        self.$store.commit('setNotification', {
+          body: `${self.$t('room.everyoneHereShallStart')}`,
+          timer: {
+            timeout: 5,
+            value: true
+          },
+          callback (value) {
+            (value) ? self.start() : self.updateState();
+          }
+        });
+      },
       listener (socketStream) {
         this.spin = false;
         this.$store.dispatch('readSocket', {
@@ -163,8 +147,8 @@
         }).then((data) => {
           if (data.H === 'GAME') {
             this.$store.commit('setSession', data.B);
-            if (this.ready) {
-              this.countDown(5);
+            if (this.ready && !this.started) {
+              this.authorize();
             }
           } else if (data.H === 'RESET') {
             this.$store.commit('setNotification', {
@@ -192,14 +176,13 @@
       this.$store.dispatch('registerListener', this.listener).then(() => {
         this.keepAlive(15000);
         if (this.ready) {
-          this.countDown(5);
+          this.authorize();
         }
       });
     },
     beforeDestroy () {
       this.$store.dispatch('removeListener', this.listener).then(() => {
         clearTimeout(this.timeout);
-        clearTimeout(this.countDownTimeOut);
       });
     }
   };
@@ -289,44 +272,6 @@
             }
           }
         }
-      }
-    }
-    .start-window {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 90vw;
-      max-width: 250px;
-      height: 90vw;
-      max-height: 250px;
-      background-color: $notification-background;
-      border-radius: 5px;
-      color: $notification-text-color;
-      font-family: BoldFont;
-      .header {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        padding: 15px 0;
-        text-align: center;
-        font-size: 30px;
-      }
-      .message {
-        text-align: center;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        transform: translate(-50%, -50%);
-      }
-      transition: opacity 200ms, transform 200ms;
-      pointer-events: none;
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8);
-      &[show] {
-        pointer-events: auto;
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
       }
     }
     .back,

@@ -91,7 +91,7 @@ class Card(object):
         Args:
             other (Card): other card to compare this one to
         Returns:
-            (bool): True if other is better than self
+            (bool): result of comparison
         """
         return self.is_better(other) < 0
 
@@ -100,6 +100,42 @@ class Card(object):
         Args:
             other (Card): other card to compare this one to
         Returns:
-            (bool): True if self is better than other
+            (bool): result of comparison
         """
         return self.is_better(other) > 0
+
+    def __eq__(self, other):
+        """Redefine '==' operator
+        Args:
+            other (Card): other card to compare this one to
+        Returns:
+            (bool): result of comparison
+        """
+        return self.is_better(other) == 0
+
+    def __ne__(self, other):
+        """Redefine '!=' operator
+        Args:
+            other (Card): other card to compare this one to
+        Returns:
+            (bool): result of comparison
+        """
+        return self.is_better(other) != 0
+
+    def __le__(self, other):
+        """Redefine '<=' operator
+        Args:
+            other (Card): other card to compare this one to
+        Returns:
+            (bool): result of comparison
+        """
+        return self.is_better(other) <= 0
+
+    def __ge__(self, other):
+        """Redefine '>=' operator
+        Args:
+            other (Card): other card to compare this one to
+        Returns:
+            (bool): result of comparison
+        """
+        return self.is_better(other) >= 0
