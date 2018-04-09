@@ -1,7 +1,7 @@
 from random import randint
 
-from classes.Game import Game
-from classes.Client import Client
+from Game import Game
+from Client import Client
 
 
 class Manager(object):
@@ -211,7 +211,7 @@ class Manager(object):
             raise Exception('invalidRoom')
         if client is None:
             raise Exception('invalidPlayer')
-        game.start_bets(client=client)
+        game.start(client=client)
         return self.output_game_to_all(game_id=game_id)
 
     def play(self, args):
@@ -234,6 +234,8 @@ class Manager(object):
             game.bet(client=client, bet=args.get('bet'))
         elif target == 'COINCHE':
             game.coinche(client=client)
+        elif target == 'CARD':
+            game.play(client=client, card_dict=args.get('card'))
         else:
             raise Exception('badRequest')
         return self.output_game_to_all(game_id=game_id)

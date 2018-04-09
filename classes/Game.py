@@ -1,23 +1,23 @@
 import random
 from time import time as UNIX_TIME_NOW
 
-from classes.Player import Player
-from classes.Engine import Engine
+from Player import Player
+from Engine import Engine
 
 
 class Game(object):
     """Room class to define a play room"""
+    __STATE_ROOM__ = 0
+    __STATE_BETS__ = 1
+    __STATE_PLAY__ = 2
+    __STATE_INTER__ = 3
+    __STATE_END__ = 4
+
     def __init__(self, game_id):
         """Constructor
         Args:
             game_id (int): unique identifier of the room
         """
-        self.__STATE_ROOM__ = 0
-        self.__STATE_BETS__ = 1
-        self.__STATE_PLAY__ = 2
-        self.__STATE_INTER__ = 3
-        self.__STATE_END__ = 4
-
         self.id = game_id
         self.ts = int(UNIX_TIME_NOW())
         self.admin_id = None
@@ -25,9 +25,10 @@ class Game(object):
         self.state = self.__STATE_ROOM__
         self.dealer = None
         self.order = None
-        self.scores = None
+        self.goal = None
         self.turn = None
         self.engine = None
+        self.won_auctions = None
 
     def output_for_client(self, client_id):
         """Output to JSON friendly object the game to a given client
@@ -41,46 +42,28 @@ class Game(object):
             'state': self.state,
             'players': []
         }
-        if self.state != self.__STATE_ROOM__:
-            nb_ply = len(self.players)
-            me_index = self.order.index(client_id)
-            for i in range(nb_ply):
-                ply = self.players.get(self.order[(me_index + i) % nb_ply])
-                output['players'].append(
-                    ply.output(
-                        private=True if ply.id == client_id else False,
-                        admin=self.admin_id == ply.id,
-                        dealer=self.dealer == ply.id,
-                        turn=self.turn == ply.id,
-                        can_coinche=self.engine.can_player_coinche(
-                            player=ply,
-                            turn=self.turn,
-                            order=self.order,
-                            players=self.players
-                        ) if self.state == self.__STATE_BETS__ else False
-                    )
+        nb_ply = len(self.players)
+        order = self.order
+        if order is None:
+            order = list(self.players.keys())
+        me_index = order.index(client_id)
+        for i in range(nb_ply):
+            ply = self.players.get(order[(me_index + i) % nb_ply])
+            output['players'].append(
+                ply.output(
+                    private=True if ply.id == client_id else False,
+                    admin=self.admin_id == ply.id,
+                    dealer=self.dealer == ply.id,
+                    turn=self.turn == ply.id,
+                    won_auctions=self.won_auctions == ply.id,
+                    can_coinche=self.engine.can_player_coinche(
+                        player=ply,
+                        turn=self.turn,
+                        order=order,
+                        players=self.players
+                    ) if self.state == self.__STATE_BETS__ else False
                 )
-            if self.scores is not None:
-                output['scores'] = {
-                    'us': self.scores[client_id],
-                    'them': self.scores[
-                        self.order[(self.order.index(client_id) + 1) % 4]
-                    ]
-                }
-        else:
-            nb_ply = len(self.players)
-            players = [p for p in self.players.values()]
-            me_index = players.index(self.players.get(client_id))
-            for i in range(nb_ply):
-                ply = players[(me_index + i) % nb_ply]
-                output['players'].append(
-                    ply.output(
-                        private=True if ply.id == client_id else False,
-                        admin=self.admin_id == ply.id,
-                        dealer=self.dealer == ply.id,
-                        turn=self.turn == ply.id
-                    )
-                )
+            )
         return output
 
     def new_player(self, client, name, is_admin=False):
@@ -149,31 +132,50 @@ class Game(object):
         """
         return len(self.players) == 0
 
-    def start_bets(self, client):
-        """Start the game
+    def start(self, client):
+        """Start to bet or the play. Trigger possible only by admin
         Args:
-            client (Client): client reference of the game starter
+            client (Client): client reference of the admin
         """
         if client.id != self.admin_id:
             raise Exception('startAdminOnly')
-        if self.state > self.__STATE_ROOM__:
-            raise Exception('gameStartedAlready')
+        if self.state in (self.__STATE_ROOM__, self.__STATE_INTER__):
+            self.start_bets()
+        elif self.state == self.__STATE_BETS__:
+            self.start_play()
+
+    def start_bets(self):
+        """Start bets phase
+        """
+        if self.state == self.__STATE_BETS__:
+            raise Exception('betsStartedAlready')
         self.state = self.__STATE_BETS__
         if self.dealer is None:
             self.dealer = random.choice([k for k in self.players.keys()])
         if self.order is None:
             ids = self.players.keys()
             self.order = random.sample(ids, len(ids))
-        if self.scores is None:
-            self.scores = dict({
-                i: 0 for i in self.order
-            })
+        if self.goal is None:
+            self.goal = 1000
         self.turn = self.order[(self.order.index(self.dealer) + 1) % 4]
         self.engine = Engine()
-        self.engine.deal(
+        self.engine.init_bets_phase(
             players=self.players,
             order=self.order,
             dealer=self.dealer
+        )
+
+    def start_play(self):
+        """Start play phase
+        """
+        if self.state == self.__STATE_PLAY__:
+            raise Exception('gameStartedAlready')
+        self.state = self.__STATE_PLAY__
+        self.turn = self.order[(self.order.index(self.dealer) + 1) % 4]
+        self.won_auctions = self.engine.init_play_phase(
+            players=self.players,
+            order=self.order,
+            turn=self.turn
         )
 
     def coinche(self, client):
@@ -185,7 +187,9 @@ class Game(object):
             raise Exception('playerNotInRoom')
         if self.state != self.__STATE_BETS__:
             raise Exception('badRequest')
-        print(client.output())
+        player = self.players.get(client.id)
+        player.coinche = True
+        self.turn = None
 
     def bet(self, client, bet=None):
         """Client bets something
@@ -203,9 +207,49 @@ class Game(object):
         self.turn, phase = self.engine.bet(
             players=self.players,
             order=self.order,
-            player=self.players.get(client.id),
+            turn=self.turn,
             bet=bet
         )
         if self.turn is None and phase == self.engine.__PHASE_END__:
             self.state = self.__STATE_INTER__
 
+    def play(self, client, card_dict):
+        """Play a card
+        Args:
+            client (Client): client reference of the player
+            card_dict (dict): card to play in client's hand
+        """
+        if client.id not in self.order:
+            raise Exception('playerNotInRoom')
+        if self.state != self.__STATE_PLAY__:
+            raise Exception('badRequest')
+        if client.id != self.turn:
+            raise Exception('badRequest')
+        self.turn, phase = self.engine.play(
+            players=self.players,
+            order=self.order,
+            turn=self.turn,
+            card_dict=card_dict
+        )
+        if phase == self.engine.__PHASE_END__:
+            self.engine.end_play_phase(
+                players=self.players,
+                order=self.order
+            )
+            if self.is_game_finished():
+                self.state = self.__STATE_END__
+            else:
+                self.state = self.__STATE_INTER__
+
+    def is_game_finished(self):
+        """Determine if game is finished or not.
+        Returns:
+            (Boolean): True if game is finished
+        """
+        p0 = self.players.get(self.order[0])
+        total_p0 = sum([g.get('stakes') for g in p0.history])
+        p1 = self.players.get(self.order[1])
+        total_p1 = sum([g.get('stakes') for g in p1.history])
+        if total_p0 >= self.goal or total_p1 >= self.goal:
+            return True
+        return False

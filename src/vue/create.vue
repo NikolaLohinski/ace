@@ -4,7 +4,7 @@
       {{ $t('create.chooseNickname') }}
     </div>
     <form @submit.prevent="create(name.length > 0)">
-      <input type="text" v-model="name" v-focus />
+      <input type="text" v-model="name"/>
     </form>
     <v-touch tag="div" :disabled="name.length == 0" class="continue" @tap="create(name.length > 0)">
       <span v-if="!spin">{{ $t('create.create') }}</span>

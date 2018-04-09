@@ -1,10 +1,16 @@
 <template>
   <div class="game">
-    <cards :hand="hand" :auction="bets && me.turn" :moveup="bidding">
+    <cards :players="players" :auction="bets && me.turn"
+           @card="play"
+           :turn="me.turn"
+           :moveup="bidding">
     </cards>
     <gamemenu @pause="updateState" @quit="quit">
     </gamemenu>
-    <buzzer :coinche-available="me.can_coinche" @coinche="coinche">
+    <buzzer :state="state"
+            :auction="auction"
+            :coinche-available="me.can_coinche"
+            @coinche="coinche">
     </buzzer>
     <auctions v-if="bets" :show="me.turn"
               :forbidden-prices="me.forbidden_bets"
@@ -25,7 +31,8 @@
   export default {
     data () {
       return {
-        timeout: null,
+        startTimeout: null,
+        keepAliveTimeout: null,
         bidding: false
       };
     },
@@ -40,22 +47,35 @@
         return (this.game['players']) ? this.game['players'] : [];
       },
       turn () {
-        return this.players.find(p => p.turn);
+        return this.players.filter((p) => !p.turn).pop();
       },
       admin () {
-        return this.players.find(p => p.admin);
+        return this.players.filter((p) => p.admin).pop();
       },
       me () {
         return (this.session) ? this.game.players[0] : {};
-      },
-      hand () {
-        return (this.me) ? this.me['hand'] : [];
       },
       state () {
         return this.game['state'];
       },
       bets () {
-        return this.game['state'] === global.GAME_STATE_BETS;
+        return this.game['state'] === global.__STATE_BETS__;
+      },
+      wonAuctions () {
+        return this.players.filter((p) => p['won_auctions']).pop() || {};
+      },
+      auction () {
+        return (this.wonAuctions.bets) ? this.wonAuctions.bets[this.wonAuctions.bets.length - 1] : {};
+      },
+      coinchor () {
+        return this.players.filter((p) => {
+          return p.coinche &&
+            p !== this.wonAuctions &&
+            p !== this.players[(this.players.indexOf(this.wonAuctions) + 2) % 4];
+        }).pop();
+      },
+      surcoinchor () {
+        return this.players.filter((p) => p.coinche && p !== this.coinchor).pop();
       }
     },
     components: {
@@ -66,23 +86,86 @@
       Auctions
     },
     watch: {
+      players: {
+        deep: true,
+        handler () {
+          if (this.coinchor && this.bets) {
+            if (this.surcoinchor) {
+              this.$store.dispatch('vibrate').then(() => {
+                this.$store.commit('setNotification', {
+                  title: this.$t('game.surcoinched'),
+                  body: `${this.surcoinchor.name} ${this.$t('game.playerSurcoinched')}`
+                });
+              });
+            } else {
+              const self = this;
+              this.$store.dispatch('vibrate').then(() => {
+                if ([0, 2].indexOf(this.players.indexOf(this.coinchor)) !== -1) {
+                  this.$store.commit('setNotification', {
+                    title: this.$t('game.coinched'),
+                    body: `${this.coinchor.name} ${this.$t('game.playerCoinched')}`
+                  });
+                } else {
+                  this.$store.commit('setNotification', {
+                    body: `${this.coinchor.name} ${this.$t('game.playerCoinchedDoYouSurcoinche')}`,
+                    timer: {
+                      timeout: 3,
+                      value: false
+                    },
+                    callback (surcoinche) {
+                      if (surcoinche) {
+                        self.coinche();
+                      }
+                    }
+                  });
+                }
+              });
+            }
+          }
+          if (!this.turn && this.bets && this.me.admin) {
+            this.start();
+          }
+        }
+      },
       state (state) {
-        if (state === global.GAME_STATE_ROOM) {
+        if (state === global.__STATE_ROOM__) {
           this.$emit('redirect', 'room');
         }
       },
       turn (turn) {
         // If it is no ones turn and game is still bets, then set a timer of
         // 3s in case of coinche to start game
-        if (!turn && this.state === global.GAME_STATE_BETS) {}
+        if (!turn && this.bets && this.me.admin) {
+          this.start();
+        }
       }
     },
     methods: {
+      start () {
+        clearTimeout(this.startTimeout);
+        this.startTimeout = setTimeout(this.$store.dispatch, 3000, 'send', {
+          H: 'START',
+          B: this.$store.getters.session.client
+        });
+      },
       coinche () {
+        if (!this.surcoinchor) {
+          this.$store.dispatch('send', {
+            H: 'PLAY',
+            B: {
+              'target': 'COINCHE',
+              'id': this.$store.getters.session.client.id,
+              'game_id': this.$store.getters.session.client.game_id
+            }
+          });
+        }
+      },
+      play (card) {
         this.$store.dispatch('send', {
           H: 'PLAY',
           B: {
-            'target': 'COINCHE',
+            'target': 'CARD',
+            'card': card,
             'id': this.$store.getters.session.client.id,
             'game_id': this.$store.getters.session.client.game_id
           }
@@ -107,7 +190,7 @@
             'game_id': this.$store.getters.session.client['game_id'],
             'target': 'PLAYER',
             'key': 'state',
-            'value': global.PLAYER_DISCONNECTED
+            'value': global.__PLAYER_OFFLINE__
           }
         }).then(() => {
           this.$emit('redirect', 'home');
@@ -121,7 +204,7 @@
             'game_id': this.$store.getters.session.client['game_id'],
             'target': 'PLAYER',
             'key': 'state',
-            'value': (pause) ? global.PLAYER_STATE_PAUSE : global.PLAYER_STATE_READY
+            'value': (pause) ? global._PLAYER_PAUSE__ : global.__PLAYER_READY__
           }
         }).then(null);
       },
@@ -134,17 +217,17 @@
           this.$store.commit('setSession', data.B);
         }, null);
       },
-      keepAlive (timeout) {
-        this.timeout = setTimeout(() => {
+      keepAlive (keepAliveTimeout) {
+        this.keepAliveTimeout = setTimeout(() => {
           this.$store.dispatch('send', {
             H: 'ALIVE',
             B: {}
           }).then(() => {
-            this.keepAlive(timeout);
+            this.keepAlive(keepAliveTimeout);
           }, () => {
-            clearTimeout(this.timeout);
+            clearTimeout(this.keepAliveTimeout);
           });
-        }, timeout);
+        }, keepAliveTimeout);
       }
     },
     store: global.store,
@@ -155,7 +238,7 @@
     },
     beforeDestroy () {
       this.$store.dispatch('removeListener', this.listener).then(() => {
-        clearTimeout(this.timeout);
+        clearTimeout(this.keepAliveTimeout);
       });
     }
   };

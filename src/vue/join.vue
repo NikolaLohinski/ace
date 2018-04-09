@@ -4,7 +4,7 @@
         {{ $t('join.chooseNickname') }}
     </div>
     <form @submit.prevent="join">
-      <input type="text" v-model="name" maxlength="10" v-focus/>
+      <input type="text" v-model="name" maxlength="10"/>
     </form>
       <div class="title">
         {{ $t('join.chooseRoomId') }}

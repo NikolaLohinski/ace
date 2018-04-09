@@ -8,7 +8,7 @@
     </transition>
     <notification></notification>
     <devtools></devtools>
-    <spinner :loading="loading" text="loading"></spinner>
+    <spinner :loading="loading"></spinner>
   </div>
 </template>
 <script>
@@ -21,11 +21,13 @@
   import Devtools from './devtools.vue';
   import Notification from './notification.vue';
 
-  global.GAME_STATE_ROOM = 0;
-  global.GAME_STATE_BETS = 1;
-  global.PLAYER_DISCONNECTED = -1;
-  global.PLAYER_STATE_PAUSE = 0;
-  global.PLAYER_STATE_READY = 1;
+  global.__STATE_ROOM__ = 0;
+  global.__STATE_BETS__ = 1;
+  global.__STATE_PLAY__ = 2;
+  global.__STATE_END__ = 3;
+  global.__PLAYER_OFFLINE__ = -1;
+  global._PLAYER_PAUSE__ = 0;
+  global.__PLAYER_READY__ = 1;
 
   export default {
     data () {
@@ -68,6 +70,7 @@
       }
     },
     mounted () {
+      this.$store.commit('setLoading', true);
       this.$store.dispatch('loadSettings').then(() => {
         this.$store.dispatch('loadSession').then(() => {
           this.$store.commit('setLoading', false);

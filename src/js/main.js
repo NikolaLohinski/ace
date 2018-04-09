@@ -1,4 +1,5 @@
 'use strict';
+if (!Object.assign) Object.assign = require('object.assign').getPolyfill();
 /* 1. Import modules */
 import 'inobounce';
 import Vue from 'vue';
@@ -17,31 +18,32 @@ Vue.use(VueResource);
 // Use vue-touch 2.0 in Vue
 Vue.use(VueTouch, { name: 'v-touch' });
 // Custom directive to focus on insertion
-Vue.directive('focus', { 'inserted': (el) => el.focus() });
+// Vue.directive('focus', { 'inserted': (el) => el.focus() });
 
 /* 3. Set VueX state manager */
 Vue.use(VueX);
-const store = new VueX.Store(Store());
+Vm.store = new VueX.Store(Store);
 
 /* 4. Set VuexI18n internationalization plugin */
 // Initialize plugin
-Vue.use(VuexI18n.plugin, store);
+Vue.use(VuexI18n.plugin, Vm.store);
 // The second argument is the default language
-I18n(Vue, 'english');
-store.i18n = Vue.i18n;
+I18n(Vue);
+Vm.store.i18n = Vue.i18n;
+
 /* 5. Create Vue Virtual machine instance */
 // Create Vue machine
-global['vm'] = new Vue(Vm(store));
+global['vm'] = new Vue(Vm);
 
 /* 6. Save store instance globally */
 // Store vuex Store for components to reach out
-global['store'] = store;
+global['store'] = Vm.store;
 
 /* 7. Set auto reload tool on cache update */
 // To reload page whenever cache has been updated
 window.applicationCache.addEventListener('downloading', () => {
-  store.commit('setNotification', {
-    body: store.i18n.translate('notifications.updateDownloading')
+  global['store'].commit('setNotification', {
+    body: global['store'].i18n.translate('notifications.updateDownloading')
   });
 }, { once: true });
 window.applicationCache.addEventListener('updateready', () => {

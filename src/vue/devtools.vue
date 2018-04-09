@@ -118,9 +118,11 @@
             view: this.goView,
             session: this.$store.getters.session
           });
-          this.$store.commit('setNotification', {
-            title: 'Dev\'Tools',
-            body: 'Current session was saved'
+          this.closeAll(() => {
+            this.$store.commit('setNotification', {
+              title: 'Dev\'Tools',
+              body: 'Current session was saved'
+            });
           });
         } else {
           this.$store.commit('setNotification', {
@@ -244,23 +246,15 @@
       }
     },
     mounted () {
-      const originalLog = console.log;
-      const originalLogError = console.error;
+      // const originalLogError = console.error;
       if (localStorage['devtools']) {
         const stored = JSON.parse(localStorage['devtools']);
         this.goView = (stored['view']) ? stored['view'] : 'Home';
       }
-      console.log = (...args) => {
-        this.$store.commit('setNotification', {
-          title: 'console.log',
-          body: args.join(`<br/>`)
-        });
-        originalLog(...args);
-      };
-      console.error = (error) => {
-        this.logError(error);
-        originalLogError(error);
-      };
+      // console.error = (error) => {
+      //   this.logError(error);
+      //   originalLogError(error);
+      // };
       window.addEventListener('error', (e) => console.log(e));
       this.move(this.x, this.y);
       window.addEventListener('resize', () => {
@@ -277,7 +271,7 @@
     position: absolute;
     left: 0;
     top: 0;
-    z-index: 998;
+    z-index: 980;
     width: 100vw;
     height: 100vh;
     transition: background-color 200ms;

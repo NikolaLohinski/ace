@@ -1,16 +1,12 @@
 import Root from '../vue/root.vue';
-const Vm = {
+export default {
   el: '#app-container',
   components: {
     Root
   },
+  store: global.store,
   mounted () {
     // to make vue-resource available in store directly
     this.$store.commit('setHttp', this.$http);
   }
-};
-
-module.exports = (store) => {
-  Vm.store = store;
-  return Vm;
 };

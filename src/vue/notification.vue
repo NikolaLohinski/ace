@@ -39,7 +39,7 @@
         return this.buffer.length === 0;
       },
       activeNotification () {
-        return (this.bufferEmpty) ? null : this.buffer[0];
+        return (this.bufferEmpty) ? null : this.buffer[this.buffer.length - 1];
       },
       args () {
         return this.$store.getters.notification;
@@ -50,6 +50,7 @@
         deep: true,
         handler () {
           if (this.activeNotification) {
+            clearTimeout(this.timeout);
             if (this.activeNotification.timer) {
               this.countDown(
                 this.activeNotification.timer.timeout,
@@ -104,7 +105,7 @@
    @import '../scss/general';
   .notification {
     position: fixed;
-    z-index: 999;
+    z-index: 990;
     top: 0;
     left: 0;
     width: 100vw;
@@ -174,7 +175,7 @@
         }
       }
     }
-    [family] {
+    *[family] {
       width: 25px;
       height: 25px;
       display: inline-block;
@@ -182,30 +183,7 @@
       position: relative;
       top: 5px;
       margin: 0 5px;
-    }
-    [family='s'] {
-      background: $spades white;
-      background-size: 100%;
-    }
-    [family='SA'] {
-      background: $SA white;
-      background-size: 100%;
-    }
-    [family='TA'] {
-      background: $TA white;
-      background-size: 100%;
-    }
-    [family='c'] {
-      background: $clubs white;
-      background-size: 100%;
-    }
-    [family='d'] {
-      background: $diamonds white;
-      background-size: 100%;
-    }
-    [family='h'] {
-      background: $hearths white;
-      background-size: 100%;
+      background-color: white;
     }
   }
 </style>

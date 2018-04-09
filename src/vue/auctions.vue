@@ -23,7 +23,7 @@
             <div class="show-family" :family="family"></div>
             <ul class="list-of-prices">
               <li v-for="p in prices" :key="p">
-                <v-touch :disabled="forbiddenPrices.includes(p)"
+                <v-touch :disabled="forbiddenPrices.indexOf(p) !== -1"
                         tag="div" class="price value" @tap="price = p">
                   {{ p }}
                 </v-touch>
@@ -31,11 +31,11 @@
             </ul>
           </div>
           <div class="special-prices">
-              <v-touch tag="div" :disabled="forbiddenPrices.includes('gen')"
+              <v-touch tag="div" :disabled="forbiddenPrices.indexOf('gen') !== -1"
                        @tap="price = 'gen'" class="special-price value left">
                 {{ $t('game.gen')}}
               </v-touch>
-              <v-touch tag="div" :disabled="forbiddenPrices.includes('cap')"
+              <v-touch tag="div" :disabled="forbiddenPrices.indexOf('cap') !== -1"
                        @tap="price = 'cap'" class="special-price value right">
                 {{ $t('game.cap')}}
               </v-touch>
@@ -83,7 +83,7 @@
           body: `
             ${self.$t('game.confirmBet')}
             <br/>
-            ${['cap', 'gen'].includes(self.price) ? self.$t('game.' + self.price) : self.price}
+            ${(['cap', 'gen'].indexOf(self.price) !== -1) ? self.$t('game.' + self.price) : self.price}
             <div family="${self.family}">
             </div>
           `,
@@ -342,30 +342,6 @@
           line-height: 35px;
         }
       }
-    }
-    [family='s'] {
-      background: $spades;
-      background-size: 100%;
-    }
-    [family='SA'] {
-      background: $SA;
-      background-size: 100%;
-    }
-    [family='TA'] {
-      background: $TA;
-      background-size: 100%;
-    }
-    [family='c'] {
-      background: $clubs;
-      background-size: 100%;
-    }
-    [family='d'] {
-      background: $diamonds;
-      background-size: 100%;
-    }
-    [family='h'] {
-      background: $hearths;
-      background-size: 100%;
     }
     .fade-enter-active,
     .fade-leave-active {

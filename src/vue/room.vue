@@ -74,9 +74,9 @@
         return (this.game['players']) ? this.game['players'] : [];
       },
       ready () {
-        return typeof this.players.find((p) => {
-          return p.state <= 0;
-        }) === 'undefined' && this.me.admin && this.players.length === 4;
+        return this.players.every((p) => {
+          return p.state > 0;
+        }) && this.me.admin && this.players.length === 4;
       },
       me () {
         return (this.session) ? this.game.players[0] : {};
@@ -91,13 +91,14 @@
     watch: {
       state (state) {
         this.$store.commit('setLoading', false);
-        if (state !== global.GAME_STATE_ROOM) {
+        if (state !== global.__STATE_ROOM__) {
           this.$emit('redirect', 'game');
         }
       }
     },
     methods: {
-      updateState () {
+      updateState ($event) {
+        $event.preventDefault();
         this.$store.dispatch('send', {
           H: 'UPDATE',
           B: {
@@ -105,7 +106,7 @@
             'game_id': this.$store.getters.session.client['game_id'],
             'target': 'PLAYER',
             'key': 'state',
-            'value': (this.me.state) ? global.PLAYER_STATE_PAUSE : global.PLAYER_STATE_READY
+            'value': (this.me.state) ? global._PLAYER_PAUSE__ : global.__PLAYER_READY__
           }
         }).then(() => {
           this.spin = true;
@@ -246,6 +247,7 @@
               width: 10px;
               height: 10px;
               border-radius: 50%;
+              transition: background-color 200ms;
               background-color: red;
               display: inline-block;
               box-shadow: inset -1px 1px 2px rgba(0,0,0,0.2);

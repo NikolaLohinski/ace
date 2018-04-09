@@ -1,11 +1,15 @@
 <template>
   <div class="buzzer">
-    <v-touch tag="div" @tap="coinche" class="button" :disabled="!enable">
+    <v-touch tag="div" @tap="coinche" class="button" :disabled="!enable" v-if="bets">
       <div class="timer">
         <div class="liquid" :style="timerStyle"></div>
       </div>
       <div class="background"></div>
     </v-touch>
+    <div class="auction" v-if="playing">
+      <div class="family" :family="auction.family"></div>
+      <div class="price">{{ auction.price }}</div>
+    </div>
   </div>
 </template>
 <script>
@@ -27,6 +31,12 @@
           height: `${perc}%`,
           backgroundColor: color
         };
+      },
+      bets () {
+        return this.state === global.__STATE_BETS__;
+      },
+      playing () {
+        return this.state === global.__STATE_PLAY__;
       }
     },
     props: {
@@ -37,6 +47,16 @@
       timeout: {
         type: Number,
         default: 3.0
+      },
+      state: {
+        type: Number,
+        default: global.__STATE_BETS__
+      },
+      auction: {
+        type: Object,
+        default () {
+          return {};
+        }
       }
     },
     methods: {
@@ -130,6 +150,24 @@
           opacity: 0.6;
           transition: height .2s, background-color .2s;
         }
+      }
+    }
+    .auction {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 28%;
+      height: 28%;
+      text-align: center;
+      .family {
+        width: 40%;
+        height: 40%;
+        display: inline-block;
+        margin: 10px auto 0 auto;
+      }
+      .price {
+        font-size: 65%;
       }
     }
   }

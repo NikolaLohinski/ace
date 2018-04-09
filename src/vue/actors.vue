@@ -6,7 +6,7 @@
       <div class="bet" :overpassed="!isLeading(p) && betFamily(p)" v-if="p.bets.length > 0 && !p.turn && bets">
         {{
            (betPrice(p) === 0) ? $t('game.pass') :
-           (['cap', 'gen'].includes(betPrice(p))) ? $t(`game.${betPrice(p)}`) :
+           (['cap', 'gen'].indexOf(betPrice(p)) !== -1) ? $t(`game.${betPrice(p)}`) :
            betPrice(p)
         }}
         <div :family="betFamily(p)" class="family" v-if="betFamily(p)"></div>
@@ -15,7 +15,7 @@
     <div class="my-bet bet" v-if="bets && me.bets.length > 0 && !me.turn" :overpassed="!isLeading(me) && betFamily(me)">
       {{
          (betPrice(me) === 0) ? $t('game.pass') :
-         (['cap', 'gen'].includes(betPrice(me))) ? $t(`game.${betPrice(me)}`) :
+         (['cap', 'gen'].indexOf(betPrice(me)) !== -1) ? $t(`game.${betPrice(me)}`) :
          betPrice(me)
       }}
       <div :family="betFamily(me)" class="family" v-if="betFamily(me)"></div>
@@ -35,9 +35,9 @@
     },
     computed: {
       dealerCoinPosition () {
-        return this.players.findIndex((p) => {
+        return this.players.indexOf(this.players.filter((p) => {
           return p.dealer;
-        });
+        }).pop());
       },
       me () {
         return this.players[0];
@@ -51,9 +51,9 @@
           } else {
             const pricePly = this.betPrice(ply);
             const priceP = this.betPrice(p);
-            if (['cap', 'gen'].includes(pricePly)) {
+            if (['cap', 'gen'].indexOf(pricePly) !== -1) {
               return priceP !== 'gen';
-            } else if (['cap', 'gen'].includes(priceP)) {
+            } else if (['cap', 'gen'].indexOf(priceP) !== -1) {
               return pricePly === 'gen';
             } else {
               return parseInt(pricePly) > parseInt(priceP);
@@ -146,6 +146,7 @@
         width: 10px;
         height: 10px;
         border-radius: 50%;
+        transition: background-color 200ms;
         background-color: red;
         display: inline-block;
         position: relative;
@@ -270,6 +271,67 @@
         screen and (max-width: $max-xxs-width) {
           .name {
             display: none;
+          }
+          .state[playing] {
+            margin-right: 2px;
+          }
+          .other-player[pos='0'] .state[playing] {
+            &:after {
+              border-right-color: $default-text-color;
+              border-left-color: transparent;
+            }
+            &:before {
+              border-right-color: transparent;
+              border-left-color: $default-text-color;
+              animation: playingright 1s infinite ease;
+              @keyframes playingright {
+                0% {
+                  opacity: 0;
+                  transform: translate(-50%, -50%);
+                }
+                20% {
+                  opacity: 1;
+                  transform: translate(-50%, -50%);
+                }
+                80% {
+                  opacity: 1;
+                  transform: translate(-75%, -50%);
+                }
+                100% {
+                  opacity: 0;
+                  transform: translate(-75%, -50%);
+                }
+              }
+            }
+          }
+          .other-player[pos='1'] .state[playing] {
+            &:after {
+              border-right-color: $default-text-color;
+              border-bottom-color: transparent;
+            }
+            &:before {
+              border-right-color: transparent;
+              border-bottom-color: $default-text-color;
+              animation: playingdown 1s infinite ease;
+              @keyframes playingdown {
+                0% {
+                  opacity: 0;
+                  transform: translate(-50%, -50%);
+                }
+                20% {
+                  opacity: 1;
+                  transform: translate(-50%, -50%);
+                }
+                80% {
+                  opacity: 1;
+                  transform: translate(-50%, -25%);
+                }
+                100% {
+                  opacity: 0;
+                  transform: translate(-50%, -25%);
+                }
+              }
+            }
           }
         }
       }

@@ -1,7 +1,7 @@
-const Store = {
+export default {
   state: {
     socket: null,
-    loading: true,
+    loading: false,
     notification: {},
     view: null,
     http: null,
@@ -161,7 +161,7 @@ const Store = {
           const headers = args['headers'].split('||');
           const socketStream = args['socketStream'];
           const data = JSON.parse(socketStream['data']);
-          if (headers.includes(data['H'])) {
+          if (headers.indexOf(data['H']) !== -1) {
             resolve(data);
           } else {
             reject();
@@ -267,4 +267,3 @@ const Store = {
   }
 };
 
-module.exports = () => Store;

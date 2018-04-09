@@ -1,6 +1,7 @@
 const translations = {
   english: {
     loading: 'Loading',
+    ready: 'Ready',
     continue: 'Continue',
     back: 'Back',
     yes: 'Yes',
@@ -44,7 +45,12 @@ const translations = {
       'pleaseChoosePrice': 'Please choose a price for your bid on',
       'cap': 'All',
       'gen': 'Alone',
-      'confirmBet': 'Please confirm your bid:'
+      'confirmBet': 'Please confirm your bid:',
+      'coinched': 'Coinched',
+      'surcoinched': 'Over-coinched',
+      'playerCoinched': 'has coinched last auction !',
+      'playerCoinchedDoYouSurcoinche': 'has coinched last auction ! Do you want to over-coinche ?',
+      'playerSurcoinched': 'has over-coinched last auction !'
     },
     errors: {
       'noWebsocket': 'Websocket is not supported by this browser. How about Mozilla Firefox ?',
@@ -59,7 +65,9 @@ const translations = {
       'badRequest': 'An error occurred. The server rejected your request.',
       'invalidRestart': 'Impossible to reload last game.',
       'startAdminOnly': 'The admin only can start the game.',
-      'gameStartedAlready': 'The game already started.'
+      'gameStartedAlready': 'The game already started.',
+      'betsStartedAlready': 'The auctions already started.',
+      'cardIsForbidden': 'Impossible to play this card.'
     },
     notifications: {
       'adminLeft': 'The admin left the game.',
@@ -68,6 +76,7 @@ const translations = {
   },
   french: {
     loading: 'Chargement',
+    ready: 'Prêt',
     continue: 'Continuer',
     back: 'Retour',
     yes: 'Oui',
@@ -111,7 +120,12 @@ const translations = {
       'pleaseChoosePrice': 'Choissisez une valeur pour votre annonce à',
       'cap': 'Capot',
       'gen': 'Générale',
-      'confirmBet': 'Veuillez confirmer votre annonce :'
+      'confirmBet': 'Veuillez confirmer votre annonce :',
+      'coinched': 'Coinché',
+      'surcoinched': 'Sur-coinché',
+      'playerCoinched': 'a coinché la dernière annonce !',
+      'playerCoinchedDoYouSurcoinche': 'a coinché la dernière annonce ! On sur-coinche ?',
+      'playerSurcoinched': 'a sur-coinché la dernière annonce !'
     },
     errors: {
       'noWebsocket': 'Les Websocket ne sont pas prises en charge par ce navigateur. Essayez Mozilla Firefox.',
@@ -128,7 +142,9 @@ const translations = {
       'badRequest': 'Une erreur est survenue. Le serveur n\'a pas compris votre requête.',
       'invalidRestart': 'Impossible de charger la dernière partie.',
       'startAdminOnly': 'Seul l\'hôte peut démarrer la partie.',
-      'gameStartedAlready': 'La partie a déjà démarré.'
+      'gameStartedAlready': 'La partie a déjà démarré.',
+      'betsStartedAlready': 'Les enchères ont déjà démarré.',
+      'cardIsForbidden': 'Impossible de jouer cette carte.'
     },
     notifications: {
       'adminLeft': 'L\'hôte a quitté la partie.',
@@ -137,10 +153,10 @@ const translations = {
   }
 };
 
-module.exports = (vue, defaultLanguage) => {
+export default (vue) => {
   // Add languages
   vue.i18n.add('english', translations.english);
   vue.i18n.add('french', translations.french);
   // Set default
-  vue.i18n.set(defaultLanguage);
+  vue.i18n.set('english');
 };

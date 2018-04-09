@@ -59,3 +59,28 @@ $min-xl-width: 1200px;
     $rot: ($rot + $angle);
   }
 }
+
+*[family='s'] {
+  background: $spades;
+  background-size: 100%;
+}
+*[family='SA'] {
+  background: $SA;
+  background-size: 100%;
+}
+*[family='TA'] {
+  background: $TA;
+  background-size: 100%;
+}
+*[family='c'] {
+  background: $clubs;
+  background-size: 100%;
+}
+*[family='d'] {
+  background: $diamonds;
+  background-size: 100%;
+}
+*[family='h'] {
+  background: $hearths;
+  background-size: 100%;
+}

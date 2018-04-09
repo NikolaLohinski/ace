@@ -2,7 +2,7 @@ import jsonpickle
 import os.path
 from tornado import ioloop, web, websocket
 
-from classes.Manager import Manager
+from Manager import Manager
 
 _DEFAULT_PORT_ = 8080
 
