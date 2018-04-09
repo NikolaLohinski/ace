@@ -5,7 +5,6 @@ import 'inobounce';
 import Vue from 'vue';
 import VueX from 'vuex';
 import VueTouch from 'vue-touch';
-import VueCanvas from 'vue-easeljs';
 import VuexI18n from 'vuex-i18n';
 import VueResource from 'vue-resource';
 import Store from './store.js';
@@ -13,7 +12,6 @@ import Vm from './vm.js';
 import I18n from './i18n.js';
 
 /* 2. Set global directives */
-Vue.use(VueCanvas);
 Vue.use(VueResource);
 // Use vue-touch 2.0 in Vue
 Vue.use(VueTouch, { name: 'v-touch' });
@@ -41,11 +39,6 @@ global['store'] = Vm.store;
 
 /* 7. Set auto reload tool on cache update */
 // To reload page whenever cache has been updated
-window.applicationCache.addEventListener('downloading', () => {
-  global['store'].commit('setNotification', {
-    body: global['store'].i18n.translate('notifications.updateDownloading')
-  });
-}, { once: true });
 window.applicationCache.addEventListener('updateready', () => {
   window.location.reload();
 });

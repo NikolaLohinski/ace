@@ -102,5 +102,5 @@ ENV/
 
 node_modules
 .idea
-out
+dist
 package-lock.json

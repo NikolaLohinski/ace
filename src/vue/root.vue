@@ -13,7 +13,7 @@
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
-  @import '../scss/general';
+  @import '../scss/style';
   .root {
     position: fixed;
     top: 0;
