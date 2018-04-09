@@ -1,82 +1,15 @@
 <template>
-  <div class="root" id="root-identifier">
-    <transition name="transition" mode="out-in">
-      <component :is="view"
-                 @back="back"
-                 @redirect="redirect">
-      </component>
-    </transition>
-    <notification></notification>
-    <devtools></devtools>
-    <spinner :loading="loading"></spinner>
+  <div class="root">
+    <home></home>
   </div>
 </template>
 <script>
   import Home from './home.vue';
-  import Create from './create.vue';
-  import Join from './join.vue';
-  import Room from './room.vue';
-  import Game from './game.vue';
-  import Spinner from './spinner.vue';
-  import Devtools from './devtools.vue';
-  import Notification from './notification.vue';
-
-  global.__STATE_ROOM__ = 0;
-  global.__STATE_BETS__ = 1;
-  global.__STATE_PLAY__ = 2;
-  global.__STATE_END__ = 3;
-  global.__PLAYER_OFFLINE__ = -1;
-  global._PLAYER_PAUSE__ = 0;
-  global.__PLAYER_READY__ = 1;
-
   export default {
-    data () {
-      return {
-        history: []
-      };
-    },
-    computed: {
-      view () {
-        return this.$store.getters.view;
-      },
-      loading () {
-        return this.$store.getters.loading;
-      }
-    },
     components: {
-      Home,
-      Create,
-      Join,
-      Spinner,
-      Room,
-      Game,
-      Devtools,
-      Notification
+      Home
     },
-    store: global.store,
-    methods: {
-      redirect (link) {
-        if (link === 'home') {
-          this.history = [];
-        } else {
-          this.history.push(this.view);
-        }
-        this.$store.commit('setView', link);
-      },
-      back () {
-        let link = this.history.pop();
-        if (!link) link = 'home';
-        this.$store.commit('setView', link);
-      }
-    },
-    mounted () {
-      this.$store.commit('setLoading', true);
-      this.$store.dispatch('loadSettings').then(() => {
-        this.$store.dispatch('loadSession').then(() => {
-          this.$store.commit('setLoading', false);
-        });
-      });
-    }
+    store: global.store
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
@@ -92,32 +25,5 @@
     background-size: cover;
     font-family: DefaultFont;
     color: $default-text-color;
-    &[vibrate] {
-        animation-name: shake;
-        animation-duration: 1s;
-        transform-origin:50% 50%;
-        animation-timing-function: linear;
-    }
-  }
-  .transition-leave-active,
-  .transition-enter-active {
-    transition: opacity .1s;
-  }
-  .transition-leave-to,
-  .transition-enter {
-    opacity: 0;
-  }
-  @keyframes shake {
-    0% { -webkit-transform: translate(2px, 1px) rotate(0deg); }
-    10% { -webkit-transform: translate(-1px, -2px) rotate(-1deg); }
-    20% { -webkit-transform: translate(-3px, 0px) rotate(1deg); }
-    30% { -webkit-transform: translate(0px, 2px) rotate(0deg); }
-    40% { -webkit-transform: translate(1px, -1px) rotate(1deg); }
-    50% { -webkit-transform: translate(-1px, 2px) rotate(-1deg); }
-    60% { -webkit-transform: translate(-3px, 1px) rotate(0deg); }
-    70% { -webkit-transform: translate(2px, 1px) rotate(-1deg); }
-    80% { -webkit-transform: translate(-1px, -1px) rotate(1deg); }
-    90% { -webkit-transform: translate(2px, 2px) rotate(0deg); }
-    100% { -webkit-transform: translate(1px, -2px) rotate(-1deg); }
   }
 </style>
