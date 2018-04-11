@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "add-to-homescreen": "^3.2.6",
-    "inobounce": "^0.1.5",
+    "cube-ui": "^1.7.3",
     "flag-icon-css": "^3.0.0",
+    "inobounce": "^0.1.5",
     "vue": "^2.3.3",
     "vue-resource": "^1.3.5",
+    "vue-router": "^3.0.1",
+    "vue-simple-markdown": "^1.0.6",
     "vue-touch": "^2.0.0-beta.4",
     "vuex": "^2.3.1",
     "vuex-i18n": "^1.10.4"
@@ -45,8 +48,21 @@
     "vue-html-loader": "^1.2.4",
     "vue-loader": "^11.3.4",
     "vue-template-compiler": "^2.1.10",
-    "webpack": "^2.3.3",
-    "webpack-dev-server": "^2.4.5"
+    "webpack": "^3.11.0",
+    "webpack-dev-server": "^2.4.5",
+    "webpack-transform-modules-plugin": "^0.3.1"
+  },
+  "transformModules": {
+    "cube-ui": {
+      "transform": "cube-ui/lib/${member}",
+      "kebabCase": true,
+      "style": {
+        "ignore": [
+          "create-api",
+          "better-scroll"
+        ]
+      }
+    }
   },
   "repository": {
     "type": "git",

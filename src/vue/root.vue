@@ -1,14 +1,10 @@
 <template>
   <div class="root">
-    <home></home>
+    <router-view></router-view>
   </div>
 </template>
 <script>
-  import Home from './home.vue';
   export default {
-    components: {
-      Home
-    },
     store: global.store
   };
 </script>
@@ -21,7 +17,7 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: $table-texture;
+    background-color: $general-background;
     background-size: cover;
     font-family: DefaultFont;
     color: $default-text-color;

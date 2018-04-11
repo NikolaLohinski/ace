@@ -2,6 +2,7 @@ const Webpack = require('webpack');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const AppCachePlugin = require('appcache-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+const TransformModulesPlugin = require('webpack-transform-modules-plugin')
 module.exports = {
   entry: {
     'app.js': './src/js/main.js'
@@ -12,7 +13,8 @@ module.exports = {
   },
   resolve: {
     alias: {
-      vue: 'vue/dist/vue.js'
+      'vue': 'vue/dist/vue.js',
+      'cube-ui': 'cube-ui/lib'
     }
   },
   devServer: {
@@ -71,6 +73,7 @@ module.exports = {
     ]
   },
   plugins: [
+    new TransformModulesPlugin(),
     new FaviconsWebpackPlugin({
       logo: './src/img/ace-logo.png',
       prefix: 'assets/',

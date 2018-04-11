@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="settings">
   </div>
 </template>
 <script>
@@ -8,6 +8,6 @@
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
-  @import '../scss/style';
-  .home {}
+  @import '../../scss/style';
+  .settings {}
 </style>
