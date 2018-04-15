@@ -89,7 +89,6 @@ module.exports = {
       filename: 'index.html'
     }),
     new AppCachePlugin({
-      network: ['*'],
       output: 'cache.manifest'
     }),
     new Webpack.DefinePlugin({

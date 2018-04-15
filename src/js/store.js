@@ -1,4 +1,10 @@
 export default {
+  mutations: {
+    language (state, language) {
+      state.i18n.locale = language;
+      localStorage['language'] = language;
+    }
+  },
   getters: {
     language (state) {
       return state.i18n.locale;

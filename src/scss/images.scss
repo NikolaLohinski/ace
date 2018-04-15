@@ -1,1 +1,6 @@
-$logo: url('~/src/img/ace-logo.png');
+$center-logo: url('#{$img-path}/center-logo.png');
+$home-background-image-1920x1080: url('#{$img-path}/home-background-1920x1080.png');
+$home-background-image-1280x720: url('#{$img-path}/home-background-1280x720.png');
+$home-background-image-800x600: url('#{$img-path}/home-background-800x600.png');
+$home-background-image-400x600: url('#{$img-path}/home-background-400x600.png');
+$dealer-coin: url('#{$img-path}/dealer-coin.png');

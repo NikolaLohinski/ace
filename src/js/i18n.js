@@ -1,9 +1,41 @@
 const translations = {
   'en-EN': {
-    'home': {}
+    'currentLanguage': 'English',
+    'home': {
+      'playOffline': 'Offline'
+    },
+    'settings': {
+      'title': 'Settings',
+      'set': 'Set',
+      'cancel': 'Cancel',
+      'changeLanguage': 'Language ACE',
+      'pleaseChooseName': 'Public ACE name'
+    },
+    'scores': {
+      'title': 'Scores'
+    },
+    'menu': {
+      'title': 'Menu'
+    }
   },
   'fr-FR': {
-    'home': {}
+    'currentLanguage': 'Français',
+    'home': {
+      'playOffline': 'Hors-ligne'
+    },
+    'settings': {
+      'title': 'Options',
+      'set': 'Ok',
+      'cancel': 'Annuler',
+      'changeLanguage': 'Langue de ACE',
+      'pleaseChooseName': 'Votre pseudo ACE'
+    },
+    'scores': {
+      'title': 'Scores'
+    },
+    'menu': {
+      'title': 'Menu'
+    }
   }
 };
 

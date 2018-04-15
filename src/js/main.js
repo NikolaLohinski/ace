@@ -31,6 +31,7 @@ Vm.router = new VueRouter(Router);
 Vue.use(VuexI18n.plugin, Vm.store);
 I18n(Vue);
 Vm.store.i18n = Vue.i18n;
+Vm.store.router = Vm.router;
 
 global['vm'] = new Vue(Vm);
 global['store'] = Vm.store;

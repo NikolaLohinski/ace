@@ -1,0 +1,22 @@
+.cube-btn {
+  border-radius: 4px;
+  background-color: $lighter-background;
+  border: 1px solid $default-border-color;
+  color: $default-text-color;
+  font-family: DefaultFont;
+  &:active {
+    background-color: $active-button-background-color;
+  }
+}
+
+.cube-picker-choose {
+  cursor: pointer;
+  font-family: DefaultFont;
+  > [data-action=confirm],
+  > [data-action=cancel] {
+    color: $default-text-color;
+    &:active {
+      color: $link-text-color;
+    }
+  }
+}
