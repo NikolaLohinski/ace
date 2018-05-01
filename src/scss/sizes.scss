@@ -1,0 +1,33 @@
+$widths: (
+  'xs': 350px,
+  's': 450px,
+  'm': 650px,
+  'l': 1000px
+);
+
+$heights: (
+  's': 350px,
+  'm': 500px,
+  'l': 600px
+);
+
+@mixin answer-to-width($size) {
+  @if not map-has-key($widths, $size) {
+    @warn 'Key `#{$size}` not found in $widths map.';
+  }
+  $_size: map_get($widths, $size);
+  @media screen and (max-device-width: $_size),
+    screen and (max-width: $_size) {
+    @content;
+  }
+}
+@mixin answer-to-height($size) {
+  @if not map-has-key($heights, $size) {
+    @warn 'Key `#{$size}` not found in $heights map.';
+  }
+  $_size: map_get($heights, $size);
+  @media screen and (max-device-height: $_size),
+    screen and (max-height: $_size) {
+    @content;
+  }
+}

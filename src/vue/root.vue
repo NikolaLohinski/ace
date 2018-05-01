@@ -36,7 +36,7 @@
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss">
-  @import '../scss/style';
+  @import '../scss/main';
   .root {
     position: fixed;
     top: 0;

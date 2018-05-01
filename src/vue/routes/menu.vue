@@ -5,6 +5,13 @@
     </v-header>
     <table>
       <tr>
+        <td style="vertical-align: top">
+          <cube-switch v-model="sortCards" class="item" disabled>
+            {{ $t('menu.sortCards') }}
+          </cube-switch>
+        </td>
+      </tr>
+      <tr>
         <td style="vertical-align: bottom">
           <v-link to="/" class="cube-btn item danger">
             {{ $t('menu.quit') }}
@@ -18,6 +25,11 @@
   import vLink from '../utils/link.vue';
   import vHeader from '../utils/header.vue';
   export default {
+    data () {
+      return {
+        sortCards: false
+      };
+    },
     components: {
       vHeader,
       vLink
@@ -27,6 +39,7 @@
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
   @import '../../scss/variables';
+  @import '../../scss/sizes';
   .menu {
     position: fixed;
     top: 0;
@@ -35,8 +48,8 @@
     bottom: 0;
     table {
       width: 100%;
-      height: calc(100% - #{$header-height} - 30px);
-      margin: 1px auto 0 auto;
+      height: calc(100% - #{$header-height} - 45px);
+      margin: 15px auto 0 auto;
       max-width: 500px;
       td {
         margin: 15px auto;
@@ -51,8 +64,7 @@
           &:first-child {
             margin-top: 0;
           }
-          @media screen and (max-width: 500px),
-          screen and (max-device-width: 500px) {
+          @include answer-to-width ('s') {
             border-radius: 0;
           }
         }

@@ -10,7 +10,7 @@
                   :status="p.status"
                   :position="i + 1">
     </other-player>
-    <dealer-coin :position="0"></dealer-coin>
+    <dealer-coin :position="1"></dealer-coin>
     <cards></cards>
     <auctions></auctions>
   </section>

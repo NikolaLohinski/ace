@@ -9,7 +9,7 @@
     background-color: $active-button-background-color;
   }
   &.danger {
-    color: $link-text-color;
+    color: $lighter-link-color;
     font-family: BoldFont;
   }
 }
@@ -27,6 +27,7 @@
 }
 
 .cube-picker-wheel-wrapper {
+  cursor: pointer;
   :nth-child(2) {
     ul.wheel-scroll {
       :nth-child(2),
@@ -34,5 +35,32 @@
         color: red;
       }
     }
+  }
+}
+
+.cube-switch {
+  border-radius: 4px;
+  background-color: $lighter-background;
+  border: 1px solid $default-border-color;
+  .cube-switch-input {
+    height: 100%;
+    right: 15px;
+    cursor: pointer;
+  }
+  .cube-switch-input:checked+.cube-switch-ui {
+    border-color: $lighter-link-color;
+    background-color: $lighter-link-color;
+  }
+  .cube-switch-input:disabled+.cube-switch-ui+.cube-switch-label {
+    opacity: 0.3;
+  }
+  .cube-switch-ui {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .cube-switch-label {
+    margin-left: 15px;
   }
 }

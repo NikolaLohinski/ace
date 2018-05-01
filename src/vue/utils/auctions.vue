@@ -1,18 +1,23 @@
 <template>
   <div class="auctions">
-    <div v-for="(auction, index) in auctions" :position="index" class="bet">
-      <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
-        {{ $t(`play.${auction.price}`) }}
-      </div>
-      <span v-else class="price">
-        {{ auction.price }}
+    <div v-for="(auction, index) in auctions" :position="index" class="bet" v-if="auction">
+      <span v-if="auction.price || auction.type !== 'pass'">
+        <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
+          {{ $t(`play.${auction.price}`) }}
+        </div>
+        <span v-else class="price">
+          {{ auction.price }}
+        </span>
+        <div v-if="auction.type === 'AA' || auction.type === 'NA'" class="type">
+          {{ $t(`play.${auction.type}`) }}
+        </div>
+        <span v-else>
+          <i :class="`card-icon ${auction.type}`" class="type">
+          </i>
+        </span>
       </span>
-      <div v-if="auction.type === 'AA' || auction.type === 'NA'" class="type">
-        {{ $t(`play.${auction.type}`) }}
-      </div>
-      <span v-else>
-        <i :class="`card-icon ${auction.type}`" class="type">
-        </i>
+      <span v-else class="pass">
+        {{ $t('play.pass')}}
       </span>
     </div>
     <nav v-if="showSelector">
@@ -49,10 +54,10 @@
           { text: this.$t('play.NA'), value: 'NA' }
         ],
         auctions: [
-          { price: 120, type: 's' },
+          null,
           { price: 90, type: 'c' },
-          { price: 80, type: 'd' },
-          { price: 'GEN', type: 'h' }
+          { price: null, type: 'pass' },
+          { price: 150, type: 'h' }
         ],
         showSelector: false
       };
@@ -77,6 +82,7 @@
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
+  @import '../../scss/sizes';
   .auctions {
     position: fixed;
     bottom: 0;
@@ -89,6 +95,10 @@
       text-align: center;
       font-size: 12px;
       z-index: 0;
+      .pass {
+        font-style: italic;
+        color: $lighter-text-color;
+      }
       .price {
         margin-bottom: 5px;
       }
@@ -115,14 +125,12 @@
         left: 25vw;
         transform: translate(0, -50%);
       }
-      @media screen and (max-height: 350px),
-      screen and (max-device-height: 350px) {
+      @include answer-to-height ('s') {
         &[position='0'] {
           bottom: 25vh;
         }
       }
-      @media screen and (max-width: 450px),
-      screen and (max-device-width: 450px) {
+      @include answer-to-width ('s') {
         &[position='1'] {
           right: 35px;
         }

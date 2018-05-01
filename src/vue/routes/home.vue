@@ -35,6 +35,9 @@
       </v-link>
     </section>
     <footer>
+      <v-link tag="div" to="/about" class="small-nav">
+        <i class="fa fa-question"></i>
+      </v-link>
       <v-link tag="div" to="/settings" class="small-nav">
         <i class="fa fa-cog"></i>
       </v-link>
@@ -54,6 +57,7 @@
   @import '../../scss/colors';
   $img-path: '../../img';
   @import '../../scss/images';
+  @import '../../scss/sizes';
   .home {
     position: fixed;
     top: 0;
@@ -68,8 +72,6 @@
       margin: 15px auto;
       tr.title {
         td {
-          font-size: 13vw;
-          line-height: 15vw;
           font-family: BoldFont;
           text-align: center;
           width: 33.33333%;
@@ -87,24 +89,23 @@
             background-size: 135% 135%;
             vertical-align: bottom;
           }
-          @media screen and (max-device-height: 350px),
-            screen and (max-height: 350px) {
+          font-size: 135px;
+          line-height: 135px;
+          @include answer-to-width ('l') {
+            font-size: 13vw;
+            line-height: 15vw;
+          }
+          @include answer-to-width ('m') {
+            font-size: 70px;
+            line-height: 70px;
+          }
+          @include answer-to-height ('s') {
             font-size: 70px;
             line-height: 70px;
             .logo {
               max-width: 20vh;
               max-height: 20vh;
             }
-          }
-          @media screen and (max-device-width: 500px),
-            screen and (max-width: 500px) {
-            font-size: 70px;
-            line-height: 70px;
-          }
-          @media screen and (min-device-width: 1000px) and (min-device-height: 350px),
-            screen and (min-width: 1000px) and (min-height: 350px){
-            font-size: 135px;
-            line-height: 135px;
           }
         }
       }
@@ -141,14 +142,14 @@
         text-align: center;
         transition: all 200ms ease;
         font-size: 20px;
-        width: 106px;
-        height: 106px;
+        width: 96px;
+        height: 96px;
         &:active {
           background-color: $active-button-background-color;
         }
         table {
-          width: 80px;
-          height: 80px;
+          width: 70px;
+          height: 70px;
           margin: 0;
           padding: 0;
           position: absolute;
@@ -162,19 +163,19 @@
         .name {
           position: absolute;
           bottom: -25px;
-          font-size: 18px;
+          font-size: 15px;
           left: 50%;
           transform: translateX(-50%);
           white-space: nowrap;
           text-align: center;
         }
       }
-
-      @media screen and (max-device-height: 350px),
-          screen and (max-height: 350px) {
+      @include answer-to-height ('m') {
         transform: none;
         top: auto;
         position: relative;
+      }
+      @include answer-to-height ('s') {
         .bubble {
           width: 76px;
           height: 76px;
@@ -197,8 +198,7 @@
       bottom: 15px;
       text-align: center;
       height: 50px;
-      @media screen and (max-device-height: 350px),
-            screen and (max-height: 350px) {
+      @include answer-to-height ('s') {
         bottom: 0;
       }
       .small-nav {

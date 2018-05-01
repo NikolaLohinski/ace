@@ -35,7 +35,7 @@
     data () {
       return {
         hand: ['7s', '8h', '9c', '10d', 'js', 'qh', 'kc', 'ad'],
-        forbidden: [],
+        forbidden: ['js', 'qh'],
         selected: null,
         turn: [
           // { index: 'ac', position: 1 },
@@ -43,7 +43,7 @@
           // { index: 'ah', position: 3 }
         ],
         leader: 1,
-        blockCards: true,
+        blockCards: false,
         auctions: false
       };
     },
@@ -72,6 +72,7 @@
   $img-cards-path: '../../img/cards';
   @import '../../scss/cards';
   @import '../../scss/colors';
+  @import '../../scss/sizes';
   $margin-turn-card: 30px;
   $play-card-transition-duration: 1s;
   .cards {
@@ -121,28 +122,23 @@
       &[auctions] {
         bottom: 65px;
       }
-      @media screen and (max-height: 500px),
-      screen and (max-device-height: 500px) {
+      @include answer-to-height ('m') {
         margin-bottom: -30px;
       }
-      @media screen and (max-height: 350px),
-      screen and (max-device-height: 350px) {
+      @include answer-to-height ('s') {
         margin-bottom: -50px;
       }
       .card {
         &:first-child {
           margin-left: auto !important;
         }
-        @media screen and (max-width: 650px),
-        screen and (max-device-width: 650px) {
+        @include answer-to-width ('m') {
           margin-left: -10px;
         }
-        @media screen and (max-width: 450px),
-        screen and (max-device-width: 450px) {
+        @include answer-to-width ('s') {
           margin-left: -25px;
         }
-        @media screen and (max-width: 350px),
-        screen and (max-device-width: 350px) {
+        @include answer-to-width ('xs') {
           margin-left: -30px;
         }
         @each $index in (1, 2, 3, 4, 5, 6, 7, 8) {

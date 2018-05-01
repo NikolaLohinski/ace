@@ -16,6 +16,7 @@
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   $img-path: '../../img';
   @import '../../scss/images';
+  @import '../../scss/sizes';
   .dealer-coin {
     background: $dealer-coin center;
     background-size: cover;
@@ -33,14 +34,12 @@
       top: 100%;
       transform: translate(-50%, -100%);
       margin-left: -100px;
-      margin-top: -50px;
-      @media screen and (min-height: 350px),
-      screen and (min-device-height: 350px) {
-        margin-top: -20vh;
+      margin-top: -100px;
+      @include answer-to-height ('s') {
+        margin-top: -50px;
       }
-      @media screen and (min-height: 600px),
-      screen and (min-device-height: 600px) {
-        margin-top: -100px;
+      @include answer-to-height ('l') {
+        margin-top: -20vh;
       }
     }
     &[position='3'] {

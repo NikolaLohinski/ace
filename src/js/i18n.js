@@ -14,7 +14,8 @@ const translations = {
     },
     'menu': {
       'title': 'Menu',
-      'quit': 'Quit'
+      'quit': 'Quit',
+      'sortCards': 'Sort cards'
     },
     'utils': {
       'ok': 'Ok',
@@ -23,10 +24,14 @@ const translations = {
     'play': {
       'bet': 'Bet',
       'pass': 'Pass',
+      'toPass': 'Pass',
       'CAP': 'All',
       'GEN': 'Alone',
       'AA': 'Assets only',
       'NA': 'No Assets'
+    },
+    'about': {
+      'title': 'About'
     }
   },
   'fr-FR': {
@@ -46,7 +51,8 @@ const translations = {
     },
     'menu': {
       'title': 'Menu',
-      'quit': 'Quitter'
+      'quit': 'Quitter',
+      'sortCards': 'Trier les cartes'
     },
     'utils': {
       'ok': 'Ok',
@@ -55,10 +61,14 @@ const translations = {
     'play': {
       'bet': 'Annonce',
       'pass': 'Passe',
+      'toPass': 'Passer',
       'CAP': 'Capot',
       'GEN': 'Générale',
       'AA': 'Tout Atout',
       'NA': 'Sans Atout'
+    },
+    'about': {
+      'title': 'À propos'
     }
   }
 };

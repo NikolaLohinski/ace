@@ -53,6 +53,7 @@
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
   @import '../../scss/variables';
+  @import '../../scss/sizes';
   .settings {
     position: fixed;
     top: 0;
@@ -87,8 +88,7 @@
             opacity: 0.6;
             font-style: italic;
           }
-          @media screen and (max-width: 500px),
-          screen and (max-device-width: 500px) {
+          @include answer-to-width ('s') {
             border-radius: 0;
           }
         }

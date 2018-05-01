@@ -25,6 +25,7 @@
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
+  @import '../../scss/sizes';
   $player-name-font-size: 12px;
   .other-player {
     position: absolute;
@@ -75,8 +76,7 @@
       color: $lighter-text-color;
       display: inline-block;
     }
-    @media screen and (max-width: 450px),
-    screen and (max-device-width: 450px) {
+    @include answer-to-width ('s') {
       .name {
         display: none;
       }
