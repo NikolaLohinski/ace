@@ -1,5 +1,7 @@
 <template>
-  <v-touch :tag="tag" @tap.prevent="goTo" link>
+  <v-touch :tag="tag" @tap.prevent="goTo"
+           @pressup.prevent="goTo"
+           link>
     <slot></slot>
   </v-touch>
 </template>
@@ -7,7 +9,13 @@
   export default {
     methods: {
       goTo () {
-        setTimeout(() => (this.to === '-1') ? this.$router.go(-1) : this.$router.push(this.to), 100);
+        setTimeout(() => {
+          if (this.append && this.to !== '-1') {
+            this.$router.push(this.$route.fullPath + this.to);
+          } else {
+            (this.to === '-1') ? this.$router.go(-1) : this.$router.push(this.to);
+          }
+        }, 100);
       }
     },
     props: {
@@ -18,6 +26,10 @@
       to: {
         type: String,
         required: true
+      },
+      append: {
+        type: Boolean,
+        default: false
       }
     }
   };

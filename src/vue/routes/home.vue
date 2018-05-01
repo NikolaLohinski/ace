@@ -1,5 +1,19 @@
 <template>
   <div class="home">
+    <table class="name">
+      <tr class="title">
+        <td>A</td>
+        <td>
+          <div class="logo"></div>
+        </td>
+        <td>E</td>
+      </tr>
+      <tr class="subtitle">
+        <td>Awesome</td>
+        <td class="red">Coinche</td>
+        <td>Entertainer</td>
+      </tr>
+    </table>
     <section>
       <v-link tag="div" to="/offline" class="bubble bubble-big">
         <table>
@@ -46,92 +60,160 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: $home-background-image-1920x1080 center;
-    background-size: cover;
-    @media screen and (max-device-width: 600px),
-           screen and (max-width: 600px) {
-      background: $home-background-image-400x600 center;
-      background-size: cover;
-    }
-    @media screen and (max-device-width: 800px),
-           screen and (max-width: 800px) {
-      background: $home-background-image-800x600 center;
-      background-size: cover;
-    }
-    @media screen and (max-device-width: 1280px),
-           screen and (max-width: 1280px) {
-      background: $home-background-image-1280x720 center;
-      background-size: cover;
-    }
-    .bubble {
-      position: relative;
-      display: inline-block;
-      padding: 5px;
-      border: 2px solid $bubble-border-color;
-      background-color: $bubble-background;
-      box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.51);
-      border-radius: 50%;
-      cursor: pointer;
-      color: $bubble-text-color;
-      text-shadow: 1px 1px 2px $bubble-text-color;
-      text-align: center;
-      transition: all 200ms ease;
-      font-size: 20px;
-      width: 106px;
-      height: 106px;
-      &:active {
-        background-color: $active-button-background-color;
-      }
-      table {
-        width: 80px;
-        height: 80px;
-        margin: 0;
-        padding: 0;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+    background-color: $general-background;
+    table.name {
+      width: 50vw;
+      max-width: 100%;
+      min-width: 280px;
+      margin: 15px auto;
+      tr.title {
         td {
-          padding-top: 3px;
+          font-size: 13vw;
+          line-height: 15vw;
+          font-family: BoldFont;
+          text-align: center;
+          width: 33.33333%;
+          vertical-align: middle;
+          text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+          .logo {
+            display: inline-block;
+            width: 15vw;
+            height: 15vw;
+            max-width: 150px;
+            max-height: 150px;
+            min-width: 80px;
+            min-height: 80px;
+            background: $ace-logo 50% 50%;
+            background-size: 135% 135%;
+            vertical-align: bottom;
+          }
+          @media screen and (max-device-height: 350px),
+            screen and (max-height: 350px) {
+            font-size: 70px;
+            line-height: 70px;
+            .logo {
+              max-width: 20vh;
+              max-height: 20vh;
+            }
+          }
+          @media screen and (max-device-width: 500px),
+            screen and (max-width: 500px) {
+            font-size: 70px;
+            line-height: 70px;
+          }
+          @media screen and (min-device-width: 1000px) and (min-device-height: 350px),
+            screen and (min-width: 1000px) and (min-height: 350px){
+            font-size: 135px;
+            line-height: 135px;
+          }
         }
       }
-      .name {
-        position: absolute;
-        bottom: -25px;
-        font-size: 18px;
-        left: 50%;
-        transform: translateX(-50%);
-        white-space: nowrap;
-        text-align: center;
+      tr.subtitle {
+        td {
+          font-size: 13px;
+          color: $lighter-text-color;
+          text-align: center;
+          width: 33.33333%;
+          &.red {
+            color: $link-text-color;
+          }
+        }
       }
-    }
-    .small-nav {
-      font-size: 35px;
-      width: 30px;
-      height: 30px;
-      line-height: 28px;
-      position: relative;
-      display: inline-block;
-      padding: 5px;
-      border-radius: 50%;
-      cursor: pointer;
-      color: $bubble-text-color;
-      text-shadow: 1px 1px 2px $bubble-text-color;
-      text-align: center;
-    }
-    footer {
-      position: absolute;
-      width: 100%;
-      bottom: 15px;
-      left: 0;
-      text-align: center;
     }
     section {
       position: absolute;
-      left: 50%;
+      left: 0;
+      right: 0;
       top: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateY(-50%);
       text-align: center;
+      .bubble {
+        position: relative;
+        display: inline-block;
+        padding: 5px;
+        border: 2px solid $bubble-border-color;
+        background-color: $bubble-background;
+        box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.51);
+        border-radius: 50%;
+        cursor: pointer;
+        color: $bubble-text-color;
+        text-shadow: 1px 1px 2px $bubble-text-color;
+        text-align: center;
+        transition: all 200ms ease;
+        font-size: 20px;
+        width: 106px;
+        height: 106px;
+        &:active {
+          background-color: $active-button-background-color;
+        }
+        table {
+          width: 80px;
+          height: 80px;
+          margin: 0;
+          padding: 0;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          td {
+            padding-top: 3px;
+          }
+        }
+        .name {
+          position: absolute;
+          bottom: -25px;
+          font-size: 18px;
+          left: 50%;
+          transform: translateX(-50%);
+          white-space: nowrap;
+          text-align: center;
+        }
+      }
+
+      @media screen and (max-device-height: 350px),
+          screen and (max-height: 350px) {
+        transform: none;
+        top: auto;
+        position: relative;
+        .bubble {
+          width: 76px;
+          height: 76px;
+          table {
+            width: 65px;
+            height: 65px;
+            font-size: 15px;
+          }
+          .name {
+            font-size: 15px;
+            bottom: -20px;
+          }
+        }
+      }
+    }
+    footer {
+      position: absolute;
+      right: 0;
+      left: 0;
+      bottom: 15px;
+      text-align: center;
+      height: 50px;
+      @media screen and (max-device-height: 350px),
+            screen and (max-height: 350px) {
+        bottom: 0;
+      }
+      .small-nav {
+        display: inline-block;
+        font-size: 30px;
+        line-height: 40px;
+        width: 40px;
+        height: 40px;
+        margin: 5px;
+        border-radius: 50%;
+        cursor: pointer;
+        color: $bubble-text-color;
+        text-shadow: 1px 1px 2px $bubble-text-color;
+        text-align: center;
+      }
     }
   }
 </style>

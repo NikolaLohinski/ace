@@ -11,4 +11,29 @@
 $fa-font-path: '../../node_modules/font-awesome/fonts';
 @import '../../node_modules/font-awesome/scss/font-awesome.scss';
 
+i.card-icon{
+  display: inline-block;
+  font-size: inherit;
+  text-rendering: auto;
+  transform: scale(1.1);
+  font-style: normal;
+  &.s:before {
+    content: '\2660';
+    font-family: DefaultFont
+  }
+  &.h:before {
+    content: '\2665';
+    color: red !important;
+    font-family: DefaultFont
+  }
+  &.c:before {
+    content: '\2663';
+    font-family: DefaultFont
+  }
+  &.d:before {
+    content: '\2666';
+    color: red !important;
+    font-family: DefaultFont;
+  }
+}
 

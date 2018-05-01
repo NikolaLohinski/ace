@@ -2,7 +2,6 @@
   <div class="other-player" :position="position">
     <div class="status" :status="status"></div>
     <div class="name">{{ name }}</div>
-    <div class="dealer-coin" v-if="dealer"></div>
   </div>
 </template>
 <script>
@@ -75,6 +74,12 @@
       float: left;
       color: $lighter-text-color;
       display: inline-block;
+    }
+    @media screen and (max-width: 450px),
+    screen and (max-device-width: 450px) {
+      .name {
+        display: none;
+      }
     }
   }
 </style>

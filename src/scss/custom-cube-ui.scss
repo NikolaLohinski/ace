@@ -5,7 +5,12 @@
   color: $default-text-color;
   font-family: DefaultFont;
   &:active {
+    color: white;
     background-color: $active-button-background-color;
+  }
+  &.danger {
+    color: $link-text-color;
+    font-family: BoldFont;
   }
 }
 
@@ -17,6 +22,17 @@
     color: $default-text-color;
     &:active {
       color: $link-text-color;
+    }
+  }
+}
+
+.cube-picker-wheel-wrapper {
+  :nth-child(2) {
+    ul.wheel-scroll {
+      :nth-child(2),
+      :nth-child(4) {
+        color: red;
+      }
     }
   }
 }

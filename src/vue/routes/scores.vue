@@ -1,6 +1,8 @@
 <template>
   <div class="scores">
-    <v-header :title="$t('scores.title')"></v-header>
+    <v-header back-to="/offline">
+      <i class="fa fa-trophy"></i>{{ $t('scores.title') }}
+    </v-header>
   </div>
 </template>
 <script>

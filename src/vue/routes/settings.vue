@@ -1,94 +1,96 @@
 <template>
   <div class="settings">
-    <v-header :title="$t('settings.title')"></v-header>
-    <section>
-      <cube-button @click="showPicker" class="option">
-        <span class="text-language">
-          {{ $t('settings.changeLanguage') }}
-        </span>
-        <span class="show-language">
-          <i class="fa fa-hand-o-right"></i>
-          {{ $t('currentLanguage') }}
-        </span>
-      </cube-button>
-    </section>
+    <v-header back-to="/">
+      <i class="fa fa-cog"></i>{{ $t('settings.title') }}
+    </v-header>
+    <table>
+      <tr>
+        <td>
+          <v-select :default="[languages.indexOf(language)]"
+                    :options="[languageOptions]"
+                    @select="(val) => $store.commit('language', val[0])"
+                    class="option">
+            <span class="text-language">{{ $t('settings.changeLanguage') }}</span>
+            <span class="show-language">
+              <i class="fa fa-hand-o-right"></i>{{ $t('currentLanguage') }}
+            </span>
+          </v-select>
+        </td>
+      </tr>
+    </table>
   </div>
 </template>
 <script>
   import vHeader from '../utils/header.vue';
+  import vSelect from '../utils/select.vue';
   export default {
-    data () {
-      return {
-        languageOptions: [
-          { text: 'English', value: 'en-EN' },
-          { text: 'Français', value: 'fr-FR' }
-        ]
-      };
-    },
     store: global.store,
-    methods: {
-      showPicker () {
-        this.picker.show();
-      },
-      createPicker () {
-        const self = this;
-        self.picker = self.$createPicker({
-          data: [self.languageOptions],
-          cancelTxt: self.$t('settings.cancel'),
-          confirmTxt: self.$t('settings.set'),
-          selectedIndex: [self.languages.indexOf(self.language)],
-          onValueChange (selectedVal) {
-            self.$store.commit('language', selectedVal[0]);
-            self.createPicker();
-          }
-        });
-      }
-    },
     computed: {
       language () {
         return this.$store.getters.language;
       },
       languages () {
         return this.$store.getters.languages;
+      },
+      languageOptions () {
+        const languageOptions = [];
+        for (let k = 0; k < this.languages.length; k++) {
+          const languageCode = this.languages[k];
+          languageOptions.push({
+            text: this.$i18n.translateIn(languageCode, 'currentLanguage'),
+            value: languageCode
+          });
+        }
+        return languageOptions;
       }
     },
     components: {
-      vHeader
-    },
-    mounted () {
-      this.createPicker();
+      vHeader,
+      vSelect
     }
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
+  @import '../../scss/variables';
   .settings {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    section {
-      padding: 15px 0;
+    table {
       width: 100%;
-      margin: 0 auto;
+      height: calc(100% - #{$header-height} - 45px);
+      margin: 15px auto 0 auto;
       max-width: 500px;
-      .option {
-        display: block;
-        height: 50px;
-        font-size: 15px;
-        margin: 5px auto;
-        .text-language {
-          float: left;
-        }
-        .show-language {
-          float: right;
-          opacity: 0.6;
-          font-style: italic;
-        }
-        @media screen and (max-width: 500px),
-        screen and (max-device-width: 500px) {
-          border-radius: 0;
+      td {
+        margin: 15px auto;
+        .option {
+          position: relative;
+          display: block;
+          height: 70px;
+          line-height: 70px;
+          font-size: 18px;
+          margin: -1px auto 0 auto;
+          padding: 0;
+          &:first-child {
+            margin-top: 0;
+          }
+          .text-language {
+            float: left;
+            margin-left: 15px;
+          }
+          .show-language {
+            float: right;
+            margin-right: 15px;
+            opacity: 0.6;
+            font-style: italic;
+          }
+          @media screen and (max-width: 500px),
+          screen and (max-device-width: 500px) {
+            border-radius: 0;
+          }
         }
       }
     }

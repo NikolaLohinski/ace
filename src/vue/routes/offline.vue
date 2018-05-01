@@ -4,15 +4,26 @@
       <v-link to="offline/scores" class="menu-btn right"><i class="fa fa-trophy"></i></v-link>
       <v-link to="offline/menu" class="menu-btn left"><i class="fa fa-bars"></i></v-link>
     </nav>
-    <other-player v-for="(p, i) in players" :name="p.name" :status="p.status" :position="i + 1">
+    <other-player v-for="(p, i) in players"
+                  :key="p.name"
+                  :name="p.name"
+                  :status="p.status"
+                  :position="i + 1">
     </other-player>
     <dealer-coin :position="0"></dealer-coin>
+    <cards></cards>
+    <auctions></auctions>
   </section>
 </template>
 <script>
+  import saveState from 'vue-save-state';
+
   import vLink from '../utils/link.vue';
   import otherPlayer from '../utils/other-player.vue';
   import dealerCoin from '../utils/dealer-coin.vue';
+  import Cards from '../utils/cards.vue';
+  import Auctions from '../utils/auctions.vue';
+
   export default {
     data () {
       return {
@@ -26,7 +37,17 @@
     components: {
       vLink,
       otherPlayer,
-      dealerCoin
+      dealerCoin,
+      Cards,
+      Auctions
+    },
+    mixins: [saveState],
+    methods: {
+      getSaveStateConfig () {
+        return {
+          'cacheKey': 'offline'
+        };
+      }
     }
   };
 </script>

@@ -6,8 +6,6 @@ const translations = {
     },
     'settings': {
       'title': 'Settings',
-      'set': 'Set',
-      'cancel': 'Cancel',
       'changeLanguage': 'Language ACE',
       'pleaseChooseName': 'Public ACE name'
     },
@@ -15,7 +13,20 @@ const translations = {
       'title': 'Scores'
     },
     'menu': {
-      'title': 'Menu'
+      'title': 'Menu',
+      'quit': 'Quit'
+    },
+    'utils': {
+      'ok': 'Ok',
+      'cancel': 'Cancel'
+    },
+    'play': {
+      'bet': 'Bet',
+      'pass': 'Pass',
+      'CAP': 'All',
+      'GEN': 'Alone',
+      'AA': 'Assets only',
+      'NA': 'No Assets'
     }
   },
   'fr-FR': {
@@ -34,7 +45,20 @@ const translations = {
       'title': 'Scores'
     },
     'menu': {
-      'title': 'Menu'
+      'title': 'Menu',
+      'quit': 'Quitter'
+    },
+    'utils': {
+      'ok': 'Ok',
+      'cancel': 'Annuler'
+    },
+    'play': {
+      'bet': 'Annonce',
+      'pass': 'Passe',
+      'CAP': 'Capot',
+      'GEN': 'Générale',
+      'AA': 'Tout Atout',
+      'NA': 'Sans Atout'
     }
   }
 };

@@ -32,8 +32,16 @@
       left: 50%;
       top: 100%;
       transform: translate(-50%, -100%);
-      margin-left: -70px;
-      margin-top: -30px;
+      margin-left: -100px;
+      margin-top: -50px;
+      @media screen and (min-height: 350px),
+      screen and (min-device-height: 350px) {
+        margin-top: -20vh;
+      }
+      @media screen and (min-height: 600px),
+      screen and (min-device-height: 600px) {
+        margin-top: -100px;
+      }
     }
     &[position='3'] {
       top: 50%;
