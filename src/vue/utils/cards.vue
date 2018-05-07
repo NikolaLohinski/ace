@@ -14,10 +14,10 @@
     <transition-group tag="div"
                       name="cards-hand"
                       class="hand"
-                      :auctions="auctions"
-                      :block-cards="blockCards">
+                      :move-up="moveUp"
+                      :disabled="disabled">
       <v-touch tag="div"
-               v-for="(card, index) in hand"
+               v-for="(card, index) in myHand"
                class="card"
                :forbidden="forbidden.indexOf(card) !== -1"
                :selected="index === selected"
@@ -30,38 +30,66 @@
   </v-touch>
 </template>
 <script>
-  // import saveState from 'vue-save-state';
   export default {
     data () {
       return {
-        hand: ['7s', '8h', '9c', '10d', 'js', 'qh', 'kc', 'ad'],
-        forbidden: ['js', 'qh'],
-        selected: null,
-        turn: [
-          // { index: 'ac', position: 1 },
-          // { index: '8s', position: 2 },
-          // { index: 'ah', position: 3 }
-        ],
-        leader: 1,
-        blockCards: false,
-        auctions: false
+        myHand: [],
+        selected: null
       };
     },
-    // mixins: [saveState],
+    props: {
+      forbidden: {
+        type: Array,
+        required: true,
+        validator (forbidden) {
+          let validate = true;
+          for (let k = 0; k < forbidden.length; k++) {
+            validate = validate && (this.hand.indexOf(forbidden[k]) !== -1);
+          }
+          return validate;
+        }
+      },
+      moveUp: {
+        type: Boolean,
+        default: false
+      },
+      disabled: {
+        type: Boolean,
+        default: true
+      },
+      turn: {
+        type: Array,
+        required: true,
+        validator (turn) {
+          return turn.length <= 4 && turn.length >= 0;
+        }
+      },
+      leader: {
+        type: Number,
+        required: true,
+        validator (leader) {
+          return leader <= 4 && leader >= -1;
+        }
+      }
+    },
+    watch: {
+      hand: {
+        deep: true,
+        handler (hand) {
+          this.myHand = hand;
+        }
+      }
+    },
     methods: {
-      // getSaveStateConfig () {
-      //   return {
-      //     'cacheKey': 'cards'
-      //   };
-      // },
       playCard ($event) {
         if (this.selected !== null) {
-          const card = this.hand.splice(this.selected, 1);
+          const card = this.myHand.splice(this.selected, 1);
           this.turn.push({
             index: card[0],
             position: 0
           });
           this.selected = null;
+          this.$emit('played', card[0]);
         }
         $event.preventDefault();
       }
@@ -82,6 +110,7 @@
     bottom: 0;
     right: 0;
     pointer-events: none;
+    z-index: 100;
     &[selection] {
       pointer-events: auto;
     }
@@ -116,10 +145,10 @@
       text-align: center;
       white-space: nowrap;
       pointer-events: auto;
-      &[block-cards] {
+      &[disabled] {
         pointer-events: none;
       }
-      &[auctions] {
+      &[move-up] {
         bottom: 65px;
       }
       @include answer-to-height ('m') {
@@ -143,7 +172,7 @@
         }
         @each $index in (1, 2, 3, 4, 5, 6, 7, 8) {
           &:nth-child(#{$index}) {
-            z-index: $index + 10;
+            z-index: $index + 100;
           }
         }
         &[selected] {
@@ -196,7 +225,7 @@
       }
       .cards-turn-enter-active {
         transition: opacity 0s $play-card-transition-duration;
-        z-index: 20;
+        z-index: 120;
       }
       .cards-turn-enter {
         opacity: 0;

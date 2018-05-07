@@ -6,9 +6,9 @@
     <table>
       <tr>
         <td style="vertical-align: top">
-          <cube-switch v-model="sortCards" class="item" disabled>
+          <v-switch v-model="sortCards" class="item" disabled>
             {{ $t('menu.sortCards') }}
-          </cube-switch>
+          </v-switch>
         </td>
       </tr>
       <tr>
@@ -24,6 +24,7 @@
 <script>
   import vLink from '../utils/link.vue';
   import vHeader from '../utils/header.vue';
+  import vSwitch from '../utils/switch.vue';
   export default {
     data () {
       return {
@@ -32,7 +33,8 @@
     },
     components: {
       vHeader,
-      vLink
+      vLink,
+      vSwitch
     }
   };
 </script>
@@ -56,9 +58,9 @@
         .item {
           display: block;
           position: relative;
-          height: 70px;
-          line-height: 70px;
-          font-size: 18px;
+          height: 50px;
+          line-height: 50px;
+          font-size: 16px;
           margin: -1px auto 0 auto;
           padding: 0;
           &:first-child {

@@ -24,7 +24,7 @@
       <div class="nav-bet">
         <v-select class="bet-option"
                   :options="options"
-                  @select="(val) => $emit('auction', val)"
+                  @select="bet"
                   :default="[]">
           {{ $t('play.bet') }}
         </v-select>
@@ -52,15 +52,21 @@
           { text: '♦', value: 'd' },
           { text: this.$t('play.AA'), value: 'AA' },
           { text: this.$t('play.NA'), value: 'NA' }
-        ],
-        auctions: [
-          null,
-          { price: 90, type: 'c' },
-          { price: null, type: 'pass' },
-          { price: 150, type: 'h' }
-        ],
-        showSelector: false
+        ]
       };
+    },
+    props: {
+      auctions: {
+        type: Array,
+        required: true,
+        validator (auctions) {
+          return auctions.length <= 4 && auctions.length >= 0;
+        }
+      },
+      showSelector: {
+        type: Boolean,
+        required: true
+      }
     },
     components: {
       vSelect
@@ -76,6 +82,11 @@
           });
         }
         return options;
+      }
+    },
+    methods: {
+      bet (bet) {
+        this.$emit('bet', bet);
       }
     }
   };

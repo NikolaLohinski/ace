@@ -4,45 +4,101 @@
       <v-link to="offline/scores" class="menu-btn right"><i class="fa fa-trophy"></i></v-link>
       <v-link to="offline/menu" class="menu-btn left"><i class="fa fa-bars"></i></v-link>
     </nav>
-    <other-player v-for="(p, i) in players"
+    <other-player v-for="(p, i) in otherPlayers"
                   :key="p.name"
                   :name="p.name"
                   :status="p.status"
                   :position="i + 1">
     </other-player>
-    <dealer-coin :position="1"></dealer-coin>
-    <cards></cards>
-    <auctions></auctions>
+    <dealer-coin :position="dealer"></dealer-coin>
+    <cards :forbidden="forbiddenCards"
+           :hand="hand"
+           :turn="turn"
+           :move-up="showBetSelector"
+           :disabled="disableCards"
+           :leader="leader"
+           @play="playCard">
+    </cards>
+    <auctions :auctions="auctions" :show-selector="showBetSelector" @bet="bet">
+    </auctions>
+    <buzzer :disabled="!coincheAvailable" @hit="coinche">
+    </buzzer>
   </section>
 </template>
 <script>
-  import saveState from 'vue-save-state';
+  // import saveState from 'vue-save-state';
 
   import vLink from '../utils/link.vue';
   import otherPlayer from '../utils/other-player.vue';
   import dealerCoin from '../utils/dealer-coin.vue';
   import Cards from '../utils/cards.vue';
   import Auctions from '../utils/auctions.vue';
+  import Buzzer from '../utils/buzzer.vue';
 
   export default {
+    // mixins: [saveState],
     data () {
       return {
-        players: [
-          { name: 'SomePlayer', status: 1 },
-          { name: 'AnOtherGuy', status: 0 },
-          { name: 'AndAnother', status: -1 }
-        ]
+        players: [],
+        gameState: 0,
+        //  Game states
+        GAME_STATE_END: -1,
+        GAME_STATE_INIT: 0,
+        GAME_STATE_BETS: 1,
+        GAME_STATE_PLAY: 2,
+        GAME_STATE_INTER: 3
       };
+    },
+    computed: {
+      otherPlayers () {
+        return this.players.slice(1);
+      },
+      auctions () {
+        return [];
+      },
+      showBetSelector () {
+        return false;
+      },
+      disableCards () {
+        return true;
+      },
+      coincheAvailable () {
+        return false;
+      },
+      forbiddenCards () {
+        return [];
+      },
+      hand () {
+        return [];
+      },
+      turn () {
+        return [];
+      },
+      leader () {
+        return -1;
+      },
+      dealer () {
+        return -1;
+      }
     },
     components: {
       vLink,
       otherPlayer,
       dealerCoin,
       Cards,
-      Auctions
+      Auctions,
+      Buzzer
     },
-    mixins: [saveState],
     methods: {
+      playCard (card) {
+        console.log(card);
+      },
+      bet (bet) {
+        console.log(bet);
+      },
+      coinche () {
+        console.log('coinche');
+      },
       getSaveStateConfig () {
         return {
           'cacheKey': 'offline'
@@ -55,7 +111,6 @@
   $img-path: '../../img';
   @import '../../scss/images';
   @import '../../scss/colors';
-  $size-center-logo: 150px;
   .offline {
     position: fixed;
     top: 0;

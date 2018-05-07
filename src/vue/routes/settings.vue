@@ -70,9 +70,9 @@
         .option {
           position: relative;
           display: block;
-          height: 70px;
-          line-height: 70px;
-          font-size: 18px;
+          height: 50px;
+          line-height: 50px;
+          font-size: 16px;
           margin: -1px auto 0 auto;
           padding: 0;
           &:first-child {

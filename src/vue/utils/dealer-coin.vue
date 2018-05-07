@@ -8,7 +8,7 @@
       position: {
         type: Number,
         required: true,
-        validator: (v) => v < 4 && v >= 0
+        validator: (v) => v < 4 && v >= -1
       }
     }
   };
@@ -29,6 +29,12 @@
     top: 50%;
     transform: translate(0, 0);
     transition: all 1s ease;
+    z-index: 1;
+    &[position='-1'] {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
     &[position='0'] {
       left: 50%;
       top: 100%;
