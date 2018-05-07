@@ -17,7 +17,7 @@
                       :move-up="moveUp"
                       :disabled="disabled">
       <v-touch tag="div"
-               v-for="(card, index) in myHand"
+               v-for="(card, index) in hand"
                class="card"
                :forbidden="forbidden.indexOf(card) !== -1"
                :selected="index === selected"
@@ -33,11 +33,18 @@
   export default {
     data () {
       return {
-        myHand: [],
         selected: null
       };
     },
+    model: {
+      prop: 'hand',
+      event: 'change'
+    },
     props: {
+      hand: {
+        type: Array,
+        required: true
+      },
       forbidden: {
         type: Array,
         required: true,
@@ -72,24 +79,18 @@
         }
       }
     },
-    watch: {
-      hand: {
-        deep: true,
-        handler (hand) {
-          this.myHand = hand;
-        }
-      }
-    },
     methods: {
       playCard ($event) {
         if (this.selected !== null) {
-          const card = this.myHand.splice(this.selected, 1);
+          const card = this.hand[this.selected];
+          const newHand = this.hand.slice(0, this.selected).concat(this.hand.slice(this.selected + 1));
+          this.$emit('change', newHand);
           this.turn.push({
-            index: card[0],
+            index: card,
             position: 0
           });
           this.selected = null;
-          this.$emit('played', card[0]);
+          this.$emit('played', card);
         }
         $event.preventDefault();
       }
@@ -173,6 +174,7 @@
         @each $index in (1, 2, 3, 4, 5, 6, 7, 8) {
           &:nth-child(#{$index}) {
             z-index: $index + 100;
+            transition: transform 200ms $index*100+200ms;
           }
         }
         &[selected] {
@@ -186,6 +188,9 @@
       }
       .cards-hand-move {
         transition: all $play-card-transition-duration !important;
+      }
+      .cards-hand-enter {
+        transform: translateY(100%);
       }
       .cards-hand-leave {
         bottom: 0;

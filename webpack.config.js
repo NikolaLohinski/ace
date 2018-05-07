@@ -20,8 +20,7 @@ module.exports = {
   devServer: {
     port: 8080,
     compress: true,
-    stats: 'errors-only',
-    open: true
+    stats: 'errors-only'
   },
   module: {
     rules: [

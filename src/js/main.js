@@ -11,6 +11,7 @@ import Cube from 'cube-ui';
 import VueResource from 'vue-resource';
 import VueRouter from 'vue-router';
 import VueSimpleMarkdown from 'vue-simple-markdown';
+import VuexLocalState from 'vuex-local-state';
 
 import Store from './store.js';
 import Router from './router.js';
@@ -21,6 +22,8 @@ Vue.use(Cube);
 Vue.use(VueSimpleMarkdown);
 Vue.use(VueResource);
 Vue.use(VueTouch, { name: 'v-touch' });
+
+new VuexLocalState(Store);
 
 Vue.use(VueX);
 Vm.store = new VueX.Store(Store);

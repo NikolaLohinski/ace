@@ -22,7 +22,7 @@
     store: global.store,
     watch: {
       '$route' (to, from) {
-        this.$store.commit('current', this.$router.history.current);
+        this.$store.commit('path', this.$router.history.current.fullPath);
         this.axis = (to.meta['vertical'] || from.meta['vertical']) ? 'y' : 'x';
         const toDepth = (to.path === '/') ? 1 : to.path.split('/').length;
         const fromDepth = (from.path === '/') ? 1 : from.path.split('/').length;
@@ -30,7 +30,7 @@
       }
     },
     mounted () {
-      if (this.$store.getters.current) this.$router.replace(this.$store.getters.current.path);
+      if (this.$store.getters.path) this.$router.replace(this.$store.getters.path);
       localStorage['i18n'] ? this.$store.commit('language', localStorage['i18n']) : null;
     }
   };

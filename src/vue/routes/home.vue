@@ -15,7 +15,7 @@
       </tr>
     </table>
     <section>
-      <v-link tag="div" to="/offline" class="bubble bubble-big">
+      <v-link tag="div" to="/play?type=offline" class="bubble bubble-big">
         <table>
           <tr>
             <td><i class="fa fa-user"></i></td>
@@ -59,7 +59,7 @@
   @import '../../scss/images';
   @import '../../scss/sizes';
   .home {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;

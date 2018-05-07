@@ -1,6 +1,6 @@
 <template>
   <div class="scores">
-    <v-header back-to="/offline">
+    <v-header back-to="/play/offline">
       <i class="fa fa-trophy"></i>{{ $t('scores.title') }}
     </v-header>
   </div>
@@ -15,7 +15,7 @@
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   .scores {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;

@@ -1,12 +1,12 @@
 <template>
   <div class="menu">
-    <v-header back-to="/offline">
+    <v-header back-to="/play/offline">
       <i class="fa fa-bars"></i>{{ $t('menu.title') }}
     </v-header>
     <table>
       <tr>
         <td style="vertical-align: top">
-          <v-switch v-model="sortCards" class="item" disabled>
+          <v-switch v-model="config.sortCards" class="item" @change="sortCards">
             {{ $t('menu.sortCards') }}
           </v-switch>
         </td>
@@ -26,15 +26,42 @@
   import vHeader from '../utils/header.vue';
   import vSwitch from '../utils/switch.vue';
   export default {
-    data () {
-      return {
-        sortCards: false
-      };
+    methods: {
+      sortCards (bool) {
+        this.$store.commit('setConfig', {
+          key: 'sortCards',
+          value: bool
+        });
+      }
+    },
+    computed: {
+      config () {
+        return this.$store.getters.config;
+      }
     },
     components: {
       vHeader,
       vLink,
       vSwitch
+    },
+    store: global.store,
+    beforeRouteLeave (to, from, next) {
+      const self = this;
+      if (to.path === '/') {
+        self.$createDialog({
+          type: 'confirm',
+          icon: 'cubeic-danger',
+          title: self.$t('utils.warning'),
+          content: self.$t('menu.youWillLoseYourCurrentProgress'),
+          confirmBtn: self.$t('menu.quit'),
+          cancelBtn: self.$t('utils.cancel'),
+          onConfirm: () => {
+            this.$store.dispatch('clearGame').then(next);
+          }
+        }).show();
+      } else {
+        next();
+      }
     }
   };
 </script>
@@ -43,7 +70,7 @@
   @import '../../scss/variables';
   @import '../../scss/sizes';
   .menu {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;

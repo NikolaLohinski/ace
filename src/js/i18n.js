@@ -1,4 +1,5 @@
 const translations = {
+  // ENGLISH
   'en-EN': {
     'currentLanguage': 'English',
     'home': {
@@ -15,25 +16,38 @@ const translations = {
     'menu': {
       'title': 'Menu',
       'quit': 'Quit',
-      'sortCards': 'Sort cards'
+      'sortCards': 'Sort cards',
+      'youWillLoseYourCurrentProgress': 'You will lose your current progress'
     },
     'utils': {
       'ok': 'Ok',
-      'cancel': 'Cancel'
+      'warning': 'Warning',
+      'cancel': 'Cancel',
+      'you': 'You'
     },
     'play': {
+      'title': 'Play',
+      'start': 'Start',
       'bet': 'Bet',
       'pass': 'Pass',
       'toPass': 'Pass',
       'CAP': 'All',
       'GEN': 'Alone',
       'AA': 'Assets only',
-      'NA': 'No Assets'
+      'NA': 'No Assets',
+      'players': 'Players',
+      'pleaseChooseAName': 'Please choose a pseudo',
+      'ai': {
+        'name': 'Bot',
+        'basic': 'Basic',
+        'skilled': 'Skilled'
+      }
     },
     'about': {
       'title': 'About'
     }
   },
+  // FRANÇAIS
   'fr-FR': {
     'currentLanguage': 'Français',
     'home': {
@@ -52,20 +66,32 @@ const translations = {
     'menu': {
       'title': 'Menu',
       'quit': 'Quitter',
-      'sortCards': 'Trier les cartes'
+      'sortCards': 'Trier les cartes',
+      'youWillLoseYourCurrentProgress': 'Vous ne pourrez plus reprendre le cours de la partie'
     },
     'utils': {
       'ok': 'Ok',
-      'cancel': 'Annuler'
+      'warning': 'Attention',
+      'cancel': 'Annuler',
+      'you': 'Vous'
     },
     'play': {
+      'title': 'Jouer',
+      'start': 'Démarrer',
       'bet': 'Annonce',
       'pass': 'Passe',
       'toPass': 'Passer',
       'CAP': 'Capot',
       'GEN': 'Générale',
       'AA': 'Tout Atout',
-      'NA': 'Sans Atout'
+      'NA': 'Sans Atout',
+      'players': 'Joueurs',
+      'pleaseChooseAName': 'Veuillez renseigner un pseudo',
+      'ai': {
+        'name': 'Bot',
+        'basic': 'Basique',
+        'skilled': 'Expérimenté'
+      }
     },
     'about': {
       'title': 'À propos'

@@ -41,8 +41,13 @@
     min-width: 50px;
     text-align: center;
     cursor: pointer;
+    transition: opacity 200ms;
     &:active {
-      color: $link-text-color !important;
+      color: $link-text-color;
+    }
+    &[disabled] {
+      pointer-events: none;
+      opacity: 0.3;
     }
   }
 </style>

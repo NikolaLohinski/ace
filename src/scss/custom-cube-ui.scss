@@ -1,19 +1,31 @@
+// Buttons
 .cube-btn {
   border-radius: 4px;
   background-color: $lighter-background;
   border: 1px solid $default-border-color;
   color: $default-text-color;
   font-family: DefaultFont;
+  &.success {
+    color: $success-link-color;
+    font-family: BoldFont;
+    &:active {
+      color: white;
+    }
+  }
+  &.danger {
+    color: $danger-link-color;
+    font-family: BoldFont;
+     &:active {
+        color: white;
+     }
+  }
   &:active {
     color: white;
     background-color: $active-button-background-color;
   }
-  &.danger {
-    color: $lighter-link-color;
-    font-family: BoldFont;
-  }
 }
 
+// Picker
 .cube-picker-choose {
   cursor: pointer;
   font-family: DefaultFont;
@@ -25,7 +37,6 @@
     }
   }
 }
-
 .cube-picker-wheel-wrapper {
   cursor: pointer;
   :nth-child(2) {
@@ -38,6 +49,7 @@
   }
 }
 
+// Switch
 .cube-switch {
   border-radius: 4px;
   background-color: $lighter-background;
@@ -48,8 +60,8 @@
     cursor: pointer;
   }
   .cube-switch-input:checked+.cube-switch-ui {
-    border-color: $lighter-link-color;
-    background-color: $lighter-link-color;
+    border-color: $danger-link-color;
+    background-color: $danger-link-color;
   }
   .cube-switch-input:disabled+.cube-switch-ui+.cube-switch-label {
     opacity: 0.3;
@@ -62,5 +74,35 @@
   }
   .cube-switch-label {
     margin-left: 15px;
+  }
+}
+
+// Popup
+.cube-dialog-btn_highlight {
+  color: $danger-link-color;
+  font-family: BoldFont;
+  &:active {
+    background-color: $active-button-background-color;
+    color: white;
+    box-shadow: 1px 1px 2px $default-text-color;
+  }
+}
+.cube-dialog-content-def {
+  text-align: center;
+}
+
+// text input
+.cube-input {
+  color: inherit;
+  font-size: inherit;
+  input {
+    color: inherit;
+    font-family: DefaultFont;
+    font-size: inherit;
+    background: none;
+  }
+  &.cube-input_active {
+    background: none;
+    border: none;
   }
 }

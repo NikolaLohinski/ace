@@ -12,12 +12,12 @@
     </other-player>
     <dealer-coin :position="dealer"></dealer-coin>
     <cards :forbidden="forbiddenCards"
-           :hand="hand"
+           v-model="(config.sortCards) ? engine.sort(players[0].hand) : players[0].hand"
            :turn="turn"
            :move-up="showBetSelector"
            :disabled="disableCards"
            :leader="leader"
-           @play="playCard">
+           @change="playCard">
     </cards>
     <auctions :auctions="auctions" :show-selector="showBetSelector" @bet="bet">
     </auctions>
@@ -26,7 +26,7 @@
   </section>
 </template>
 <script>
-  // import saveState from 'vue-save-state';
+  import Engine from '../../js/engine/Engine.js';
 
   import vLink from '../utils/link.vue';
   import otherPlayer from '../utils/other-player.vue';
@@ -36,25 +36,33 @@
   import Buzzer from '../utils/buzzer.vue';
 
   export default {
-    // mixins: [saveState],
     data () {
       return {
-        players: [],
-        gameState: 0,
-        //  Game states
-        GAME_STATE_END: -1,
-        GAME_STATE_INIT: 0,
-        GAME_STATE_BETS: 1,
-        GAME_STATE_PLAY: 2,
-        GAME_STATE_INTER: 3
+        engine: Engine
       };
     },
+    store: global.store,
     computed: {
+      game () {
+        return this.$store.getters.game;
+      },
+      players () {
+        return this.game.players || [];
+      },
       otherPlayers () {
         return this.players.slice(1);
       },
       auctions () {
-        return [];
+        const auctions = [];
+        for (let p = 0; p < this.players.length; p++) {
+          const player = this.players[p];
+          if (player.auctions) {
+            auctions.push(player.auctions[player.auctions.length - 1]);
+          } else {
+            auctions.push(null);
+          }
+        }
+        return auctions;
       },
       showBetSelector () {
         return false;
@@ -68,9 +76,6 @@
       forbiddenCards () {
         return [];
       },
-      hand () {
-        return [];
-      },
       turn () {
         return [];
       },
@@ -78,7 +83,10 @@
         return -1;
       },
       dealer () {
-        return -1;
+        return this.players.findIndex((p) => p.dealer);
+      },
+      config () {
+        return this.$store.getters.config;
       }
     },
     components: {
@@ -92,6 +100,7 @@
     methods: {
       playCard (card) {
         console.log(card);
+        // this.$store.commit('updateGame');
       },
       bet (bet) {
         console.log(bet);
@@ -99,10 +108,33 @@
       coinche () {
         console.log('coinche');
       },
-      getSaveStateConfig () {
-        return {
-          'cacheKey': 'offline'
-        };
+      initGame () {
+        this.engine.deal(this.players, null);
+        this.game.intialized = true;
+        this.$store.commit('updateGame');
+      }
+    },
+    beforeRouteLeave (to, from, next) {
+      const self = this;
+      if (to.path.indexOf('/offline') === -1) {
+        self.$createDialog({
+          type: 'confirm',
+          icon: 'cubeic-danger',
+          title: self.$t('utils.warning'),
+          content: self.$t('menu.youWillLoseYourCurrentProgress'),
+          confirmBtn: self.$t('menu.quit'),
+          cancelBtn: self.$t('utils.cancel'),
+          onConfirm: () => {
+            this.$store.dispatch('clearGame').then(next);
+          }
+        }).show();
+      } else {
+        next();
+      }
+    },
+    mounted () {
+      if (!this.game.intialized) {
+        this.initGame();
       }
     }
   };
@@ -112,7 +144,7 @@
   @import '../../scss/images';
   @import '../../scss/colors';
   .offline {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -132,7 +164,6 @@
         text-align: center;
         display: inline-block;
         font-size: 30px;
-        color: $default-text-color;
         pointer-events: auto;
         text-shadow: 1px 1px 2px $default-text-color;
         &.right {

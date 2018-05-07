@@ -16,7 +16,7 @@
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   .about {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
