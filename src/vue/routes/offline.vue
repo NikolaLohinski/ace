@@ -8,25 +8,30 @@
                   :key="p.name"
                   :name="p.name"
                   :status="p.status"
+                  :playing="p.turn"
                   :position="i + 1">
     </other-player>
     <dealer-coin :position="dealer"></dealer-coin>
+    <auctions :auctions="auctions"
+              :forbidden-prices="me.forbiddenPrices"
+              :show-selector="showBetSelector"
+              @bet="bet">
+    </auctions>
     <cards :forbidden="forbiddenCards"
-           v-model="(config.sortCards) ? engine.sort(players[0].hand) : players[0].hand"
+           :hand="hand"
            :turn="turn"
+           :starter="game.starter || game.leader"
            :move-up="showBetSelector"
            :disabled="disableCards"
            :leader="leader"
-           @change="playCard">
+           @played="play">
     </cards>
-    <auctions :auctions="auctions" :show-selector="showBetSelector" @bet="bet">
-    </auctions>
     <buzzer :disabled="!coincheAvailable" @hit="coinche">
     </buzzer>
   </section>
 </template>
 <script>
-  import Engine from '../../js/engine/Engine.js';
+  import _consts_ from '../../js/engine/constants.js';
 
   import vLink from '../utils/link.vue';
   import otherPlayer from '../utils/other-player.vue';
@@ -36,51 +41,59 @@
   import Buzzer from '../utils/buzzer.vue';
 
   export default {
-    data () {
-      return {
-        engine: Engine
-      };
-    },
     store: global.store,
     computed: {
+      leader () {
+        const leader = this.$store.getters.findLeader;
+        return (leader === -1) ? this.dealer : leader;
+      },
       game () {
         return this.$store.getters.game;
       },
       players () {
-        return this.game.players || [];
+        return this.$store.getters.players;
+      },
+      me () {
+        return this.players[0] || {};
+      },
+      hand () {
+        if (!this.config.sortCards) {
+          return this.me.hand;
+        }
+        const category = this.game.auction ? this.game.auction.category : null;
+        return this.$store.getters.sortCards(this.me.hand, category);
       },
       otherPlayers () {
         return this.players.slice(1);
       },
       auctions () {
         const auctions = [];
-        for (let p = 0; p < this.players.length; p++) {
-          const player = this.players[p];
-          if (player.auctions) {
-            auctions.push(player.auctions[player.auctions.length - 1]);
-          } else {
-            auctions.push(null);
+        if (this.game.state === _consts_.__GAME_STATE_BETS__) {
+          for (let p = 0; p < this.players.length; p++) {
+            const player = this.players[p];
+            if (player.auctions && p !== this.players.findIndex((e) => e.turn)) {
+              auctions.push(player.auctions[player.auctions.length - 1]);
+            } else {
+              auctions.push(null);
+            }
           }
         }
         return auctions;
       },
       showBetSelector () {
-        return false;
+        return this.me.turn && this.game.state === _consts_.__GAME_STATE_BETS__;
       },
       disableCards () {
-        return true;
+        return !(this.me.turn && this.game.state === _consts_.__GAME_STATE_PLAY__);
       },
       coincheAvailable () {
-        return false;
+        return this.me.canCoinche || false;
       },
       forbiddenCards () {
-        return [];
+        return this.me.forbiddenCards || [];
       },
       turn () {
-        return [];
-      },
-      leader () {
-        return -1;
+        return this.game.turn || [null, null, null, null];
       },
       dealer () {
         return this.players.findIndex((p) => p.dealer);
@@ -98,20 +111,29 @@
       Buzzer
     },
     methods: {
-      playCard (card) {
-        console.log(card);
-        // this.$store.commit('updateGame');
+      play (card) {
+        this.$store.dispatch('act', {
+          action: 'play',
+          arg: card,
+          token: this.game.token,
+          id: this.me.id
+        }).then();
       },
       bet (bet) {
-        console.log(bet);
+        this.$store.dispatch('act', {
+          action: 'bet',
+          arg: bet,
+          token: this.game.token,
+          id: this.me.id
+        }).then();
       },
-      coinche () {
-        console.log('coinche');
-      },
-      initGame () {
-        this.engine.deal(this.players, null);
-        this.game.intialized = true;
-        this.$store.commit('updateGame');
+      coinche (coinche) {
+        this.$store.dispatch('act', {
+          action: 'bet',
+          arg: coinche,
+          token: this.game.token,
+          id: this.me.id
+        }).then();
       }
     },
     beforeRouteLeave (to, from, next) {
@@ -133,9 +155,7 @@
       }
     },
     mounted () {
-      if (!this.game.intialized) {
-        this.initGame();
-      }
+      this.$store.dispatch('initGame').then();
     }
   };
 </script>

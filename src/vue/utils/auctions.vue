@@ -1,18 +1,18 @@
 <template>
   <div class="auctions">
     <div v-for="(auction, index) in auctions" :position="index" class="bet" v-if="auction">
-      <span v-if="auction.price || auction.type !== 'pass'">
+      <span v-if="auction.type !== passType">
         <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
           {{ $t(`play.${auction.price}`) }}
         </div>
         <span v-else class="price">
           {{ auction.price }}
         </span>
-        <div v-if="auction.type === 'AA' || auction.type === 'NA'" class="type">
-          {{ $t(`play.${auction.type}`) }}
+        <div v-if="auction.category === 'AA' || auction.category === 'NA'" class="type">
+          {{ $t(`play.${auction.category}`) }}
         </div>
         <span v-else>
-          <i :class="`card-icon ${auction.type}`" class="type">
+          <i :class="`card-icon ${auction.category}`" class="type">
           </i>
         </span>
       </span>
@@ -29,7 +29,7 @@
           {{ $t('play.bet') }}
         </v-select>
         <v-touch tag="button"
-                 @tap="() => $emit('pass')"
+                 @tap="() => bet(null)"
                  class="cube-btn bet-option">
           {{ $t('play.pass') }}
         </v-touch>
@@ -38,24 +38,23 @@
   </div>
 </template>
 <script>
+  import _consts_ from '../../js/engine/constants.js';
   import vSelect from './select.vue';
   export default {
     data () {
       return {
-        prices: [
-          80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 'CAP', 'GEN'
-        ],
-        types: [
-          { text: '♠', value: 's' },
-          { text: '♥', value: 'h' },
-          { text: '♣', value: 'c' },
-          { text: '♦', value: 'd' },
-          { text: this.$t('play.AA'), value: 'AA' },
-          { text: this.$t('play.NA'), value: 'NA' }
-        ]
+        prices: _consts_.__AUCTION_PRICES__,
+        categories: _consts_.__AUCTION_CATEGORIES__,
+        passType: _consts_.__BET_ACTION_PASS__
       };
     },
     props: {
+      forbiddenPrices: {
+        type: Array,
+        default () {
+          return [];
+        }
+      },
       auctions: {
         type: Array,
         required: true,
@@ -72,21 +71,40 @@
       vSelect
     },
     computed: {
-      options () {
-        const options = [[], this.types];
+      priceOptions () {
+        const priceOptions = [];
         for (let k = 0; k < this.prices.length; k++) {
           const price = this.prices[k];
-          options[0].push({
-            text: (price === 'GEN' || price === 'CAP') ? this.$t(`play.${price}`) : price,
-            value: price
+          if (this.forbiddenPrices.indexOf(price) === -1) {
+            priceOptions.push({
+              text: (price === 'GEN' || price === 'CAP') ? this.$t(`play.${price}`) : price,
+              value: price
+            });
+          }
+        }
+        return priceOptions;
+      },
+      categoryOptions () {
+        const categoryOptions = [];
+        for (let k = 0; k < this.categories.length; k++) {
+          categoryOptions.push({
+            text: this.$t(`play.${this.categories[k]}`),
+            value: this.categories[k]
           });
         }
-        return options;
+        return categoryOptions;
+      },
+      options () {
+        return [this.priceOptions, this.categoryOptions];
       }
     },
     methods: {
       bet (bet) {
-        this.$emit('bet', bet);
+        this.$emit('bet', {
+          price: bet ? bet[0] : null,
+          category: bet ? bet[1] : null,
+          type: bet ? _consts_.__BET_ACTION_BET__ : _consts_.__BET_ACTION_PASS__
+        });
       }
     }
   };
@@ -101,6 +119,7 @@
     right: 0;
     top: 0;
     pointer-events: none;
+    z-index: 200;
     .bet {
       position: absolute;
       text-align: center;

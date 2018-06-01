@@ -1,6 +1,6 @@
 <template>
   <div class="other-player" :position="position">
-    <div class="status" :status="status"></div>
+    <div class="status" :playing="playing" :status="status"></div>
     <div class="name">{{ name }}</div>
   </div>
 </template>
@@ -19,6 +19,10 @@
         required: true,
         type: Number,
         validator: (v) => v < 4 && v > 0
+      },
+      playing: {
+        type: Boolean,
+        default: false
       }
     }
   };
@@ -49,11 +53,12 @@
       }
     }
     .status {
+      position: relative;
       width: 12px;
       height: 12px;
       line-height: $player-name-font-size;
       border-radius: 50%;
-      transition: background-color 200ms;
+      transition: background-color 200ms, left 200ms, top 200ms, border 200ms;
       display: inline-block;
       margin: 0 5px;
       vertical-align: middle;
@@ -67,6 +72,18 @@
       }
       &[status='-1'] {
         background-color: $afk-player-color;
+      }
+      &[playing] {
+        left: -1px;
+        top: -1px;
+        border: 2px solid transparent;
+        border-right-color: $default-text-color;
+        animation: turn linear .5s infinite;
+        @keyframes turn {
+         to {
+           transform: rotate(360deg);
+         }
+        }
       }
     }
     .name {

@@ -4,10 +4,12 @@
            :selection="selected"
            class="cards">
     <transition-group tag="div" name="cards-turn" class="turn" :leader="leader">
-      <div v-for="cardData in turn"
-           :key="cardData['index']"
-           :index="cardData['index']"
-           :position="cardData['position']"
+      <div v-for="(card, index) in turn_"
+           v-if="card"
+           :key="card"
+           :index="card"
+           :z-index="(4 - starter_ + index) % 4"
+           :position="index"
            class="card">
       </div>
     </transition-group>
@@ -17,7 +19,7 @@
                       :move-up="moveUp"
                       :disabled="disabled">
       <v-touch tag="div"
-               v-for="(card, index) in hand"
+               v-for="(card, index) in hand_"
                class="card"
                :forbidden="forbidden.indexOf(card) !== -1"
                :selected="index === selected"
@@ -33,12 +35,11 @@
   export default {
     data () {
       return {
-        selected: null
+        selected: null,
+        hand_: this.hand,
+        turn_: this.turn,
+        starter_: this.starter
       };
-    },
-    model: {
-      prop: 'hand',
-      event: 'change'
     },
     props: {
       hand: {
@@ -47,14 +48,7 @@
       },
       forbidden: {
         type: Array,
-        required: true,
-        validator (forbidden) {
-          let validate = true;
-          for (let k = 0; k < forbidden.length; k++) {
-            validate = validate && (this.hand.indexOf(forbidden[k]) !== -1);
-          }
-          return validate;
-        }
+        required: true
       },
       moveUp: {
         type: Boolean,
@@ -63,6 +57,10 @@
       disabled: {
         type: Boolean,
         default: true
+      },
+      starter: {
+        type: Number,
+        default: 0
       },
       turn: {
         type: Array,
@@ -83,16 +81,32 @@
       playCard ($event) {
         if (this.selected !== null) {
           const card = this.hand[this.selected];
-          const newHand = this.hand.slice(0, this.selected).concat(this.hand.slice(this.selected + 1));
-          this.$emit('change', newHand);
-          this.turn.push({
-            index: card,
-            position: 0
-          });
+          this.hand_.splice(this.selected, 1);
+          this.$emit('played', { card: card });
           this.selected = null;
-          this.$emit('played', card);
         }
         $event.preventDefault();
+      }
+    },
+    watch: {
+      hand: {
+        deep: true,
+        handler (hand) {
+          this.hand_ = hand;
+        }
+      },
+      turn: {
+        deep: true,
+        handler (turn) {
+          const self = this;
+          self.turn_ = turn;
+          if (turn.indexOf(null) === -1) {
+            setTimeout(() => {
+              self.turn_ = [null, null, null, null];
+              self.starter_ = self.starter;
+            }, 1000);
+          }
+        }
       }
     }
   };
@@ -103,7 +117,7 @@
   @import '../../scss/colors';
   @import '../../scss/sizes';
   $margin-turn-card: 30px;
-  $play-card-transition-duration: 1s;
+  $play-card-transition-duration: .2s;
   .cards {
     position: fixed;
     top: 0;
@@ -121,6 +135,11 @@
         &[index='#{$card-name}'] {
           background: $card-url center;
           background-size: 100% 100%;
+        }
+      }
+      @each $z-index in (0, 1, 2, 3) {
+        &[z-index='#{$z-index}'] {
+          z-index: 100 + $z-index;
         }
       }
       width: 12.5vw;
@@ -142,7 +161,7 @@
       left: 50%;
       transform: translateX(-50%);
       bottom: 0;
-      transition: all $play-card-transition-duration;
+      transition: bottom 200ms;
       text-align: center;
       white-space: nowrap;
       pointer-events: auto;
@@ -186,26 +205,11 @@
         }
         transition: all .2s;
       }
-      .cards-hand-move {
-        transition: all $play-card-transition-duration !important;
-      }
       .cards-hand-enter {
         transform: translateY(100%);
       }
-      .cards-hand-leave {
-        bottom: 0;
-        left: 0;
-      }
       .cards-hand-leave-to {
-        bottom: 50vh !important;
-        left: 50% !important;
-        transform: translate(-50%, 50%) !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: -$margin-turn-card !important;
-      }
-      .cards-hand-leave-active {
-        position: fixed !important;
+        opacity: 0;
       }
     }
     .turn {
@@ -229,7 +233,7 @@
         }
       }
       .cards-turn-enter-active {
-        transition: opacity 0s $play-card-transition-duration;
+        transition: opacity $play-card-transition-duration;
         z-index: 120;
       }
       .cards-turn-enter {

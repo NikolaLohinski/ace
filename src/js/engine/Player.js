@@ -12,50 +12,39 @@ export default class Player {
    * a new player object
    */
   constructor (playerObj) {
-    if (['BOT', 'USR'].indexOf(playerObj.type) === -1) {
-      throw new Error('Player type must be either IA or HUMAN');
+    for (const property in playerObj) {
+      if (playerObj.hasOwnProperty(property)) {
+        this[property] = playerObj[property];
+      }
     }
-    /**
-     * Type of player, either USR or BOT
-     * @type {String}
-     */
-    this.type = playerObj.type;
-    if (this.type === 'BOT') {
-      /**
-       * Level of the bot if any
-       * @type {string}
-       */
-      this.level = playerObj.level;
+    this.dealer = this.dealer || false;
+    this.turn = this.turn || false;
+    this.canCoinche = this.canCoinche || false;
+    this.auctions = this.auctions || [];
+    this.forbiddenPrices = this.forbiddenPrices || [];
+    this.hand = this.hand || [];
+    this.folds = this.folds || [];
+    this.status = this.status || _const_.__PLAYER_STATUS_CONNECTED__;
+    if (!this.name ||
+      ['USR', 'BOT'].indexOf(this.type) === -1 ||
+      (this.type === 'BOT' && !this.level)) {
+      throw Error('Errors in defintion of player');
     }
-    /**
-     * Integer identifier ot the player
-     * @type {Number}
-     */
-    this.id = playerObj.id;
-    /**
-     * Name of the player
-     * @type {String}
-     */
-    this.name = playerObj.name;
-    /**
-     * Whether this player is the dealer or not
-     * @type {boolean}
-     */
-    this.dealer = false;
-    /**
-     * Bets of the player
-     * @type {Array}
-     */
-    this.auctions = [];
-    /**
-     * Hand will hold the cards in hand of the player
-     * @type {Array}
-     */
-    this.hand = [];
-    /**
-     * Status of the player, 1 for active, 0 for AFK, -1 for disconnected
-     * @type {number}
-     */
-    this.status = _const_.__PLAYER_STATUS_CONNECTED__;
-  };
+  }
+
+  /**
+   * Get a public image of a player, that can be share with other ones
+   * @return {object} Current public image of the player
+   */
+  getPublicImage () {
+    return {
+      type: this.type,
+      name: this.name,
+      id: this.id,
+      dealer: this.dealer,
+      turn: this.turn,
+      auctions: this.auctions,
+      status: this.status
+    };
+  }
 }

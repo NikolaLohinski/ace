@@ -126,19 +126,17 @@
       left: 0;
       right: 0;
       top: 50%;
-      transform: translateY(-50%);
+      transform: translateY(-35%);
       text-align: center;
       .bubble {
         position: relative;
         display: inline-block;
         padding: 5px;
-        border: 2px solid $bubble-border-color;
         background-color: $bubble-background;
-        box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.51);
+        border: 1px solid $default-border-color;
         border-radius: 50%;
         cursor: pointer;
-        color: $bubble-text-color;
-        text-shadow: 1px 1px 2px $bubble-text-color;
+        color: $default-text-color;
         text-align: center;
         transition: all 200ms ease;
         font-size: 20px;
@@ -146,6 +144,7 @@
         height: 96px;
         &:active {
           background-color: $active-button-background-color;
+          box-shadow: inset 1px 1px 5px $default-text-color;
         }
         table {
           width: 70px;
@@ -171,11 +170,12 @@
         }
       }
       @include answer-to-height ('m') {
+        transform: translateY(-15%);
+      }
+      @include answer-to-height ('s') {
         transform: none;
         top: auto;
         position: relative;
-      }
-      @include answer-to-height ('s') {
         .bubble {
           width: 76px;
           height: 76px;
@@ -210,7 +210,7 @@
         margin: 5px;
         border-radius: 50%;
         cursor: pointer;
-        color: $bubble-text-color;
+        color: $default-text-color;
         text-shadow: 1px 1px 2px $bubble-text-color;
         text-align: center;
       }

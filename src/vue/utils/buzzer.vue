@@ -1,13 +1,26 @@
 <template>
   <div class="buzzer-container">
     <div class="buzzer-holder">
-      <v-touch tag="div" class="buzzer cube-btn"
-               @tap.prevent="$emit('hit')">
-        <i class="fa fa-hand-rock-o"></i>
+      <v-touch tag="button" class="buzzer cube-btn"
+               @tap.prevent="hit">
       </v-touch>
     </div>
   </div>
 </template>
+<script>
+  import _consts_ from '../../js/engine/constants.js';
+  export default {
+    methods: {
+      hit () {
+        this.$emit('hit', {
+          price: null,
+          category: null,
+          type: _consts_.__BET_ACTION_COINCHE__
+        });
+      }
+    }
+  };
+</script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   $img-path: '../../img';
   @import '../../scss/images';
@@ -28,6 +41,10 @@
       .buzzer {
         cursor: pointer;
         display: inline-block;
+        background: $coinche center no-repeat;
+        background-color: $lighter-background;
+        background-size: 95%;
+        border: 1px solid $default-border-color;
         width: $size-center-logo / 3.5;
         height: $size-center-logo / 3.5;
         line-height: $size-center-logo / 3.8;
@@ -40,6 +57,7 @@
           outline: none;
         }
         &:active {
+          background-color: $danger-link-color;
           box-shadow: inset 1px 1px 2px $default-text-color;
           border-color: $active-button-background-color;
           outline: none;

@@ -103,6 +103,21 @@
   }
   &.cube-input_active {
     background: none;
+    border-color: none;
+  }
+  &:after {
     border: none;
+  }
+}
+
+// checkbox
+.cube-checkbox {
+  display: inline-block;
+  height: 48px;
+  .cube-checkbox-ui.cubeic-round-border {
+    margin-right: 0;
+  }
+  &.cube-checkbox_checked .cube-checkbox-ui i{
+    color: $danger-link-color;
   }
 }

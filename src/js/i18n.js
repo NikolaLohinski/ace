@@ -8,7 +8,9 @@ const translations = {
     'settings': {
       'title': 'Settings',
       'changeLanguage': 'Language ACE',
-      'pleaseChooseName': 'Public ACE name'
+      'pleaseChooseName': 'Public ACE name',
+      'reset': 'Reset ACE',
+      'confirmReset': 'Are you sure you want to reset ACE completely ?'
     },
     'scores': {
       'title': 'Scores'
@@ -35,12 +37,17 @@ const translations = {
       'GEN': 'Alone',
       'AA': 'Assets only',
       'NA': 'No Assets',
+      's': '♠',
+      'd': '♦',
+      'c': '♣',
+      'h': '♥',
       'players': 'Players',
+      'dealer': 'Dealer',
+      'playerType': 'Type',
       'pleaseChooseAName': 'Please choose a pseudo',
       'ai': {
         'name': 'Bot',
-        'basic': 'Basic',
-        'skilled': 'Skilled'
+        '1': 'Basic'
       }
     },
     'about': {
@@ -54,11 +61,11 @@ const translations = {
       'playOffline': 'Hors-ligne'
     },
     'settings': {
-      'title': 'Options',
-      'set': 'Ok',
       'cancel': 'Annuler',
       'changeLanguage': 'Langue de ACE',
-      'pleaseChooseName': 'Votre pseudo ACE'
+      'pleaseChooseName': 'Votre pseudo ACE',
+      'reset': 'Réinitialiser ACE',
+      'confirmReset': 'Êtes-vous sûr de vouloir réinitialiser ACE ?'
     },
     'scores': {
       'title': 'Scores'
@@ -85,12 +92,17 @@ const translations = {
       'GEN': 'Générale',
       'AA': 'Tout Atout',
       'NA': 'Sans Atout',
+      's': '♠',
+      'd': '♦',
+      'c': '♣',
+      'h': '♥',
       'players': 'Joueurs',
+      'dealer': 'Dealer',
+      'playerType': 'Type',
       'pleaseChooseAName': 'Veuillez renseigner un pseudo',
       'ai': {
         'name': 'Bot',
-        'basic': 'Basique',
-        'skilled': 'Expérimenté'
+        '1': 'Basique'
       }
     },
     'about': {

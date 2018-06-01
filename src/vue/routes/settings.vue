@@ -17,6 +17,11 @@
           </v-select>
         </td>
       </tr>
+      <tr><td style="vertical-align: bottom">
+        <v-touch tag="div" class="cube-btn danger" @tap="reset">
+          {{ $t('settings.reset') }}
+        </v-touch>
+      </td></tr>
     </table>
   </div>
 </template>
@@ -44,6 +49,23 @@
         return languageOptions;
       }
     },
+    methods: {
+      reset () {
+        const self = this;
+        self.$createDialog({
+          type: 'confirm',
+          icon: 'cubeic-danger',
+          title: self.$t('utils.warning'),
+          content: self.$t('settings.confirmReset'),
+          confirmBtn: self.$t('utils.ok'),
+          cancelBtn: self.$t('utils.cancel'),
+          onConfirm: () => {
+            localStorage.clear();
+            self.$router.replace('/');
+          }
+        }).show();
+      }
+    },
     components: {
       vHeader,
       vSelect
@@ -62,8 +84,8 @@
     bottom: 0;
     table {
       width: 100%;
-      height: calc(100% - #{$header-height} - 45px);
       margin: 15px auto 0 auto;
+      height: calc(100% - #{$header-height} - 45px);
       max-width: 500px;
       td {
         margin: 15px auto;

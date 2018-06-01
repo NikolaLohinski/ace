@@ -3,115 +3,95 @@
     <v-header back-to="/">
       <i class="fa fa-play"></i>{{ $t('play.title') }}
     </v-header>
-    <div class="container">
-      <table>
-        <tr>
-          <td style="vertical-align: top">
-            <div class="item title">
-              <span class="name">
-              {{ $t('play.players') }}
-              </span>
-            </div>
-            <div class="item you">
-              <i class="fa fa-user"></i>
-              <cube-input :maxlength="8"
-                          v-model="name"
-                          :placeholder="$t('play.pleaseChooseAName')"
-                          class="input"
-                          clearable>
+    <table>
+      <tr><td>
+        <table class="configuration">
+          <tr>
+            <th class="type">{{ $t('play.playerType') }}</th>
+            <th class="name">{{ $t('play.players') }}</th>
+            <th class="dealer">{{ $t('play.dealer') }}</th></tr>
+          <tr class="player" v-for="(player, index) in players">
+            <template v-if="player.type === 'USR'">
+            <td class="type"><i class="fa fa-user"></i></td>
+            <td class="name">
+              <cube-input v-model="player.name" :maxlength="8" clearable>
               </cube-input>
-            </div>
-            <v-select :default="[AI.level]"
-                      :options="[AILevels]"
-                      @select="(selection) => updateAI(selection, AI)"
-                      class="item"
-                      :key="index"
-                      v-for="(AI, index) in AIs">
-              <span class="name">
-                <i class="fa fa-microchip"></i>
-                {{ $t('play.ai.name') + ` ${index + 1}`}}</span>
+            </td>
+            </template>
+            <template v-if="player.type === 'BOT'">
+            <td class="type"><i class="fa fa-microchip"></i></td>
+            <td class="name">
+              <v-select :default="[[player.level]]"
+                        :options="[[{ text: $t('play.ai.1'), value: 0 }]]"
+                        @select="(val) => player.level = val[0]"
+                        class="options">
+              <span class="text">{{ player.name }}</span>
               <span class="value">
-                {{ $t(`play.ai.${AI.level}`) }}
+                <i class="fa fa-hand-o-right"></i>{{ $t(`play.ai.${player.level}`) }}
               </span>
             </v-select>
-          </td>
-        </tr>
-        <tr>
-          <td style="vertical-align: bottom">
-            <v-link to="/play/offline" class="cube-btn item success" :disabled="name.length === 0">
-              {{ $t('play.start') }}
-            </v-link>
-          </td>
-        </tr>
-      </table>
-    </div>
+            </td>
+            </template>
+            <td class="dealer">
+              <v-touch tag="div" class="radio"
+                       :checked="player.dealer"
+                       @tap.prevent="selectDealer(index)">
+              </v-touch>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+      <tr><td style="vertical-align: bottom" :disabled="players.findIndex((p) => p.name.length === 0) !== -1">
+        <v-link to="play/offline" class="cube-btn success">
+          {{ $t('play.start') }}
+        </v-link>
+      </td></tr>
+    </table>
   </div>
 </template>
 <script>
-  import Player from '../../js/engine/Player.js';
-
   import saveState from 'vue-save-state';
 
   import vLink from '../utils/link.vue';
   import vHeader from '../utils/header.vue';
   import vSelect from '../utils/select.vue';
+
+  import utils from '../../js/utils.js';
   export default {
     data () {
       return {
-        name: this.$t('utils.you'),
-        id: null,
-        AIs: [
-          { level: 'basic' },
-          { level: 'basic' },
-          { level: 'basic' }
-        ],
-        possibleLevels: ['basic']
+        players: [
+          { type: 'USR', name: this.$t('utils.you'), dealer: false, level: null },
+          { type: 'BOT', name: `${this.$t('play.ai.name')} 1`, dealer: false, level: 1 },
+          { type: 'BOT', name: `${this.$t('play.ai.name')} 2`, dealer: false, level: 1 },
+          { type: 'BOT', name: `${this.$t('play.ai.name')} 3`, dealer: false, level: 1 }
+        ]
       };
     },
     mixins: [saveState],
     methods: {
-      updateAI (args, AI) {
-        AI.level = args[0];
-        AI.id = null;
-      },
-      generateId () {
-        let d = new Date().getTime();
-        if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
-          d += performance.now();
-        }
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-          const r = (d + Math.random() * 16) % 16 | 0;
-          d = Math.floor(d / 16);
-          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-        });
-      },
-      initGame () {
-        const players = [{
-          'name': this.name,
-          'id': this.id,
-          'type': 'USR'
-        }].concat(this.AIs);
-        for (let k = 0; k < players.length; k++) {
-          const playerObj = players[k];
-          if (!playerObj.id) {
-            playerObj.id = this.generateId();
+      confirmGameConfig () {
+        for (let k = 0; k < this.players.length; k++) {
+          const player = this.players[k];
+          if (!player.id) {
+            player.id = utils.generateId();
           }
-          if (playerObj.level) {
-            playerObj.name = `Bot ${k}`;
-            playerObj.type = 'BOT';
-          }
-          players[k] = new Player(playerObj);
         }
-        if (players.findIndex((p) => p.dealer) === -1) {
-          players[Math.floor(Math.random() * players.length)].dealer = true;
+        if (this.players.findIndex((p) => p.dealer) === -1) {
+          this.players[Math.floor(4 * Math.random())].dealer = true;
         }
-        this.$store.commit('setPlayers', players);
+        this.$store.commit('players', this.players);
       },
       getSaveStateConfig () {
         return {
           cacheKey: 'play-config',
-          saveProperties: ['name', 'id', 'AIs']
+          saveProperties: ['players']
         };
+      },
+      selectDealer (index) {
+        for (let k = 0; k < this.players.length; k++) {
+          this.players[k].dealer = (k === index) ? !this.players[k].dealer : false;
+        }
       }
     },
     components: {
@@ -119,108 +99,103 @@
       vLink,
       vSelect
     },
-    computed: {
-      AILevels () {
-        const AILevels = [];
-        for (let k = 0; k < this.possibleLevels.length; k++) {
-          const level = this.possibleLevels[k];
-          AILevels.push({
-            text: this.$t(`play.ai.${level}`),
-            value: level
-          });
-        }
-        return AILevels;
-      }
-    },
     beforeRouteLeave (to, from, next) {
       if (to.fullPath.indexOf('play/offline') !== -1) {
-        this.initGame();
+        this.confirmGameConfig();
       }
       next();
     }
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
+  $img-path: '../../img';
   @import '../../scss/colors';
   @import '../../scss/variables';
   @import '../../scss/sizes';
+  @import '../../scss/images';
   .play {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    .container {
-      position: absolute;
-      top: $header-height + 17px;
+    >table {
       width: 100%;
-      height: calc(100% - #{$header-height} - 17px);
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-      text-align: center;
-      table {
-        width: 100%;
-        height: 100%;
-        max-width: 500px;
+      height: calc(100% - #{$header-height} - 45px);
+      margin: 15px auto;
+      max-width: 500px;
+      td[disabled] {
+        pointer-events: none;
+        opacity: 0.2;
+      }
+      .configuration {
+        text-align: center;
         margin: 0 auto;
-        td {
-          &:last-child {
-            padding: 15px 0;
-          }
-          margin: 15px auto;
-          .item {
-            &.title {
-              color: $lighter-text-color;
-              font-style: italic;
-            }
-            position: relative;
-            display: block;
+        width: 100%;
+        tr {
+          &.player >td {
             height: 50px;
+            padding: 0 10px;
             line-height: 50px;
-            font-size: 16px;
-            padding: 0;
-            border-bottom-color: $lighter-background;
+            background-color: $lighter-background;
+            border-top: 1px solid $default-border-color;
+            border-bottom: 1px solid $default-border-color;
+            &:first-child {
+              border-radius: 4px 0 0 4px;
+              border-left: 1px solid $default-border-color;
+            }
             &:last-child {
-              margin-top: 0;
-              border-bottom-color: $default-border-color;
+              border-radius: 0 4px 4px 0;
+              border-right: 1px solid $default-border-color;
             }
-            &.you {
-              pointer-events: none;
+            vertical-align: middle;
+          }
+          th {
+            color: $lighter-text-color;
+            font-size: 15px;
+            padding: 15px;
+          }
+          .type {
+            width: 30px;
+          }
+          .name {
+            text-align: left;
+            .options {
+              height: 50px;
+              line-height: 50px;
+              padding-top: 0;
+              padding-bottom: 0;
+              border: none;
+              vertical-align: middle;
+              span {
+                display: inline-block;
+                &.text {
+                  float: left;
+                  margin-left: -5px;
+                }
+                &.value {
+                  float: right;
+                  font-style: italic;
+                  color: $lighter-text-color;
+                }
+              }
+            }
+          }
+          .dealer {
+            width: 50px;
+            .radio {
+              position: relative;
+              top: -2px;
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              display: inline-block;
               border: 1px solid $default-border-color;
-              border-bottom: none;
-              border-radius: 4px;
-              .input {
-                pointer-events: auto;
-                width: calc(100% - 32px);
-                padding-left: 32px;
-                height: 100%;
-                font-size: 16px;
-                z-index: 0;
+              vertical-align: middle;
+              &[checked] {
+                background: $dealer-coin -3px -3px;
+                background-size: 46px 46px;
               }
-              i.fa-user {
-                position: absolute;
-                left: 17px;
-                top: 0;
-                height: 100%;
-                line-height: 50px;
-                z-index: 1;
-              }
-            }
-            .name {
-              float: left;
-              margin-left: 15px;
-            }
-            .value {
-              float: right;
-              margin-right: 15px;
-              opacity: 0.6;
-              font-style: italic;
-            }
-            i.fa {
-              margin-right: 10px;
-            }
-            @include answer-to-width ('s') {
-              border-radius: 0;
             }
           }
         }

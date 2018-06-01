@@ -30,5 +30,11 @@ export default {
     ASSET: [0, 0, 3, 4, 10, 11, 14, 20],
     AA: [0, 0, 0, 2, 3, 4, 10, 19],
     NA: [0, 0, 2, 3, 6, 7, 8, 12]
-  }
+  },
+  // Bets
+  __AUCTION_PRICES__: [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 'CAP', 'GEN'],
+  __AUCTION_CATEGORIES__: ['s', 'h', 'c', 'd', 'AA', 'NA'],
+  __BET_ACTION_PASS__: 0,
+  __BET_ACTION_BET__: 1,
+  __BET_ACTION_COINCHE__: 2
 };
