@@ -13,7 +13,9 @@ const translations = {
       'confirmReset': 'Are you sure you want to reset ACE completely ?'
     },
     'scores': {
-      'title': 'Scores'
+      'title': 'Scores',
+      'us': 'Us',
+      'them': 'Them'
     },
     'menu': {
       'title': 'Menu',
@@ -25,7 +27,8 @@ const translations = {
       'ok': 'Ok',
       'warning': 'Warning',
       'cancel': 'Cancel',
-      'you': 'You'
+      'you': 'You',
+      'continue': 'Continue'
     },
     'play': {
       'title': 'Play',
@@ -45,6 +48,16 @@ const translations = {
       'dealer': 'Dealer',
       'playerType': 'Type',
       'pleaseChooseAName': 'Please choose a pseudo',
+      'wonPhrase': 'You won, congratulations !',
+      'lostPhrase': 'Too bad, you lost...',
+      'scoresUsThem': 'Us : {us} - Them : {them}',
+      'withBelote': 'With belote',
+      'made': 'Auction {auction} was achieved',
+      'failed': 'Auction {auction} was lost',
+      'achieved': 'Achieved',
+      'lost': 'Failed',
+      'lostGamePhrase': 'You lost the game...',
+      'wonGamePhrase': 'Victory !',
       'ai': {
         'name': 'Bot',
         '1': 'Basic'
@@ -68,7 +81,9 @@ const translations = {
       'confirmReset': 'Êtes-vous sûr de vouloir réinitialiser ACE ?'
     },
     'scores': {
-      'title': 'Scores'
+      'title': 'Scores',
+      'us': 'Nous',
+      'them': 'Eux'
     },
     'menu': {
       'title': 'Menu',
@@ -80,7 +95,8 @@ const translations = {
       'ok': 'Ok',
       'warning': 'Attention',
       'cancel': 'Annuler',
-      'you': 'Vous'
+      'you': 'Vous',
+      'continue': 'Continuer'
     },
     'play': {
       'title': 'Jouer',
@@ -100,6 +116,16 @@ const translations = {
       'dealer': 'Dealer',
       'playerType': 'Type',
       'pleaseChooseAName': 'Veuillez renseigner un pseudo',
+      'wonPhrase': 'Victoire, bravo !',
+      'lostPhrase': 'Dommage...',
+      'scoresUsThem': 'Nous : {us} - Eux : {them}',
+      'withBelote': 'Avec belote',
+      'made': 'Annonce {auction} faite',
+      'failed': 'Annonce {auction} chutée',
+      'achieved': 'Fait',
+      'lost': 'Chuté',
+      'lostGamePhrase': 'Partie perdue...',
+      'wonGamePhrase': 'Victoire !',
       'ai': {
         'name': 'Bot',
         '1': 'Basique'

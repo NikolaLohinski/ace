@@ -15,6 +15,7 @@ export default {
    * @return {Promise} Promise for reaction
    */
   react (game, players, me) {
+    const token = game.token;
     return new Promise((react) => {
       const meIndex = players.findIndex((p) => p.id === me.id);
       const arrangedPlayers = [me];
@@ -36,7 +37,7 @@ export default {
             react({
               action: 'bet',
               arg: arg,
-              token: game.token,
+              token,
               id: me.id
             });
           });
@@ -45,7 +46,7 @@ export default {
             react({
               action: 'play',
               arg: arg,
-              token: game.token,
+              token,
               id: me.id
             });
           });
@@ -57,7 +58,7 @@ export default {
               react({
                 action: 'bet',
                 arg: coinche,
-                token: game.token,
+                token,
                 id: me.id
               });
             }

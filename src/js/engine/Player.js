@@ -22,9 +22,10 @@ export default class Player {
     this.canCoinche = this.canCoinche || false;
     this.auctions = this.auctions || [];
     this.forbiddenPrices = this.forbiddenPrices || [];
+    this.forbiddenCards = this.forbiddenCards || [];
     this.hand = this.hand || [];
     this.folds = this.folds || [];
-    this.status = this.status || _const_.__PLAYER_STATUS_CONNECTED__;
+    this.status = (typeof this.status) !== 'undefined' ? this.status : _const_.__PLAYER_STATUS_CONNECTED__;
     if (!this.name ||
       ['USR', 'BOT'].indexOf(this.type) === -1 ||
       (this.type === 'BOT' && !this.level)) {

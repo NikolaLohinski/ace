@@ -7,8 +7,10 @@ export default {
   __GAME_STATE_END__: -1,
   __GAME_STATE_INIT__: 0,
   __GAME_STATE_BETS__: 1,
-  __GAME_STATE_PLAY__: 2,
-  __GAME_STATE_INTER__: 3,
+  __GAME_STATE_WAIT__: 2,
+  __WAIT_TIMEOUT__: 3000,
+  __GAME_STATE_PLAY__: 3,
+  __GAME_STATE_INTER__: 4,
   // Cards
   __DECK__: [
     '7c', '8c', '9c', '10c', 'jc', 'qc', 'kc', 'ac',
@@ -33,6 +35,8 @@ export default {
   },
   // Bets
   __AUCTION_PRICES__: [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 'CAP', 'GEN'],
+  __GEN_PRICE__: 300,
+  __CAP_PRICE__: 250,
   __AUCTION_CATEGORIES__: ['s', 'h', 'c', 'd', 'AA', 'NA'],
   __BET_ACTION_PASS__: 0,
   __BET_ACTION_BET__: 1,

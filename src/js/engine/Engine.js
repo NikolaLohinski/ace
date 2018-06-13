@@ -13,7 +13,7 @@ const Engine = {
    * @param {Array} players self explanatory
    * @return {Array} new game and players
    */
-  deal (game, players) {
+  init (game, players) {
     if (!game.deck || game.deck.length !== 32) {
       game.deck = _consts_.__DECK__;
       // shuffle
@@ -27,6 +27,23 @@ const Engine = {
         game.deck[randomNumber] = temp;
       }
     }
+    [game, players] = Engine.deal(game, players);
+    game.scores = game.scores || [0, 0];
+    game.history = game.history || [];
+    game.goal = game.goal || 1000;
+    game.state = _consts_.__GAME_STATE_BETS__;
+    game.initialized = true;
+    game.turn = [null, null, null, null];
+    game.starter = (players.findIndex((p) => p.dealer) + 1) % 4;
+    return [game, players];
+  },
+  /**
+   * Deal cards from game's deck amongst players
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
+   */
+  deal (game, players) {
     const cutIndex = Math.floor(3 + Math.random() * 26);
     const dealOrder = _consts_.__DEAL_ORDERS__[Math.floor(Math.random() * _consts_.__DEAL_ORDERS__.length)];
     const dealerIndex = players.findIndex((p) => p.dealer);
@@ -39,8 +56,6 @@ const Engine = {
         player.hand = player.hand.concat(game.deck.splice(0, count));
       }
     }
-    game.state = _consts_.__GAME_STATE_BETS__;
-    game.initialized = true;
     return [game, players];
   },
   /**
@@ -51,12 +66,25 @@ const Engine = {
    */
   clear (game, players) {
     game.initialized = false;
+    game.deck = [];
     for (let k = 0; k < players.length; k++) {
+      for (let c = 0; c < players[k].hand.length; c++) {
+        game.deck.push(players[k].hand[c]);
+      }
+      for (let c = 0; c < players[k].folds.length; c++) {
+        game.deck.push(players[k].folds[c]);
+      }
       players[k].hand = [];
+      players[k].folds = [];
       players[k].auctions = [];
       players[k].forbiddenPrices = [];
+      players[k].forbiddenCards = [];
       players[k].canCoinche = false;
+      players[k].coinche = false;
     }
+    const dealerIndex = players.findIndex((p) => p.dealer);
+    players[dealerIndex].dealer = false;
+    players[(dealerIndex + 1) % 4].dealer = true;
     return [game, players];
   },
   /**
@@ -70,9 +98,15 @@ const Engine = {
     const leaderIndex = Engine.leader(game, players);
     game.auction = players[leaderIndex].auctions[players[leaderIndex].auctions.length - 1];
     game.auctioneerIndex = leaderIndex;
-    game.turn = [null, null, null, null];
     game.starter = players.findIndex((p) => p.turn);
     game.state = _consts_.__GAME_STATE_PLAY__;
+    for (let p = 0; p < players.length; p++) {
+      players[p].canCoinche = false;
+      if (players[p].hand.indexOf(`q${game.auction.category}`) !== -1 &&
+      players[p].hand.indexOf(`k${game.auction.category}`) !== -1) {
+        players[p].belote = true;
+      }
+    }
     return [game, players];
   },
   /**
@@ -85,15 +119,32 @@ const Engine = {
   bet (game, players, bet) {
     const meIndex = players.findIndex((p) => p.id === bet.id);
     const me = players[meIndex];
+    for (let p = 0; p < players.length; p++) {
+      players[p].canCoinche = false;
+    }
     if (bet.type === _consts_.__BET_ACTION_COINCHE__) {
       // Case of a Coinche
-      throw new Error('actBet for a coinche not yet implemented');
+      players[meIndex].coinche = true;
+      players[meIndex].canCoinche = false;
+      players[(meIndex + 2) % 4].canCoinche = false;
+      if (!players[(meIndex + 1) % 4].coinche && !players[(meIndex + 3) % 4].coinche) {
+        players[(meIndex + 1) % 4].canCoinche = true;
+        players[(meIndex + 3) % 4].canCoinche = true;
+      }
+      game.state = _consts_.__GAME_STATE_WAIT__;
     } else if (bet.type === _consts_.__BET_ACTION_BET__) {
       // Case of a regular bet
       me.auctions.push(bet);
       players = Engine.next(game, players, null);
+      players[(meIndex + 1) % 4].canCoinche = true;
+      players[(meIndex + 3) % 4].canCoinche = true;
       for (let k = 0; k < players.length; k++) {
-        players[k].forbiddenPrices.push(bet.price);
+        for (let b = 0; b < _consts_.__AUCTION_PRICES__.length; b++) {
+          if (b <= _consts_.__AUCTION_PRICES__.indexOf(bet.price) &&
+          players[k].forbiddenPrices.indexOf(_consts_.__AUCTION_PRICES__[b]) === -1) {
+            players[k].forbiddenPrices.push(_consts_.__AUCTION_PRICES__[b]);
+          }
+        }
       }
     } else if (bet.type === _consts_.__BET_ACTION_PASS__) {
       // Case of pass
@@ -104,16 +155,13 @@ const Engine = {
       }) !== -1) {
         const leaderIndex = Engine.leader(game, players);
         if (leaderIndex === ((players.findIndex((p) => p.turn) + 1) % 4)) {
-          [game, players] = Engine.start(game, players);
+          game.state = _consts_.__GAME_STATE_WAIT__;
         } else {
           players = Engine.next(game, players, null);
         }
       } else {
         players[meIndex].turn = false;
         game.state = _consts_.__GAME_STATE_INTER__;
-        const dealerIndex = players.findIndex((p) => p.dealer);
-        players[dealerIndex].dealer = false;
-        players[(dealerIndex + 1) % 4].dealer = true;
       }
     } else {
       // arguments unknown
@@ -141,6 +189,7 @@ const Engine = {
       if (players[0].hand.length === 0) {
         // End of game
         game.starter = null;
+        me.turn = false;
         game.state = _consts_.__GAME_STATE_INTER__;
         return [game, players];
       } else {
@@ -178,10 +227,19 @@ const Engine = {
           const card = player.hand[c];
           if (card[card.length - 1] !== familyStart) {
             forbiddenCards.push(card);
-          } else if (category === 'AA' || familyStart === category) {
+          } else if (['AA', familyStart].indexOf(category) !== -1) {
             if (Engine.compareCards(leaderCard, card, true) > 0) {
               potentialFC.push(card);
             }
+          }
+        }
+        if (potentialFC.length > 0) {
+          const assetSuperiorIndex = player.hand.findIndex(
+            (c) => c[c.length - 1] === familyStart &&
+              Engine.compareCards(leaderCard, c, true) < 0
+          );
+          if (assetSuperiorIndex !== -1) {
+            forbiddenCards = forbiddenCards.concat(potentialFC);
           }
         }
       } else {
@@ -202,13 +260,13 @@ const Engine = {
             }
           }
         }
-      }
-      if (potentialFC.length > 0) {
-        const anyAssetSuperior = player.hand.findIndex(
-          (c) => c[c.length - 1] === category && potentialFC.indexOf(c) === -1
-        ) !== -1;
-        if (anyAssetSuperior) {
-          forbiddenCards = forbiddenCards.concat(potentialFC);
+        if (potentialFC.length > 0) {
+          const anyAssetSuperior = player.hand.findIndex(
+            (c) => c[c.length - 1] === category && potentialFC.indexOf(c) === -1
+          ) !== -1;
+          if (anyAssetSuperior) {
+            forbiddenCards = forbiddenCards.concat(potentialFC);
+          }
         }
       }
     }
@@ -227,7 +285,8 @@ const Engine = {
       return 0;
     } else {
       const order = asset ? _consts_.__ORDERS__.ASSET : _consts_.__ORDERS__.REGUL;
-      return order.indexOf(card1.slice(0, card1.length - 1)) - order.indexOf(card2.slice(0, card2.length - 1));
+      return order.indexOf(card1.slice(0, card1.length - 1)) -
+        order.indexOf(card2.slice(0, card2.length - 1));
     }
   },
   /**
@@ -310,7 +369,7 @@ const Engine = {
    */
   leader (game, players) {
     let max = -1;
-    if (game.state === _consts_.__GAME_STATE_BETS__) {
+    if ([_consts_.__GAME_STATE_BETS__, _consts_.__GAME_STATE_WAIT__].indexOf(game.state) !== -1) {
       for (let k = 0; k < players.length; k++) {
         const auctions = players[k].auctions;
         if (auctions && auctions.length > 0) {
@@ -329,10 +388,123 @@ const Engine = {
           cards.push(game.turn[(k + game.starter) % 4]);
         }
       }
-      const sortedCards = Engine.sort(cards, game.auction.category);
-      max = game.turn.findIndex((c) => c === sortedCards[0]);
+      if (game.auction) {
+        const sortedCards = Engine.sort(cards, game.auction.category);
+        max = game.turn.findIndex((c) => c === sortedCards[0]);
+      }
     }
     return max;
+  },
+   /**
+   * Evaluate the game, update scores etc..
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
+   */
+  evaluate (game, players) {
+    if (game.state !== _consts_.__GAME_STATE_INTER__) throw Error('Trying to evaluate game that has not ended');
+    const announcerIndex = players.findIndex((p) => p.id === game.auction.id);
+    const offense = [players[announcerIndex], players[(announcerIndex + 2) % 4]];
+    const defense = [players[(announcerIndex + 1) % 4], players[(announcerIndex + 3) % 4]];
+    let coinchePriceFactor = 1;
+    if (defense[0].coinche || defense[1].coinche) {
+      coinchePriceFactor = coinchePriceFactor * 2;
+      if (offense[0].coinche || offense[1].coinche) {
+        coinchePriceFactor = coinchePriceFactor * 2;
+      }
+    }
+    let price;
+    let victoryOffense = false;
+    let scores = [null, null];
+    let belote = false;
+    if (game.auction.price === 'GEN') {
+      // all folds for announcer
+      victoryOffense = players[announcerIndex].folds.length === 32;
+      price = coinchePriceFactor * _consts_.__GEN_PRICE__;
+    } else if (game.auction.price === 'CAP') {
+      // all folds for announcer's team
+      victoryOffense = (offense[0].folds.length + offense[0].folds.length) === 32;
+      price = coinchePriceFactor * _consts_.__CAP_PRICE__;
+    } else {
+      // Regular auction
+      let goal = game.auction.price;
+      let offenseScore = 0;
+      if (game.auction.category === ['AA']) {  // All assets
+        const cardMap = {};
+        for (let k = 0; k < _consts_.__ORDERS__.ASSET.length; k++) {
+          cardMap[_consts_.__ORDERS__.ASSET[k]] = _consts_.__PRICES__.AA[k];
+        }
+        for (let p = 0; p < offense.length; p++) {
+          for (let c = 0; c < offense[p].folds.length; c++) {
+            const card = offense[p].folds[c];
+            offenseScore += cardMap[card.slice(0, card.length - 1)];
+          }
+        }
+      } else if (game.auction.category === 'NA') {  // No assets
+        const cardMap = {};
+        for (let k = 0; k < _consts_.__ORDERS__.REGUL.length; k++) {
+          cardMap[_consts_.__ORDERS__.REGUL[k]] = _consts_.__PRICES__.NA[k];
+        }
+        for (let p = 0; p < offense.length; p++) {
+          for (let c = 0; c < offense[p].folds.length; c++) {
+            const card = offense[p].folds[c];
+            offenseScore += cardMap[card.slice(0, card.length - 1)];
+          }
+        }
+      } else {  // Regular type of game
+        const regularMap = {};
+        const assetsMap = {};
+        for (let k = 0; k < _consts_.__ORDERS__.ASSET.length; k++) {
+          assetsMap[_consts_.__ORDERS__.ASSET[k]] = _consts_.__PRICES__.ASSET[k];
+        }
+        for (let k = 0; k < _consts_.__ORDERS__.REGUL.length; k++) {
+          regularMap[_consts_.__ORDERS__.REGUL[k]] = _consts_.__PRICES__.REGUL[k];
+        }
+        for (let p = 0; p < offense.length; p++) {
+          for (let c = 0; c < offense[p].folds.length; c++) {
+            const card = offense[p].folds[c];
+            const family = card[card.length - 1];
+            if (family === game.auction.category) {
+              offenseScore += assetsMap[card.slice(0, card.length - 1)];
+            } else {
+              offenseScore += regularMap[card.slice(0, card.length - 1)];
+            }
+          }
+          // Test if belote
+          if (offense[p].belote) {
+            goal -= 20;
+            belote = true;
+          }
+        }
+      }
+      if ([announcerIndex, (announcerIndex + 2) % 4].indexOf(Engine.leader(game, players)) !== -1) {
+        offenseScore += 10;
+      }
+      if ([0, 2].indexOf(announcerIndex) !== -1) {
+        scores = [offenseScore, 162 - offenseScore];
+      } else {
+        scores = [162 - offenseScore, offenseScore];
+      }
+      goal = Math.max(81, goal);
+      victoryOffense = offenseScore >= goal;
+      price = coinchePriceFactor * game.auction.price;
+    }
+    if (([0, 2].indexOf(announcerIndex) !== -1 && victoryOffense) ||
+    ([1, 3].indexOf(announcerIndex) !== -1 && !victoryOffense)) {
+      game.scores[0] += price;
+    } else {
+      game.scores[1] += price;
+    }
+    game.history.push({
+      auction: game.auction,
+      won: victoryOffense,
+      scores: scores,
+      belote: belote
+    });
+    if (game.scores[0] >= game.goal || game.scores[1] >= game.goal) {
+      game.state = _consts_.__GAME_STATE_END__;
+    }
+    return [game, players];
   }
 };
 

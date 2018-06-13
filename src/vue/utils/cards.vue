@@ -3,7 +3,7 @@
            @swipeup="playCard"
            :selection="selected"
            class="cards">
-    <transition-group tag="div" name="cards-turn" class="turn" :leader="leader">
+    <transition-group tag="div" name="cards-turn" class="turn">
       <div v-for="(card, index) in turn_"
            v-if="card"
            :key="card"
@@ -13,11 +13,22 @@
            class="card">
       </div>
     </transition-group>
+    <transition name="fast-hide-fold">
+    <div class="fold" :leader="leader" v-if="hideFoldTimeout > 0">
+      <div v-for="(card, index) in lastFold"
+           v-if="card"
+           :key="card"
+           :index="card"
+           :z-index="(4 - starter_ + index) % 4"
+           :position="index"
+           class="card">
+      </div>
+    </div>
+    </transition>
     <transition-group tag="div"
                       name="cards-hand"
                       class="hand"
-                      :move-up="moveUp"
-                      :disabled="disabled">
+                      :move-up="moveUp">
       <v-touch tag="div"
                v-for="(card, index) in hand_"
                class="card"
@@ -32,12 +43,16 @@
   </v-touch>
 </template>
 <script>
+  import saveState from 'vue-save-state';
   export default {
     data () {
       return {
         selected: null,
         hand_: this.hand,
-        turn_: this.turn,
+        lastFold: [null, null, null, null],
+        hideFoldTimeout: 0,
+        timeoutIndex: -1,
+        turn_: [null, null, null, null],
         starter_: this.starter
       };
     },
@@ -77,15 +92,22 @@
         }
       }
     },
+    mixins: [saveState],
     methods: {
       playCard ($event) {
-        if (this.selected !== null) {
+        if (this.selected !== null && !this.disabled) {
           const card = this.hand[this.selected];
           this.hand_.splice(this.selected, 1);
           this.$emit('played', { card: card });
           this.selected = null;
         }
         $event.preventDefault();
+      },
+      getSaveStateConfig () {
+        return {
+          cacheKey: 'cards',
+          saveProperties: ['lastFold']
+        };
       }
     },
     watch: {
@@ -95,17 +117,39 @@
           this.hand_ = hand;
         }
       },
+      moveUp (moveUp) {
+        if (moveUp) {
+          this.selected = null;
+        }
+      },
       turn: {
         deep: true,
         handler (turn) {
           const self = this;
-          self.turn_ = turn;
+          self.hideFoldTimeout = 0;
           if (turn.indexOf(null) === -1) {
-            setTimeout(() => {
-              self.turn_ = [null, null, null, null];
-              self.starter_ = self.starter;
-            }, 1000);
+            if (JSON.stringify(self.lastFold) !== JSON.stringify(turn)) {
+              setTimeout(() => {
+                self.lastFold = turn;
+                self.turn_ = [null, null, null, null];
+                self.starter_ = self.starter;
+                self.hideFoldTimeout = 2000;
+              }, 500);
+            }
+          } else {
+            self.turn_ = turn;
           }
+        }
+      },
+      hideFoldTimeout (value) {
+        const self = this;
+        clearTimeout(self.timeoutIndex);
+        if (value > 1000) {
+          self.timeoutIndex = setTimeout(() => {
+            self.hideFoldTimeout = value - 1000;
+          }, value - 1000);
+        } else {
+          self.hideFoldTimeout = 0;
         }
       }
     }
@@ -117,7 +161,7 @@
   @import '../../scss/colors';
   @import '../../scss/sizes';
   $margin-turn-card: 30px;
-  $play-card-transition-duration: .2s;
+  $play-card-transition-duration: .5s;
   .cards {
     position: fixed;
     top: 0;
@@ -165,11 +209,9 @@
       text-align: center;
       white-space: nowrap;
       pointer-events: auto;
-      &[disabled] {
-        pointer-events: none;
-      }
       &[move-up] {
         bottom: 65px;
+        pointer-events: none;
       }
       @include answer-to-height ('m') {
         margin-bottom: -30px;
@@ -178,6 +220,7 @@
         margin-bottom: -50px;
       }
       .card {
+        display: inline-block;
         &:first-child {
           margin-left: auto !important;
         }
@@ -193,7 +236,6 @@
         @each $index in (1, 2, 3, 4, 5, 6, 7, 8) {
           &:nth-child(#{$index}) {
             z-index: $index + 100;
-            transition: transform 200ms $index*100+200ms;
           }
         }
         &[selected] {
@@ -206,13 +248,27 @@
         transition: all .2s;
       }
       .cards-hand-enter {
-        transform: translateY(100%);
+        transform: translateY(200%);
       }
       .cards-hand-leave-to {
         opacity: 0;
       }
+      .cards-hand-enter-active {
+        @each $index in (1, 2, 3, 4, 5, 6, 7, 8) {
+          &:nth-child(#{$index}) {
+            transition: transform 200ms $index*100+200ms;
+          }
+        }
+      }
     }
-    .turn {
+    .fast-hide-fold-leave-to {
+      opacity: 0;
+    }
+    .fast-hide-fold-leave-active {
+      transition: all 0.5s;
+      transition-delay: 0s !important;
+    }
+    .turn, .fold {
       pointer-events: none;
       .card {
         position: absolute;
@@ -232,39 +288,97 @@
           margin-left: -$margin-turn-card;
         }
       }
-      .cards-turn-enter-active {
-        transition: opacity $play-card-transition-duration;
-        z-index: 120;
-      }
+    }
+    .turn {
       .cards-turn-enter {
-        opacity: 0;
+        &[position='0'] {
+          opacity: 0;
+          // top: 100%;
+          // left: 50%;
+          // transform: translate(-50%, 100%);
+        }
+        &[position='1'] {
+          top: 50%;
+          left: 100%;
+          transform: translate(100%, -50%);
+        }
+        &[position='2'] {
+          top: 0;
+          left: 50%;
+          transform: translate(-50%, -200%);
+        }
+        &[position='3'] {
+          top: 50%;
+          left: 0;
+          transform: translate(-200%, -50%);
+        }
       }
-      .cards-turn-leave-active {
-        transition: left 1.2s, top 1.2s, transform 1.2s, margin 0.5s;
+      .cards-turn-enter-active {
+        transition: all $play-card-transition-duration 200ms;
       }
-      &[leader='0'] .cards-turn-leave-to {
-        left: 50%;
-        top: 100%;
-        margin: 0;
-        transform: translate(-50%, 0);
+    }
+    .fold {
+      .card {
+        transition: left 1.2s 1s, top 1.2s 1s, transform 1.2s 1s, margin 0.5s 1s;
       }
-      &[leader='1'] .cards-turn-leave-to {
-        left: 100%;
-        top: 50%;
-        margin: 0;
-        transform: translate(0, -50%);
+      $fold-leave-duration: 0.75s;
+      $fold-leave-delay: 1s;
+      $fold-leave-type: ease-in-out;
+      &[leader='0'] .card {
+        animation: leave-0 $fold-leave-duration $fold-leave-delay $fold-leave-type forwards;
+        @keyframes leave-0 {
+          50% {
+            margin: 0;
+          }
+          100% {
+            left: 50%;
+            top: 100%;
+            margin: 0;
+            transform: translate(-50%, 50%);
+          }
+        }
       }
-      &[leader='2'] .cards-turn-leave-to {
-        left: 50%;
-        top: 0;
-        margin: 0;
-        transform: translate(-50%, -100%);
+      &[leader='1'] .card {
+        animation: leave-1 $fold-leave-duration $fold-leave-delay $fold-leave-type forwards;
+        @keyframes leave-1 {
+          50% {
+            margin: 0;
+          }
+          100% {
+            left: 100%;
+            top: 50%;
+            margin: 0;
+            transform: translate(50%, -50%);
+          }
+        }
       }
-      &[leader='3'] .cards-turn-leave-to {
-        left: 0;
-        top: 50%;
-        margin: 0;
-        transform: translate(-100%, -50%);
+      &[leader='2'] .card {
+        animation: leave-2 $fold-leave-duration $fold-leave-delay $fold-leave-type forwards;
+        @keyframes leave-2 {
+          50% {
+            margin: 0;
+          }
+          100% {
+            left: 50%;
+            top: 0;
+            margin: 0;
+            transform: translate(-50%, -150%);
+          }
+        }
+      }
+      &[leader='3'] .card {
+        animation: leave-3 $fold-leave-duration $fold-leave-delay $fold-leave-type forwards;
+        @keyframes leave-3 {
+          50% {
+            margin: 0;
+          }
+          100% {
+            left: 0;
+            top: 50%;
+            margin: 0;
+            transform: translate(-150%, -50%);
+          }
+        }
       }
     }
   }

@@ -26,7 +26,11 @@
            :leader="leader"
            @played="play">
     </cards>
-    <buzzer :disabled="!coincheAvailable" @hit="coinche">
+    <buzzer :auction="game.auction"
+            :bets="[constants.__GAME_STATE_BETS__, constants.__GAME_STATE_WAIT__].indexOf(game.state) !== -1"
+            :play="game.state === constants.__GAME_STATE_PLAY__"
+            :disabled="!me.canCoinche"
+            @hit="coinche">
     </buzzer>
   </section>
 </template>
@@ -43,6 +47,9 @@
   export default {
     store: global.store,
     computed: {
+      constants () {
+        return _consts_;
+      },
       leader () {
         const leader = this.$store.getters.findLeader;
         return (leader === -1) ? this.dealer : leader;
@@ -68,7 +75,10 @@
       },
       auctions () {
         const auctions = [];
-        if (this.game.state === _consts_.__GAME_STATE_BETS__) {
+        if ([
+          this.constants.__GAME_STATE_BETS__,
+          this.constants.__GAME_STATE_WAIT__
+        ].indexOf(this.game.state) !== -1) {
           for (let p = 0; p < this.players.length; p++) {
             const player = this.players[p];
             if (player.auctions && p !== this.players.findIndex((e) => e.turn)) {
@@ -81,13 +91,10 @@
         return auctions;
       },
       showBetSelector () {
-        return this.me.turn && this.game.state === _consts_.__GAME_STATE_BETS__;
+        return this.me.turn === true && this.game.state === this.constants.__GAME_STATE_BETS__;
       },
       disableCards () {
-        return !(this.me.turn && this.game.state === _consts_.__GAME_STATE_PLAY__);
-      },
-      coincheAvailable () {
-        return this.me.canCoinche || false;
+        return !(this.me.turn && this.game.state === this.constants.__GAME_STATE_PLAY__);
       },
       forbiddenCards () {
         return this.me.forbiddenCards || [];
@@ -100,6 +107,14 @@
       },
       config () {
         return this.$store.getters.config;
+      },
+      interPause () {
+        return (this.game.state === this.constants.__GAME_STATE_INTER__ ||
+          this.game.state === this.constants.__GAME_STATE_END__) &&
+          this.me.status === this.constants.__PLAYER_STATUS_INACTIVE__;
+      },
+      endGame () {
+        return this.game.state === this.constants.__GAME_STATE_END__;
       }
     },
     components: {
@@ -134,28 +149,100 @@
           token: this.game.token,
           id: this.me.id
         }).then();
+      },
+      showInterGame () {
+        const self = this;
+        const lastGameData = self.game.history[self.game.history.length - 1];
+        const myTeamIds = [this.me.id, this.players[2].id];
+        let won = lastGameData['won'] && myTeamIds.indexOf(lastGameData['auction'].id) !== -1;
+        won = won || !lastGameData['won'] && myTeamIds.indexOf(lastGameData['auction'].id) === -1;
+        let content = '';
+        if (['CAP', 'GEN'].indexOf(self.game.auction.price) !== -1) {
+          const args = { auction: self.$t(`play.${self.game.auction.price}`) };
+          content = won ? self.$t('play.made', args) : self.$t('play.failed', args);
+        } else {
+          content = self.$t('play.scoresUsThem', {
+            us: lastGameData['scores'][0],
+            them: lastGameData['scores'][1]
+          });
+          if (self.game.history[self.game.history.length - 1].belote) {
+            content += `<br>${self.$t('play.withBelote')}`;
+          }
+        }
+        self.$createDialog({
+          type: 'alert',
+          icon: won ? 'cubeic-right' : 'cubeic-wrong',
+          title: self.$t(won ? 'play.wonPhrase' : 'play.lostPhrase'),
+          content: content,
+          confirmBtn: self.$t('utils.continue'),
+          onConfirm: () => {
+            if (self.endGame) {
+              self.showEndGame();
+            } else {
+              self.$store.dispatch('continueGame').then();
+            }
+          }
+        }).show();
+      },
+      showEndGame () {
+        const self = this;
+        const won = self.game.scores[0] >= self.game.goal;
+        setTimeout(() => {
+          self.$createDialog({
+            type: 'confirm',
+            icon: 'cubeic-warn',
+            title: self.$t(won ? 'play.wonGamePhrase' : 'play.lostGamePhrase'),
+            content: self.$t('play.scoresUsThem', {
+              us: self.game.scores[0],
+              them: self.game.scores[1]
+            }),
+            confirmBtn: self.$t('menu.quit'),
+            cancelBtn: self.$t('scores.title'),
+            onConfirm () {
+              self.$router.push('/');
+            },
+            onCancel () {
+              self.$router.push('/play/offline/scores');
+            }
+          }).show();
+        }, 200);
+      }
+    },
+    watch: {
+      interPause (interPause) {
+        if (interPause) {
+          this.showInterGame();
+        }
       }
     },
     beforeRouteLeave (to, from, next) {
       const self = this;
       if (to.path.indexOf('/offline') === -1) {
-        self.$createDialog({
-          type: 'confirm',
-          icon: 'cubeic-danger',
-          title: self.$t('utils.warning'),
-          content: self.$t('menu.youWillLoseYourCurrentProgress'),
-          confirmBtn: self.$t('menu.quit'),
-          cancelBtn: self.$t('utils.cancel'),
-          onConfirm: () => {
-            this.$store.dispatch('clearGame').then(next);
-          }
-        }).show();
+        if (self.game.state === self.constants.__GAME_STATE_END__) {
+          self.$store.dispatch('clearGame').then(next);
+        } else {
+          self.$createDialog({
+            type: 'confirm',
+            icon: 'cubeic-danger',
+            title: self.$t('utils.warning'),
+            content: self.$t('menu.youWillLoseYourCurrentProgress'),
+            confirmBtn: self.$t('menu.quit'),
+            cancelBtn: self.$t('utils.cancel'),
+            onConfirm: () => {
+              this.$store.dispatch('clearGame').then(next);
+            }
+          }).show();
+        }
       } else {
-        next();
+        this.$store.dispatch('afk', true).then(next);
       }
     },
     mounted () {
-      this.$store.dispatch('initGame').then();
+      const self = this;
+      self.$store.dispatch('initGame').then();
+      setTimeout(() => {
+        if (self.interPause) self.showInterGame();
+      }, 200);
     }
   };
 </script>

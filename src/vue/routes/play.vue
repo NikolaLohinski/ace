@@ -21,8 +21,10 @@
             <template v-if="player.type === 'BOT'">
             <td class="type"><i class="fa fa-microchip"></i></td>
             <td class="name">
-              <v-select :default="[[player.level]]"
-                        :options="[[{ text: $t('play.ai.1'), value: 0 }]]"
+              <v-select :default="[[0]]"
+                        :options="[
+                          [{ text: $t('play.ai.1'), value: 1 }]
+                        ]"
                         @select="(val) => player.level = val[0]"
                         class="options">
               <span class="text">{{ player.name }}</span>

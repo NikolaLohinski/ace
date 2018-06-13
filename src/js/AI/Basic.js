@@ -1,5 +1,7 @@
 import _consts_ from '../engine/constants.js';
-
+const __THINKING_TIME_BET__ = 2000;  // Time in ms
+const __THINKING_TIME_COINCHE__ = 300;  // Time in ms
+const __THINKING_TIME_PLAY__ = 1500;  // Time in ms
 /**
  * Implementation of a basic AI
  * @author: Nikola LOHINSKI (https://NikolaLohinski.github.io)
@@ -13,11 +15,29 @@ export default {
    */
   bet (players) {
     return new Promise((resolve) => {
-      setTimeout(resolve, 1000, {
-        price: null,
-        category: null,
-        type: _consts_.__BET_ACTION_PASS__
-      });
+      setTimeout(() => {
+        const me = players[0];
+        let price = null;
+        let category = null;
+        let type = _consts_.__BET_ACTION_PASS__;
+        const prices = [80, 90, 100, 110];
+        const possibles = [];
+        for (let p = 0; p < prices.length; p++) {
+          if (me.forbiddenPrices.indexOf(prices[p]) === -1) {
+            possibles.push(prices[p]);
+          }
+        }
+        if (Math.random() > 0.5 && possibles.length > 0) {
+          price = possibles[Math.floor(Math.random() * possibles.length)];
+          category = ['s', 'd', 'c', 'h'][Math.floor(Math.random() * 4)];
+          type = _consts_.__BET_ACTION_BET__;
+        }
+        resolve({
+          price,
+          category,
+          type
+        });
+      }, __THINKING_TIME_BET__);
     });
   },
   /**
@@ -27,7 +47,11 @@ export default {
    */
   coinche (players) {
     return new Promise((resolve) => {
-      setTimeout(resolve, 1000, null);
+      if (players[0].canCoinche && Math.random() > 0.7) {
+        setTimeout(resolve, __THINKING_TIME_COINCHE__, {
+          type: _consts_.__BET_ACTION_COINCHE__
+        });
+      }
     });
   },
   /**
@@ -40,15 +64,18 @@ export default {
   play (players, turn, auction) {
     return new Promise((resolve) => {
       const me = players[0];
+      const possibles = [];
       setTimeout(() => {
-        let cardIndex = Math.floor(Math.random() * me.hand.length);
-        while (me.forbiddenCards.indexOf(me.hand[cardIndex]) !== -1) {
-          cardIndex = Math.floor(Math.random() * me.hand.length);
+        for (let c = 0; c < me.hand.length; c++) {
+          if (me.forbiddenCards.indexOf(me.hand[c]) === -1) {
+            possibles.push(me.hand[c]);
+          }
         }
+        const cardIndex = Math.floor(Math.random() * possibles.length);
         resolve({
-          card: me.hand[cardIndex]
+          card: possibles[cardIndex]
         });
-      }, 4000);
+      }, __THINKING_TIME_PLAY__);
     });
   }
 };

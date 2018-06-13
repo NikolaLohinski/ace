@@ -1,9 +1,23 @@
 <template>
   <div class="buzzer-container">
-    <div class="buzzer-holder">
+    <div class="buzzer-holder" v-if="bets">
       <v-touch tag="button" class="buzzer cube-btn"
                @tap.prevent="hit">
       </v-touch>
+    </div>
+    <div class="auction" v-if="play">
+      <div class="category" v-if="['AA', 'NA'].indexOf(auction.category) !== -1">
+        {{ auction.category }}
+      </div>
+      <i :class="`category card-icon ${auction.category}`" v-else></i>
+      <div class="price">
+        <span v-if="['GEN', 'CAP'].indexOf(auction.price) !== -1">
+        {{ $t(`play.${auction.price}`) }}
+        </span>
+        <span v-else>
+          {{auction.price}}
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -17,6 +31,19 @@
           category: null,
           type: _consts_.__BET_ACTION_COINCHE__
         });
+      }
+    },
+    props: {
+      bets: {
+        type: Boolean,
+        required: true
+      },
+      play: {
+        type: Boolean,
+        required: true
+      },
+      auction: {
+        type: Object
       }
     }
   };
@@ -71,6 +98,19 @@
           margin-right: 0;
           transform: none;
         }
+      }
+    }
+    .auction {
+      display: table-cell;
+      text-align: center;
+      vertical-align: middle;
+      .category {
+        position: relative;
+        top: -4px;
+      }
+      .price {
+        font-size: 8px;
+        margin-top: -2px;
       }
     }
     &[disabled] {

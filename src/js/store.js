@@ -4,12 +4,18 @@ import Player from './engine/Player.js';
 import utils from './utils.js';
 import AIHandler from './AI/AIHandler';
 
+const __DELAY_UI__ = 2000;  // in ms
+
 export default {
+  state: {
+    timeoutId: -1
+  },
   localState: {
     path: null,
     game: {},
     players: [],
-    config: {}
+    config: {},
+    engineTimeout: 0
   },
   mutations: {
     path (state, path) {
@@ -28,6 +34,12 @@ export default {
     },
     players (state, players) {
       state.players = players;
+    },
+    engineTimeout (state, timeout) {
+      state.engineTimeout = timeout;
+    },
+    timeoutId (state, id) {
+      state.timeoutId = id;
     }
   },
   getters: {
@@ -70,6 +82,12 @@ export default {
         players.push(new Player(state.players[k]).getPublicImage());
       }
       return players;
+    },
+    engineTimeout (state) {
+      return state.engineTimeout;
+    },
+    timeoutId (state) {
+      return state.timeoutId;
     }
   },
   actions: {
@@ -80,12 +98,33 @@ export default {
         resolve();
       });
     },
+    afk (state, isAfk) {
+      return new Promise((resolve) => {
+        state.getters.players[0].status =
+          isAfk ? _consts_.__PLAYER_STATUS_INACTIVE__
+          : _consts_.__PLAYER_STATUS_CONNECTED__;
+        state.dispatch('notify', [state.getters.game, state.getters.players]).then(resolve);
+      });
+    },
+    continueGame (state) {
+      return new Promise(() => {
+        state.dispatch('afk', false).then(() => {
+          if (state.getters.players.findIndex((p) => p.status !== _consts_.__PLAYER_STATUS_CONNECTED__) === -1) {
+            const [game, players] = Engine.clear(state.getters.game, state.getters.players);
+            state.dispatch('notify', Engine.init(game, players)).then();
+          }
+        });
+      });
+    },
     initGame (state) {
       return new Promise(() => {
         let game = state.getters.game;
         let players = state.getters.players;
+        players[0].status = _consts_.__PLAYER_STATUS_CONNECTED__;
         if (!game.initialized) {
-          [game, players] = Engine.deal(game, players);
+          [game, players] = Engine.init(game, players);
+        } else if ([_consts_.__GAME_STATE_INTER__, _consts_.__GAME_STATE_END__].indexOf(game.state) !== -1) {
+          players[0].status = _consts_.__PLAYER_STATUS_INACTIVE__;
         }
         state.dispatch('notify', [game, players]).then();
       });
@@ -97,7 +136,7 @@ export default {
           arg.id = act.id;
           state.dispatch(act.action, arg).then();
         } else {
-          throw Error('Action outdated');
+          console.error(`Action outdated from ${act.id}`);
         }
       });
     },
@@ -106,7 +145,18 @@ export default {
         state.dispatch(
           'notify',
           Engine.play(state.getters.game, state.getters.players, play)
-        ).then();
+        ).then(() => {
+          if (state.getters.game.state === _consts_.__GAME_STATE_INTER__) {
+            setTimeout(() => {
+              state.dispatch(
+                'notify',
+                Engine.evaluate(state.getters.game, state.getters.players)
+              ).then(() => {
+                state.dispatch('afk', true).then();
+              });
+            }, __DELAY_UI__);
+          }
+        });
       });
     },
     bet (state, bet) {
@@ -116,14 +166,34 @@ export default {
           Engine.bet(state.getters.game, state.getters.players, bet)
         ).then(() => {
           if (state.getters.game.state === _consts_.__GAME_STATE_INTER__) {
-            state.dispatch(
+            setTimeout(() => {
+              state.dispatch(
                 'notify',
-                Engine.clear(state.getters.game, state.getters.players
-              )).then(() => {
-                setTimeout(state.dispatch, 2000, 'initGame');
+                Engine.clear(state.getters.game, state.getters.players)
+              ).then(() => {
+                setTimeout(state.dispatch, __DELAY_UI__, 'initGame');
               });
+            }, __DELAY_UI__);
+          } else if (state.getters.game.state === _consts_.__GAME_STATE_WAIT__) {
+            state.dispatch('wait', _consts_.__WAIT_TIMEOUT__).then(() => {
+              state.dispatch(
+                'notify',
+                Engine.start(state.getters.game, state.getters.players)
+              ).then();
+            });
           }
         });
+      });
+    },
+    wait (state, duration) {
+      return new Promise((resolve) => {
+        clearTimeout(state.getters.timeoutId);
+        state.commit('engineTimeout', duration);
+        state.commit('timeoutId', setTimeout(() => {
+          const newDuration = duration - 1000;
+          if (newDuration < 0) resolve();
+          else state.dispatch('wait', newDuration).then(resolve);
+        }, duration));
       });
     },
     notify (state, [game, players]) {
