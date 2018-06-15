@@ -1,24 +1,23 @@
 <template>
   <div class="buzzer-container">
-    <div class="buzzer-holder" v-if="bets">
+    <transition name="fade" mode="out-in">
+    <div class="buzzer-holder" v-if="showBuzzer">
       <v-touch tag="button" class="buzzer cube-btn"
                @tap.prevent="hit">
       </v-touch>
     </div>
-    <div class="auction" v-if="play">
-      <div class="category" v-if="['AA', 'NA'].indexOf(auction.category) !== -1">
-        {{ auction.category }}
-      </div>
-      <i :class="`category card-icon ${auction.category}`" v-else></i>
+    <div class="auction" v-else>
+      <i :class="`category card-icon ${auction.category}`"></i>
       <div class="price">
         <span v-if="['GEN', 'CAP'].indexOf(auction.price) !== -1">
         {{ $t(`play.${auction.price}`) }}
         </span>
         <span v-else>
-          {{auction.price}}
+          {{ auction.price }}
         </span>
       </div>
     </div>
+    </transition>
   </div>
 </template>
 <script>
@@ -34,16 +33,15 @@
       }
     },
     props: {
-      bets: {
-        type: Boolean,
-        required: true
-      },
-      play: {
+      showBuzzer: {
         type: Boolean,
         required: true
       },
       auction: {
-        type: Object
+        type: Object,
+        default () {
+          return {};
+        }
       }
     }
   };
@@ -107,10 +105,15 @@
       .category {
         position: relative;
         top: -4px;
+        &:before {
+          width: 20px !important;
+          height: 20px !important;
+        }
       }
       .price {
-        font-size: 8px;
-        margin-top: -2px;
+        color: $darker-text-color;
+        font-size: 7px;
+        margin-top: -3px;
       }
     }
     &[disabled] {
@@ -118,6 +121,14 @@
         pointer-events: none;
         opacity: 0.3;
       }
+    }
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: opacity .2s;
+    }
+    .fade-enter,
+    .fade-leave-to {
+      opacity: 0;
     }
   }
 </style>

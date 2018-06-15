@@ -124,10 +124,13 @@ const Engine = {
     }
     if (bet.type === _consts_.__BET_ACTION_COINCHE__) {
       // Case of a Coinche
+      for (let k = 0; k < players.length; k++) {
+        players[k].turn = false;
+      }
       players[meIndex].coinche = true;
       players[meIndex].canCoinche = false;
       players[(meIndex + 2) % 4].canCoinche = false;
-      if (!players[(meIndex + 1) % 4].coinche && !players[(meIndex + 3) % 4].coinche) {
+      if (!(players[(meIndex + 1) % 4].coinche || players[(meIndex + 3) % 4].coinche)) {
         players[(meIndex + 1) % 4].canCoinche = true;
         players[(meIndex + 3) % 4].canCoinche = true;
       }
@@ -156,6 +159,7 @@ const Engine = {
         const leaderIndex = Engine.leader(game, players);
         if (leaderIndex === ((players.findIndex((p) => p.turn) + 1) % 4)) {
           game.state = _consts_.__GAME_STATE_WAIT__;
+          players[meIndex].turn = false;
         } else {
           players = Engine.next(game, players, null);
         }
@@ -243,7 +247,9 @@ const Engine = {
           }
         }
       } else {
-        if (['AA', 'NA'].indexOf(category) === -1 && ((index + 2) % 4) !== leaderIndex) {
+        if (['AA', 'NA'].indexOf(category) === -1 && (((index + 2) % 4) !== leaderIndex) || (
+            player.hand.findIndex((c) => c[c.length - 1] !== category) === -1 && ((index + 2) % 4) === leaderIndex)
+        ) {
           if (player.hand.findIndex((c) => c[c.length - 1] === category) !== -1) {
             const potentialFC = [];
             for (let c = 0; c < player.hand.length; c++) {
@@ -344,7 +350,7 @@ const Engine = {
    */
   next (game, players, after) {
     const playingIndex = players.findIndex((p) => p.turn);
-    players[playingIndex].turn = false;
+    if (playingIndex !== -1) players[playingIndex].turn = false;
     let index;
     switch (after) {
       case 'dealer':
@@ -407,10 +413,14 @@ const Engine = {
     const offense = [players[announcerIndex], players[(announcerIndex + 2) % 4]];
     const defense = [players[(announcerIndex + 1) % 4], players[(announcerIndex + 3) % 4]];
     let coinchePriceFactor = 1;
+    let coinche = false;
+    let surCoinche = false;
     if (defense[0].coinche || defense[1].coinche) {
       coinchePriceFactor = coinchePriceFactor * 2;
+      coinche = true;
       if (offense[0].coinche || offense[1].coinche) {
         coinchePriceFactor = coinchePriceFactor * 2;
+        surCoinche = true;
       }
     }
     let price;
@@ -499,7 +509,9 @@ const Engine = {
       auction: game.auction,
       won: victoryOffense,
       scores: scores,
-      belote: belote
+      belote: belote,
+      coinche: coinche,
+      surCoinche: surCoinche
     });
     if (game.scores[0] >= game.goal || game.scores[1] >= game.goal) {
       game.state = _consts_.__GAME_STATE_END__;

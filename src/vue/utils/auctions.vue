@@ -1,25 +1,25 @@
 <template>
   <div class="auctions">
-    <div v-for="(auction, index) in auctions" :position="index" class="bet" v-if="auction">
-      <span v-if="auction.type !== passType">
-        <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
-          {{ $t(`play.${auction.price}`) }}
-        </div>
-        <span v-else class="price">
-          {{ auction.price }}
+    <transition-group name="fade" tag="div">
+      <div v-for="(auction, index) in auctions" :key="index"
+                        :position="index" class="bet" v-if="auction">
+        <span v-if="auction.type !== passType">
+          <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
+            {{ $t(`play.${auction.price}`) }}
+          </div>
+          <span v-else class="price">
+            {{ auction.price }}
+          </span>
+          <span>
+            <i :class="`card-icon ${auction.category}`" class="type">
+            </i>
+          </span>
         </span>
-        <div v-if="auction.category === 'AA' || auction.category === 'NA'" class="type">
-          {{ $t(`play.${auction.category}`) }}
-        </div>
-        <span v-else>
-          <i :class="`card-icon ${auction.category}`" class="type">
-          </i>
+        <span v-else class="pass">
+          {{ $t('play.pass')}}
         </span>
-      </span>
-      <span v-else class="pass">
-        {{ $t('play.pass')}}
-      </span>
-    </div>
+      </div>
+    </transition-group>
     <nav v-if="showSelector">
       <div class="nav-bet">
         <v-select class="bet-option"
@@ -45,7 +45,8 @@
       return {
         prices: _consts_.__AUCTION_PRICES__,
         categories: _consts_.__AUCTION_CATEGORIES__,
-        passType: _consts_.__BET_ACTION_PASS__
+        passType: _consts_.__BET_ACTION_PASS__,
+        priceOptions: this.computePrices(_consts_.__AUCTION_PRICES__, this.forbiddenPrices)
       };
     },
     props: {
@@ -71,24 +72,11 @@
       vSelect
     },
     computed: {
-      priceOptions () {
-        const priceOptions = [];
-        for (let k = 0; k < this.prices.length; k++) {
-          const price = this.prices[k];
-          if (this.forbiddenPrices.indexOf(price) === -1) {
-            priceOptions.push({
-              text: (price === 'GEN' || price === 'CAP') ? this.$t(`play.${price}`) : price,
-              value: price
-            });
-          }
-        }
-        return priceOptions;
-      },
       categoryOptions () {
         const categoryOptions = [];
         for (let k = 0; k < this.categories.length; k++) {
           categoryOptions.push({
-            text: this.$t(`play.${this.categories[k]}`),
+            text: `<i class="card-icon ${this.categories[k]}"></i>`,
             value: this.categories[k]
           });
         }
@@ -98,7 +86,28 @@
         return [this.priceOptions, this.categoryOptions];
       }
     },
+    watch: {
+      forbiddenPrices: {
+        deep: true,
+        handler (forbiddenPrices) {
+          this.priceOptions = this.computePrices(this.prices, forbiddenPrices);
+        }
+      }
+    },
     methods: {
+      computePrices (prices, forbidden) {
+        const priceOptions = [];
+        for (let k = 0; k < prices.length; k++) {
+          const price = prices[k];
+          if (forbidden.indexOf(price) === -1) {
+            priceOptions.push({
+              text: (price === 'GEN' || price === 'CAP') ? this.$t(`play.${price}`) : price,
+              value: price
+            });
+          }
+        }
+        return priceOptions;
+      },
       bet (bet) {
         this.$emit('bet', {
           price: bet ? bet[0] : null,
@@ -131,6 +140,10 @@
       }
       .price {
         margin-bottom: 5px;
+      }
+      .type:before {
+        width: 20px;
+        height: 20px;
       }
       &[position='0'] {
         bottom: 28vh;
@@ -189,6 +202,14 @@
           width: 48%;
         }
       }
+    }
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: opacity .2s;
+    }
+    .fade-enter,
+    .fade-leave-to {
+      opacity: 0;
     }
   }
 </style>

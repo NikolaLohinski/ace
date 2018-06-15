@@ -38,12 +38,6 @@ const translations = {
       'toPass': 'Pass',
       'CAP': 'All',
       'GEN': 'Alone',
-      'AA': 'Assets only',
-      'NA': 'No Assets',
-      's': '♠',
-      'd': '♦',
-      'c': '♣',
-      'h': '♥',
       'players': 'Players',
       'dealer': 'Dealer',
       'playerType': 'Type',
@@ -58,6 +52,8 @@ const translations = {
       'lost': 'Failed',
       'lostGamePhrase': 'You lost the game...',
       'wonGamePhrase': 'Victory !',
+      'playerCoinched': '{player} coinched !',
+      'playerSurCoinched': '{player} surcoinched !',
       'ai': {
         'name': 'Bot',
         '1': 'Basic'
@@ -74,6 +70,7 @@ const translations = {
       'playOffline': 'Hors-ligne'
     },
     'settings': {
+      'title': 'Options',
       'cancel': 'Annuler',
       'changeLanguage': 'Langue de ACE',
       'pleaseChooseName': 'Votre pseudo ACE',
@@ -106,12 +103,6 @@ const translations = {
       'toPass': 'Passer',
       'CAP': 'Capot',
       'GEN': 'Générale',
-      'AA': 'Tout Atout',
-      'NA': 'Sans Atout',
-      's': '♠',
-      'd': '♦',
-      'c': '♣',
-      'h': '♥',
       'players': 'Joueurs',
       'dealer': 'Dealer',
       'playerType': 'Type',
@@ -126,6 +117,8 @@ const translations = {
       'lost': 'Chuté',
       'lostGamePhrase': 'Partie perdue...',
       'wonGamePhrase': 'Victoire !',
+      'playerCoinched': 'Coinché par {player} !',
+      'playerSurCoinched': 'Surcoinché par {player} !',
       'ai': {
         'name': 'Bot',
         '1': 'Basique'

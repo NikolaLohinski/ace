@@ -1,5 +1,5 @@
 <template>
-  <section class="offline">
+  <section class="offline" :vibrate="vibrate">
     <nav>
       <v-link to="offline/scores" class="menu-btn right"><i class="fa fa-trophy"></i></v-link>
       <v-link to="offline/menu" class="menu-btn left"><i class="fa fa-bars"></i></v-link>
@@ -13,7 +13,7 @@
     </other-player>
     <dealer-coin :position="dealer"></dealer-coin>
     <auctions :auctions="auctions"
-              :forbidden-prices="me.forbiddenPrices"
+              :forbidden-prices="forbiddenPrices"
               :show-selector="showBetSelector"
               @bet="bet">
     </auctions>
@@ -27,8 +27,7 @@
            @played="play">
     </cards>
     <buzzer :auction="game.auction"
-            :bets="[constants.__GAME_STATE_BETS__, constants.__GAME_STATE_WAIT__].indexOf(game.state) !== -1"
-            :play="game.state === constants.__GAME_STATE_PLAY__"
+            :show-buzzer="[constants.__GAME_STATE_BETS__, constants.__GAME_STATE_WAIT__].indexOf(game.state) !== -1"
             :disabled="!me.canCoinche"
             @hit="coinche">
     </buzzer>
@@ -45,6 +44,14 @@
   import Buzzer from '../utils/buzzer.vue';
 
   export default {
+    data () {
+      return {
+        playerCoinche: null,
+        playerSurCoinche: null,
+        vibrate: false,
+        timeout: -1
+      };
+    },
     store: global.store,
     computed: {
       constants () {
@@ -98,6 +105,9 @@
       },
       forbiddenCards () {
         return this.me.forbiddenCards || [];
+      },
+      forbiddenPrices () {
+        return this.me.forbiddenPrices || [];
       },
       turn () {
         return this.game.turn || [null, null, null, null];
@@ -212,6 +222,58 @@
       interPause (interPause) {
         if (interPause) {
           this.showInterGame();
+          this.playerCoinche = null;
+          this.playerSurCoinche = null;
+        }
+      },
+      players: {
+        deep: true,
+        handler (newPlayers) {
+          if ([this.constants.__GAME_STATE_WAIT__, this.constants.__GAME_STATE_BETS__].indexOf(this.game.state) !== -1) {
+            if (!this.playerCoinche) {
+              const coincheIndex = newPlayers.findIndex((p) => p.coinche);
+              if (coincheIndex !== -1) this.playerCoinche = newPlayers[coincheIndex];
+            }
+            if (!this.playerSurCoinche && this.playerCoinche) {
+              const surCoincheIndex = newPlayers.findIndex((p) => p.coinche && p.id !== this.playerCoinche.id);
+              if (surCoincheIndex !== -1) this.playerSurCoinche = newPlayers[surCoincheIndex];
+            }
+          }
+        }
+      },
+      playerCoinche (player) {
+        const self = this;
+        if (player) {
+          self.$createToast({
+            type: 'warn',
+            time: 3000,
+            txt: self.$t('play.playerCoinched', { player: player.name }),
+            mask: true,
+            maskClosable: true
+          }).show();
+          this.vibrate = 1;
+        }
+      },
+      playerSurCoinche (player) {
+        const self = this;
+        if (player) {
+          self.$createToast({
+            type: 'warn',
+            time: 3000,
+            txt: self.$t('play.playerSurCoinched', { player: player.name }),
+            mask: true,
+            maskClosable: true
+          }).show();
+          this.vibrate = true;
+        }
+      },
+      vibrate (vibrate) {
+        if (vibrate) {
+          clearTimeout(this.timeout);
+          this.timeout = setTimeout(() => {
+            this.vibrate = false;
+            this.timeout = -1;
+          }, 1000);
         }
       }
     },
@@ -258,6 +320,12 @@
     bottom: 0;
     background: $center-logo center no-repeat;
     background-size: $size-center-logo $size-center-logo;
+    &[vibrate] {
+      animation-name: shake;
+      animation-duration: 1s;
+      transform-origin:50% 50%;
+      animation-timing-function: linear;
+    }
     nav {
       position: absolute;
       pointer-events: none;
@@ -280,6 +348,19 @@
           left: 5px;
         }
       }
+    }
+    @keyframes shake {
+      0% { -webkit-transform: translate(2px, 1px) rotate(0deg); }
+      10% { -webkit-transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { -webkit-transform: translate(-3px, 0px) rotate(1deg); }
+      30% { -webkit-transform: translate(0px, 2px) rotate(0deg); }
+      40% { -webkit-transform: translate(1px, -1px) rotate(1deg); }
+      50% { -webkit-transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { -webkit-transform: translate(-3px, 1px) rotate(0deg); }
+      70% { -webkit-transform: translate(2px, 1px) rotate(-1deg); }
+      80% { -webkit-transform: translate(-1px, -1px) rotate(1deg); }
+      90% { -webkit-transform: translate(2px, 2px) rotate(0deg); }
+      100% { -webkit-transform: translate(1px, -2px) rotate(-1deg); }
     }
   }
 </style>

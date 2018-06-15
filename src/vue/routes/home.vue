@@ -198,9 +198,6 @@
       bottom: 15px;
       text-align: center;
       height: 50px;
-      @include answer-to-height ('s') {
-        bottom: 0;
-      }
       .small-nav {
         display: inline-block;
         font-size: 30px;

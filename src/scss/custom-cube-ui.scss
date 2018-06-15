@@ -29,23 +29,11 @@
 .cube-picker-choose {
   cursor: pointer;
   font-family: DefaultFont;
-  > [data-action=confirm],
-  > [data-action=cancel] {
+  > .cube-picker-cancel {
     color: $default-text-color;
-    &:active {
-      color: $link-text-color;
-    }
   }
-}
-.cube-picker-wheel-wrapper {
-  cursor: pointer;
-  :nth-child(2) {
-    ul.wheel-scroll {
-      :nth-child(2),
-      :nth-child(4) {
-        color: red;
-      }
-    }
+  > .cube-picker-confirm {
+    color: $link-text-color;
   }
 }
 

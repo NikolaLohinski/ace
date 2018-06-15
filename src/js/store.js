@@ -8,7 +8,8 @@ const __DELAY_UI__ = 2000;  // in ms
 
 export default {
   state: {
-    timeoutId: -1
+    timeoutId: -1,
+    loading: true
   },
   localState: {
     path: null,
@@ -18,6 +19,9 @@ export default {
     engineTimeout: 0
   },
   mutations: {
+    loading (state, loading) {
+      state.loading = loading;
+    },
     path (state, path) {
       state.path = path;
     },
@@ -43,6 +47,9 @@ export default {
     }
   },
   getters: {
+    loading (state) {
+      return state.loading;
+    },
     path (state) {
       return state.path;
     },

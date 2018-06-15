@@ -7,12 +7,14 @@
       <table>
         <thead>
           <th class="total">{{ scores[0] }}</th>
+          <th class="coinche"></th>
           <th class="title">
             {{ 'scores.us' | translate }}
           </th>
           <th class="title">
             {{ 'scores.them' | translate }}
           </th>
+          <th class="coinche"></th>
           <th class="total">{{ scores[1] }}</th>
         </thead>
         <tr v-for="game in history">
@@ -24,14 +26,14 @@
               <span class="price" v-else>
                 {{ game.auction.price }}
               </span>
-              <span class="category" v-if="['AA', 'NA'].indexOf(game.auction.category) !== -1">
-                {{ `play.${game.auction.category}` | translate }}
-              </span>
-              <span class="category" v-else>
+              <span class="category">
                 <i :class="`card-icon ${game.auction.category}`"></i>
                 <span v-if="game.belote">B</span>
               </span>
             </span>
+          </td>
+          <td class="coinche">
+            <i class="logo" v-if="usCoinche(game)"></i>
           </td>
           <td v-if="isCapOrGen(game)" class="cap-gen"
               colspan="2" :failed="whoWon(game) !== whoIsAuctioneer(game)">
@@ -43,6 +45,9 @@
           <td :bold="whoWon(game) === 1" v-if="!isCapOrGen(game)">
             {{ game.scores[1] }}
           </td>
+          <td class="coinche">
+            <i class="logo" v-if="themCoinche(game)"></i>
+          </td>
           <td>
             <span v-if="[1, 3].indexOf(whoIsAuctioneer(game)) !== -1">
               <span class="price" v-if="['CAP', 'GEN'].indexOf(game.auction.price) !== -1">
@@ -51,10 +56,7 @@
               <span class="price" v-else>
                 {{ game.auction.price }}
               </span>
-              <span class="category" v-if="['AA', 'NA'].indexOf(game.auction.category) !== -1">
-                {{ `play.${game.auction.category}` | translate }}
-              </span>
-              <span class="category" v-else>
+              <span class="category">
                 <i :class="`card-icon ${game.auction.category}`"></i>
               </span>
             </span>
@@ -93,6 +95,24 @@
       },
       isCapOrGen (game) {
         return ['CAP', 'GEN'].indexOf(game.auction.price) !== -1;
+      },
+      usCoinche (game) {
+        let usCoinche = false;
+        if (game.coinche || game.surCoinche) {
+          const auctioneerIndex = this.players.findIndex((p) => p.id === game.auction.id);
+          usCoinche = ([0, 2].indexOf(auctioneerIndex) !== -1 && game.surCoinche) ||
+          ([1, 3].indexOf(auctioneerIndex) !== -1 && game.coinche);
+        }
+        return usCoinche;
+      },
+      themCoinche (game) {
+        let themCoinche = false;
+        if (game.coinche || game.surCoinche) {
+          const auctioneerIndex = this.players.findIndex((p) => p.id === game.auction.id);
+          themCoinche = ([1, 3].indexOf(auctioneerIndex) !== -1 && game.surCoinche) ||
+          ([0, 2].indexOf(auctioneerIndex) !== -1 && game.coinche);
+        }
+        return themCoinche;
       }
     },
     components: {
@@ -104,6 +124,8 @@
   @import '../../scss/colors';
   @import '../../scss/variables';
   @import '../../scss/sizes';
+  $img-path: '../../img';
+  @import '../../scss/images';
   .scores {
     position: absolute;
     top: 0;
@@ -113,8 +135,8 @@
     .container {
       height: calc(100% - #{$header-height} - 45px);
       -webkit-overflow-scrolling: touch;
-      margin: 15px auto 0 auto;
       overflow-y: auto;
+      margin: 15px auto 0 auto;
       table {
         width: 100%;
         margin: 0 auto;
@@ -126,13 +148,29 @@
           &.total {
             font-family: BoldFont;
             font-size: 20px;
+            width: 30%;
           }
           &[bold] {
             font-family: BoldFont;
           }
           &.title {
             color: $lighter-text-color;
-            width: 30%;
+            width: 15%;
+          }
+          &.coinche {
+            position: relative;
+            width: 5%;
+            .logo {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              margin: -10px 0 0 -10px;
+              display: block;
+              width: 20px;
+              height: 20px;
+              background: $ace-logo center no-repeat;
+              background-size: 100%;
+            }
           }
           &.cap-gen {
             font-family: BoldFont;
@@ -142,8 +180,15 @@
               color: $lighter-text-color;
             }
           }
-          .category, .price {
+          .category,
+          .price {
             margin: 0 2px;
+          }
+          .category i:before {
+            width: 20px;
+            height: 20px;
+            margin-top: -7px;
+            top: 1px;
           }
         }
       }

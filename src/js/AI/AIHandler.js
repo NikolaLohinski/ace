@@ -52,7 +52,10 @@ export default {
           });
         }
       } else { // Passive reaction
-        if (game.state === _consts_.__GAME_STATE_BETS__) {
+        if ([
+          _consts_.__GAME_STATE_BETS__,
+          _consts_.__GAME_STATE_WAIT__
+        ].indexOf(game.state) !== -1) {
           AI.coinche(arrangedPlayers).then((coinche) => {
             if (coinche) {
               react({

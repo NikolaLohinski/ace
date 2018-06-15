@@ -1,6 +1,6 @@
 import _consts_ from '../engine/constants.js';
-const __THINKING_TIME_BET__ = 2000;  // Time in ms
-const __THINKING_TIME_COINCHE__ = 300;  // Time in ms
+const __THINKING_TIME_BET__ = 2500;  // Time in ms
+const __THINKING_TIME_COINCHE__ = 1500;  // Time in ms
 const __THINKING_TIME_PLAY__ = 1500;  // Time in ms
 /**
  * Implementation of a basic AI
@@ -47,7 +47,7 @@ export default {
    */
   coinche (players) {
     return new Promise((resolve) => {
-      if (players[0].canCoinche && Math.random() > 0.7) {
+      if (players[0].canCoinche && Math.random() > 0.9) {
         setTimeout(resolve, __THINKING_TIME_COINCHE__, {
           type: _consts_.__BET_ACTION_COINCHE__
         });

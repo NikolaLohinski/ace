@@ -8,32 +8,42 @@ $spades: url('#{$img-path}/spades.png');
 $hearths: url('#{$img-path}/hearths.png');
 $clubs: url('#{$img-path}/clubs.png');
 $diamonds: url('#{$img-path}/diamonds.png');
+$AA: url('#{$img-path}/AA.png');
+$NA: url('#{$img-path}/NA.png');
 
 i.card-icon{
   display: inline-block;
   &:before {
     content: '';
-    width: 15px;
-    height: 15px;
+    width: 30px;
+    height: 30px;
     display: inline-block;
-    vertical-align: bottom;
+    vertical-align: middle;
     position: relative;
-    top: 1px;
+    top: -1px;
   }
   &.s:before {
-    background: $spades 50% 50%;
+    background: $spades center no-repeat;
     background-size: 100%;
   }
   &.h:before {
-    background: $hearths 50% 50%;
+    background: $hearths center no-repeat;
     background-size: 100%;
   }
   &.c:before {
-    background: $clubs 50% 50%;
+    background: $clubs center no-repeat;
     background-size: 100%;
   }
   &.d:before {
-    background: $diamonds 50% 50%;
+    background: $diamonds center no-repeat;
+    background-size: 100%;
+  }
+  &.AA:before {
+    background: $AA center no-repeat;
+    background-size: 100%;
+  }
+  &.NA:before {
+    background: $NA center no-repeat;
     background-size: 100%;
   }
 }

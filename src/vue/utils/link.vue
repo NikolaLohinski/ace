@@ -1,6 +1,7 @@
 <template>
   <v-touch :tag="tag" @tap.prevent="goTo"
            @pressup.prevent="goTo"
+           @touchstart="goTo"
            link>
     <slot></slot>
   </v-touch>
