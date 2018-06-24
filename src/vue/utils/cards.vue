@@ -33,11 +33,11 @@
                v-for="(card, index) in hand_"
                class="card"
                :forbidden="forbidden.indexOf(card) !== -1"
-               :selected="index === selected"
+               :selected="card === selected"
                :key="card"
                :index="card"
                :leader="leader"
-               @tap="selected = (selected === index || forbidden.indexOf(card) !== -1) ? null : index">
+               @tap="selected = (selected === card || forbidden.indexOf(card) !== -1) ? null : card">
       </v-touch>
     </transition-group>
   </v-touch>
@@ -96,9 +96,9 @@
     methods: {
       playCard ($event) {
         if (this.selected !== null && !this.disabled) {
-          const card = this.hand[this.selected];
-          this.hand_.splice(this.selected, 1);
-          this.$emit('played', { card: card });
+          const index = this.hand_.indexOf(this.selected);
+          this.$emit('played', { card: this.hand[index] });
+          this.hand_ = this.hand.slice(0, index).concat(this.hand.slice(index + 1));
           this.selected = null;
         }
         $event.preventDefault();
@@ -114,7 +114,7 @@
       hand: {
         deep: true,
         handler (hand) {
-          this.hand_ = hand;
+          this.hand_ = JSON.parse(JSON.stringify(hand));
         }
       },
       moveUp (moveUp) {

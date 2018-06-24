@@ -22,7 +22,7 @@
     props: {
       tag: {
         type: String,
-        default: 'a'
+        default: 'div'
       },
       to: {
         type: String,

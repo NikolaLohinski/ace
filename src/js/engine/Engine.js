@@ -81,6 +81,7 @@ const Engine = {
       players[k].forbiddenCards = [];
       players[k].canCoinche = false;
       players[k].coinche = false;
+      players[k].belote = false;
     }
     const dealerIndex = players.findIndex((p) => p.dealer);
     players[dealerIndex].dealer = false;
@@ -186,7 +187,8 @@ const Engine = {
     const me = players[meIndex];
     game.turn[meIndex] = play.card;
     const cardIndex = me.hand.indexOf(play.card);
-    me.hand = me.hand.slice(0, cardIndex).concat(me.hand.slice(cardIndex + 1));
+    const hand = JSON.parse(JSON.stringify(me.hand));
+    me.hand = hand.slice(0, cardIndex).concat(hand.slice(cardIndex + 1));
     if (game.turn.indexOf(null) === -1) {
       const leaderIndex = Engine.leader(game, players);
       players[leaderIndex].folds = players[leaderIndex].folds.concat(game.turn);

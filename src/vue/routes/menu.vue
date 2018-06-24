@@ -79,7 +79,7 @@
       width: 100%;
       height: calc(100% - #{$header-height} - 45px);
       margin: 15px auto 0 auto;
-      max-width: 500px;
+      max-width: $max-width-main;
       td {
         margin: 15px auto;
         .item {

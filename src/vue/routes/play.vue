@@ -23,14 +23,12 @@
               <td class="type"><i class="fa fa-microchip"></i></td>
               <td class="name">
                 <v-select :default="[[0]]"
-                          :options="[
-                            [{ text: $t('play.ai.1'), value: 1 }]
-                          ]"
+                          :options="[AiOptions]"
                           @select="(val) => player.level = val[0]"
                           class="options">
                 <span class="text">{{ player.name }}</span>
                 <span class="value">
-                  <i class="fa fa-hand-o-right"></i>{{ $t(`play.ai.${player.level}`) }}
+                  <i class="fa fa-hand-o-right"></i>{{ $t(`play.ai.${player.level}.name`) }}
                 </span>
               </v-select>
               </td>
@@ -44,11 +42,15 @@
             </tr>
           </table>
         </td></tr>
-        <tr><td style="vertical-align: bottom" :disabled="players.findIndex((p) => p.name.length === 0) !== -1">
-          <v-link to="play/offline" class="cube-btn success">
-            {{ $t('play.start') }}
-          </v-link>
-        </td></tr>
+        <tr>
+          <td class="start"
+              style="vertical-align: bottom"
+              :disabled="players.findIndex((p) => p.name.length === 0) !== -1">
+            <v-link to="play/offline" class="cube-btn success">
+              {{ $t('play.start') }}
+            </v-link>
+          </td>
+        </tr>
       </table>
     </div>
   </div>
@@ -66,11 +68,19 @@
       return {
         players: [
           { type: 'USR', name: this.$t('utils.you'), dealer: false, level: null },
-          { type: 'BOT', name: `${this.$t('play.ai.name')} 1`, dealer: false, level: 1 },
-          { type: 'BOT', name: `${this.$t('play.ai.name')} 2`, dealer: false, level: 1 },
-          { type: 'BOT', name: `${this.$t('play.ai.name')} 3`, dealer: false, level: 1 }
+          { type: 'BOT', name: `${this.$t('play.ai.title')} 1`, dealer: false, level: 1 },
+          { type: 'BOT', name: `${this.$t('play.ai.title')} 2`, dealer: false, level: 1 },
+          { type: 'BOT', name: `${this.$t('play.ai.title')} 3`, dealer: false, level: 1 }
         ]
       };
+    },
+    computed: {
+      AiOptions () {
+        return [
+          { text: `${this.$t('play.ai.1.name')} - <i class="info">${this.$t('play.ai.1.description')}</i>`, value: 1 },
+          { text: `${this.$t('play.ai.2.name')} - <i class="info">${this.$t('play.ai.2.description')}</i>`, value: 2 }
+        ];
+      }
     },
     mixins: [saveState],
     methods: {
@@ -133,10 +143,13 @@
         width: 100%;
         height: 100%;
         margin: 0 auto;
-        max-width: 500px;
+        max-width: $max-width-main;
         td[disabled] {
           pointer-events: none;
           opacity: 0.2;
+        }
+        td.start {
+          padding-top: 15px;
         }
         .configuration {
           text-align: center;

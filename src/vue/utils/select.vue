@@ -1,5 +1,5 @@
 <template>
-  <v-touch tag="a"
+  <v-touch tag="div"
            class="cube-btn"
            @pressup.prevent="openSelect"
            @tap.prevent="openSelect">

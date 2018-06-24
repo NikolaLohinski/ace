@@ -49,6 +49,7 @@
     line-height: $header-height;
     text-align: center;
     font-size: 20px;
+    z-index: 10;
     .title {
       display: inline-block;
       .fa {

@@ -107,7 +107,7 @@
         return this.me.forbiddenCards || [];
       },
       forbiddenPrices () {
-        return this.me.forbiddenPrices || [];
+        return [].concat(this.me.forbiddenPrices) || [];
       },
       turn () {
         return this.game.turn || [null, null, null, null];
@@ -181,7 +181,7 @@
         }
         self.$createDialog({
           type: 'alert',
-          icon: won ? 'cubeic-right' : 'cubeic-wrong',
+          icon: won ? 'cubeic-good' : 'cubeic-bad',
           title: self.$t(won ? 'play.wonPhrase' : 'play.lostPhrase'),
           content: content,
           confirmBtn: self.$t('utils.continue'),
@@ -200,7 +200,7 @@
         setTimeout(() => {
           self.$createDialog({
             type: 'confirm',
-            icon: 'cubeic-warn',
+            icon: won ? 'cubeic-vip' : 'cubeic-sad',
             title: self.$t(won ? 'play.wonGamePhrase' : 'play.lostGamePhrase'),
             content: self.$t('play.scoresUsThem', {
               us: self.game.scores[0],

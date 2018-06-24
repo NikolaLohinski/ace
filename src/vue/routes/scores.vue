@@ -6,6 +6,7 @@
     <div class="container">
       <table>
         <thead>
+          <th class="index"></th>
           <th class="total">{{ scores[0] }}</th>
           <th class="coinche"></th>
           <th class="title">
@@ -17,8 +18,10 @@
           <th class="coinche"></th>
           <th class="total">{{ scores[1] }}</th>
         </thead>
-        <tr v-for="game in history">
-          <td>
+        <tbody>
+          <tr v-for="(game,index) in [].concat(history).reverse()">
+          <td class="index">{{ history.length - index }}</td>
+          <td :stroke="whoWon(game) === 1 && [0, 2].indexOf(whoIsAuctioneer(game)) !== -1">
             <span v-if="[0, 2].indexOf(whoIsAuctioneer(game)) !== -1">
               <span class="price" v-if="['CAP', 'GEN'].indexOf(game.auction.price) !== -1">
                 {{ `play.${game.auction.price}` | translate }}
@@ -39,16 +42,16 @@
               colspan="2" :failed="whoWon(game) !== whoIsAuctioneer(game)">
             {{ `play.${ whoWon(game) !== whoIsAuctioneer(game) ? 'lost' : 'achieved' }` | translate }}
           </td>
-          <td :bold="whoWon(game) === 0" v-if="!isCapOrGen(game)">
+          <td :bold="whoWon(game) === 0" v-if="!isCapOrGen(game)" class="score">
             {{ game.scores[0] }}
           </td>
-          <td :bold="whoWon(game) === 1" v-if="!isCapOrGen(game)">
+          <td :bold="whoWon(game) === 1" v-if="!isCapOrGen(game)" class="score">
             {{ game.scores[1] }}
           </td>
           <td class="coinche">
             <i class="logo" v-if="themCoinche(game)"></i>
           </td>
-          <td>
+          <td :stroke="whoWon(game) === 0 && [1, 3].indexOf(whoIsAuctioneer(game)) !== -1">
             <span v-if="[1, 3].indexOf(whoIsAuctioneer(game)) !== -1">
               <span class="price" v-if="['CAP', 'GEN'].indexOf(game.auction.price) !== -1">
                 {{ `play.${game.auction.price}` | translate }}
@@ -62,6 +65,7 @@
             </span>
           </td>
         </tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -136,26 +140,42 @@
       height: calc(100% - #{$header-height} - 45px);
       -webkit-overflow-scrolling: touch;
       overflow-y: auto;
-      margin: 15px auto 0 auto;
+      margin: 5px auto 0 auto;
       table {
         width: 100%;
         margin: 0 auto;
-        max-width: 500px;
+        max-width: $max-width-main;
         td, th {
+          position: relative;
           height: 50px;
           text-align: center;
           vertical-align: middle;
+          border-bottom: 1px solid $default-border-color;
           &.total {
             font-family: BoldFont;
-            font-size: 20px;
-            width: 30%;
+            font-size: 35px;
+            width: 35%;
+            &:nth-child(2) {
+              width: 32%;
+            }
+          }
+          &.index {
+            width: 3%;
+            font-size: 10px;
+            text-align: right;
+            color: $lighter-text-color;
           }
           &[bold] {
             font-family: BoldFont;
+            color: $danger-link-color;
           }
           &.title {
             color: $lighter-text-color;
-            width: 15%;
+            width: 10%;
+            font-size: 14px;
+          }
+          &.score {
+            font-size: 12px;
           }
           &.coinche {
             position: relative;
@@ -189,6 +209,16 @@
             height: 20px;
             margin-top: -7px;
             top: 1px;
+          }
+          &[stroke]:after {
+            content: '';
+            width: 50%;
+            height: 3px;
+            background-color: $default-text-color;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg);
           }
         }
       }

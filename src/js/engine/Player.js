@@ -45,7 +45,8 @@ export default class Player {
       dealer: this.dealer,
       turn: this.turn,
       auctions: this.auctions,
-      status: this.status
+      status: this.status,
+      folds: this.folds
     };
   }
 }

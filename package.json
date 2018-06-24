@@ -1,7 +1,7 @@
 {
   "name": "awesome-coinche-entertainer",
   "version": "1.0.0",
-  "description": "This is an enternaining application built with Tornado and VueJS to play the popular card game Coinche (or Belote coinché).",
+  "description": "This is an enternaining application built with VueJS to play the popular french card game Coinche",
   "main": "out/app.js",
   "scripts": {
     "default-server": "./node_modules/.bin/webpack-dev-server -d --host 192.168.1.83 --port 8080",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "add-to-homescreen": "^3.2.6",
-    "cube-ui": "file:../cube-ui",
+    "cube-ui": "^1.9.9",
     "flag-icon-css": "^3.0.0",
     "font-awesome": "^4.7.0",
     "inobounce": "^0.1.5",

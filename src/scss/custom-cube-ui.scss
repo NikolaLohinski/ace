@@ -36,6 +36,15 @@
     color: $link-text-color;
   }
 }
+.cube-picker-content {
+  i.info {
+    color:$lighter-text-color;
+    font-style: normal;
+  }
+}
+li.cube-picker-wheel-item {
+  text-align: center;
+}
 
 // Switch
 .cube-switch {
@@ -77,6 +86,9 @@
 }
 .cube-dialog-content-def {
   text-align: center;
+}
+.cube-dialog-title-def {
+  overflow: visible;
 }
 
 // text input

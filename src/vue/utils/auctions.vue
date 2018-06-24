@@ -43,10 +43,8 @@
   export default {
     data () {
       return {
-        prices: _consts_.__AUCTION_PRICES__,
         categories: _consts_.__AUCTION_CATEGORIES__,
-        passType: _consts_.__BET_ACTION_PASS__,
-        priceOptions: this.computePrices(_consts_.__AUCTION_PRICES__, this.forbiddenPrices)
+        passType: _consts_.__BET_ACTION_PASS__
       };
     },
     props: {
@@ -83,31 +81,20 @@
         return categoryOptions;
       },
       options () {
-        return [this.priceOptions, this.categoryOptions];
-      }
-    },
-    watch: {
-      forbiddenPrices: {
-        deep: true,
-        handler (forbiddenPrices) {
-          this.priceOptions = this.computePrices(this.prices, forbiddenPrices);
-        }
-      }
-    },
-    methods: {
-      computePrices (prices, forbidden) {
         const priceOptions = [];
-        for (let k = 0; k < prices.length; k++) {
-          const price = prices[k];
-          if (forbidden.indexOf(price) === -1) {
+        for (let k = 0; k < _consts_.__AUCTION_PRICES__.length; k++) {
+          const price = _consts_.__AUCTION_PRICES__[k];
+          if (this.forbiddenPrices.indexOf(price) === -1) {
             priceOptions.push({
               text: (price === 'GEN' || price === 'CAP') ? this.$t(`play.${price}`) : price,
               value: price
             });
           }
         }
-        return priceOptions;
-      },
+        return [priceOptions, this.categoryOptions];
+      }
+    },
+    methods: {
       bet (bet) {
         this.$emit('bet', {
           price: bet ? bet[0] : null,
@@ -121,6 +108,7 @@
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
   @import '../../scss/sizes';
+  @import '../../scss/variables';
   .auctions {
     position: fixed;
     bottom: 0;
@@ -195,7 +183,7 @@
       .nav-bet {
         margin: 0 auto;
         width: 100%;
-        max-width: 500px;
+        max-width: $max-width-main;
         line-height: 65px;
         .bet-option {
           display: inline-block;

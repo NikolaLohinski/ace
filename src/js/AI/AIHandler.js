@@ -1,4 +1,5 @@
-import Basic from './Basic.js';
+import BacterIA from './BacterIA.js';
+import LucIA from './LucIA.js';
 import _consts_ from '../engine/constants.js';
 
 /**
@@ -28,8 +29,11 @@ export default {
       }
       let AI;
       switch (me.level) {
+        case 2:
+          AI = LucIA;
+          break;
         default:
-          AI = Basic;
+          AI = BacterIA;
       }
       if (players[meIndex].turn) { // Active reaction
         if (game.state === _consts_.__GAME_STATE_BETS__) {
@@ -56,16 +60,18 @@ export default {
           _consts_.__GAME_STATE_BETS__,
           _consts_.__GAME_STATE_WAIT__
         ].indexOf(game.state) !== -1) {
-          AI.coinche(arrangedPlayers).then((coinche) => {
-            if (coinche) {
-              react({
-                action: 'bet',
-                arg: coinche,
-                token,
-                id: me.id
-              });
-            }
-          });
+          if (arrangedPlayers[0].canCoinche) {
+            AI.coinche(arrangedPlayers).then((coinche) => {
+              if (coinche) {
+                react({
+                  action: 'bet',
+                  arg: coinche,
+                  token,
+                  id: me.id
+                });
+              }
+            });
+          }
         }
       }
     });

@@ -29,13 +29,13 @@
             <td><i class="fa fa-microchip"></i></td>
           </tr>
         </table>
-        <vue-simple-markdown class="name"
-                             :source="$t('home.playOffline')">
-        </vue-simple-markdown>
+        <div class="name">
+          {{ $t('home.playOffline') }}
+        </div>
       </v-link>
     </section>
     <footer>
-      <v-link tag="div" to="/about" class="small-nav">
+      <v-link tag="div" to="/questions" class="small-nav">
         <i class="fa fa-question"></i>
       </v-link>
       <v-link tag="div" to="/settings" class="small-nav">
@@ -83,8 +83,8 @@
             height: 15vw;
             max-width: 150px;
             max-height: 150px;
-            min-width: 80px;
-            min-height: 80px;
+            min-width: 90px;
+            min-height: 90px;
             background: $ace-logo 50% 50%;
             background-size: 135% 135%;
             vertical-align: bottom;
@@ -100,11 +100,13 @@
             line-height: 70px;
           }
           @include answer-to-height ('s') {
-            font-size: 70px;
-            line-height: 70px;
+            font-size: 60px;
+            line-height: 60px;
             .logo {
-              max-width: 20vh;
-              max-height: 20vh;
+              max-width: 10vh;
+              max-height: 10vh;
+              min-width: 70px;
+              min-height: 70px;
             }
           }
         }
@@ -118,6 +120,9 @@
           &.red {
             color: $link-text-color;
           }
+          @include answer-to-height ('s') {
+            font-size: 10px;
+          }
         }
       }
     }
@@ -126,7 +131,7 @@
       left: 0;
       right: 0;
       top: 50%;
-      transform: translateY(-35%);
+      transform: translateY(-50%);
       text-align: center;
       .bubble {
         position: relative;
@@ -170,19 +175,16 @@
         }
       }
       @include answer-to-height ('m') {
-        transform: translateY(-15%);
+        transform: translateY(-35%);
       }
       @include answer-to-height ('s') {
-        transform: none;
-        top: auto;
-        position: relative;
         .bubble {
           width: 76px;
           height: 76px;
           table {
-            width: 65px;
-            height: 65px;
-            font-size: 15px;
+            width: 50px;
+            height: 50px;
+            font-size: 13px;
           }
           .name {
             font-size: 15px;
