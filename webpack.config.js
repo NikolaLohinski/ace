@@ -8,7 +8,7 @@ module.exports = {
     'app.js': './src/js/main.js'
   },
   output: {
-    path: require('path').resolve(__dirname, 'dist'),
+    path: require('path').resolve(__dirname, 'docs'),
     filename: '[name]'
   },
   resolve: {
