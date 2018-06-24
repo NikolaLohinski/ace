@@ -2,18 +2,19 @@ const Webpack = require('webpack');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const AppCachePlugin = require('appcache-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
-const TransformModulesPlugin = require('webpack-transform-modules-plugin')
+const TransformModulesPlugin = require('webpack-transform-modules-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
   entry: {
     'app.js': './src/js/main.js'
   },
   output: {
-    path: require('path').resolve(__dirname, 'docs'),
+    path: require('path').resolve(__dirname, 'dist'),
     filename: '[name]'
   },
   resolve: {
     alias: {
-      'vue': 'vue/dist/vue.js',
+      'vue': 'vue/dist/vue.common.js',
       'cube-ui': 'cube-ui/lib'
     }
   },
@@ -91,9 +92,10 @@ module.exports = {
       output: 'cache.manifest'
     }),
     new Webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: '"production"'
-      }
-    })
+      '__VERSION__': JSON.stringify(require('./package.json').version)
+    }),
+    new CopyWebpackPlugin([
+      { from: 'README_master.md', to: 'README.md' }
+    ])
   ]
 };

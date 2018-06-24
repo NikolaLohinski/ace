@@ -454,6 +454,9 @@ parties plus intéressantes et stimulantes. Le [code](https://github.com/NikolaL
 l'application est disponible librement en _open source_ et nous invitons à tester le jeu, les IAs, et si le coeur vous 
 en dit, à proposer votre aide pour le développement, qui sera la bienvenue ! 
 ![dealer-coin](${require('../img/dealer-coin.png')})
+#### V${__VERSION__} 
+#### Copyright © 2017 Nikola Lohinski
+#### MIT Licence 
         `
       }
     }

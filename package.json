@@ -1,14 +1,12 @@
 {
-  "name": "awesome-coinche-entertainer",
+  "name": "ace",
   "version": "1.0.0",
   "description": "This is an enternaining application built with VueJS to play the popular french card game Coinche",
-  "main": "out/app.js",
+  "main": "dist/index.html",
   "scripts": {
-    "default-server": "./node_modules/.bin/webpack-dev-server -d --host 192.168.1.83 --port 8080",
-    "dev-server": "npm run webpack-server -- -d",
-    "webpack-server": "./node_modules/.bin/webpack-dev-server",
+    "webpack-server": "./node_modules/.bin/webpack-dev-server -d",
     "webpack": "./node_modules/.bin/webpack",
-    "build": "npm run webpack -- -p",
+    "build": "export NODE_ENV=production && npm run webpack -- -p",
     "watch": "npm run webpack -- -w"
   },
   "dependencies": {
@@ -70,7 +68,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NikolaLohinski/awesome-coinche-entertainer.git"
+    "url": "git+https://github.com/NikolaLohinski/ace.git"
   },
   "keywords": [
     "awesome",
@@ -81,7 +79,7 @@
   "author": "N.Lohinski",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/NikolaLohinski/awesome-coinche-entertainer/issues"
+    "url": "https://github.com/NikolaLohinski/ace/issues"
   },
-  "homepage": "https://github.com/NikolaLohinski/awesome-coinche-entertainer#readme"
+  "homepage": "https://github.com/NikolaLohinski/ace#readme"
 }

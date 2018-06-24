@@ -12,6 +12,11 @@ h3 {
   margin-top: 10px;
   font-family: BoldFont;
 }
+h4 {
+  font-size: 13px;
+  text-align: center;
+  color: $lighter-text-color;
+}
 a {
   color: $danger-link-color;
   text-decoration: underline;
