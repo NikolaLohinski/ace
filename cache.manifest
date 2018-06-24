@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# 1c48b52fcd135f56f8d5
+# 59bc041f0d1c1ed91abd
 
 assets/android-chrome-36x36.png
 assets/android-chrome-48x48.png
@@ -16,8 +16,8 @@ assets/apple-touch-icon-72x72.png
 assets/apple-touch-icon-76x76.png
 assets/apple-touch-icon-114x114.png
 assets/apple-touch-icon-120x120.png
-assets/apple-touch-icon-144x144.png
 assets/apple-touch-icon-152x152.png
+assets/apple-touch-icon-144x144.png
 assets/apple-touch-icon-167x167.png
 assets/apple-touch-icon-180x180.png
 assets/apple-touch-icon.png
@@ -29,10 +29,10 @@ assets/apple-touch-startup-image-320x460.png
 assets/apple-touch-startup-image-640x920.png
 assets/apple-touch-startup-image-640x1096.png
 assets/apple-touch-startup-image-748x1024.png
-assets/apple-touch-startup-image-768x1004.png
 assets/apple-touch-startup-image-750x1294.png
-assets/apple-touch-startup-image-1242x2148.png
+assets/apple-touch-startup-image-768x1004.png
 assets/apple-touch-startup-image-1182x2208.png
+assets/apple-touch-startup-image-1242x2148.png
 assets/apple-touch-startup-image-1496x2048.png
 assets/apple-touch-startup-image-1536x2008.png
 assets/firefox_app_60x60.png
