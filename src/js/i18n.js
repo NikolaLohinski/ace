@@ -222,6 +222,9 @@ card game Coinche and a set of artificial intelligences (AIs) to make the game m
 The [code](https://github.com/NikolaLohinski/awesome-coinche-entertainer) is _open source_ and you are encouraged
 to test the game, the IAs, and even give us a hand in the development, which would be greatly appreciated ! 
 ![dealer-coin](${require('../img/dealer-coin.png')})
+#### V${__VERSION__} 
+#### Copyright © 2017 Nikola Lohinski
+#### MIT Licence
         `
       }
     }
