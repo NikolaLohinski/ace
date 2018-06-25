@@ -59,7 +59,7 @@
   @import '../../scss/images';
   @import '../../scss/sizes';
   .home {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -127,7 +127,7 @@
       }
     }
     section {
-      position: absolute;
+      position: fixed;
       left: 0;
       right: 0;
       top: 50%;
@@ -194,7 +194,7 @@
       }
     }
     footer {
-      position: absolute;
+      position: fixed;
       right: 0;
       left: 0;
       bottom: 15px;

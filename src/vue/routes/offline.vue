@@ -305,6 +305,12 @@
       setTimeout(() => {
         if (self.interPause) self.showInterGame();
       }, 200);
+      if (this.config.sortCards === undefined) {
+        this.$store.commit('setConfig', {
+          key: 'sortCards',
+          value: true
+        });
+      }
     }
   };
 </script>
@@ -313,7 +319,7 @@
   @import '../../scss/images';
   @import '../../scss/colors';
   .offline {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;

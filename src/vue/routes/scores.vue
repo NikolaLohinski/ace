@@ -131,7 +131,7 @@
   $img-path: '../../img';
   @import '../../scss/images';
   .scores {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;

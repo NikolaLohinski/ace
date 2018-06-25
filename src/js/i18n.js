@@ -53,8 +53,8 @@ const translations = {
       'lost': 'Failed',
       'lostGamePhrase': 'You lost the game...',
       'wonGamePhrase': 'Victory !',
-      'playerCoinched': '{player} coinched !',
-      'playerSurCoinched': '{player} counter-coinched !',
+      'playerCoinched': 'Coinched by {player} !',
+      'playerSurCoinched': 'Counter-coinched by {player} !',
       'ai': {
         'title': 'Bot',
         '1': {

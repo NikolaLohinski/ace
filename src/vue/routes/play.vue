@@ -22,7 +22,7 @@
               <template v-if="player.type === 'BOT'">
               <td class="type"><i class="fa fa-microchip"></i></td>
               <td class="name">
-                <v-select :default="[[0]]"
+                <v-select :default="[[AiOptions.findIndex((l) => l.value === player.level)]]"
                           :options="[AiOptions]"
                           @select="(val) => player.level = val[0]"
                           class="options">
@@ -68,9 +68,9 @@
       return {
         players: [
           { type: 'USR', name: this.$t('utils.you'), dealer: false, level: null },
-          { type: 'BOT', name: `${this.$t('play.ai.title')} 1`, dealer: false, level: 1 },
-          { type: 'BOT', name: `${this.$t('play.ai.title')} 2`, dealer: false, level: 1 },
-          { type: 'BOT', name: `${this.$t('play.ai.title')} 3`, dealer: false, level: 1 }
+          { type: 'BOT', name: `${this.$t('play.ai.title')} 1`, dealer: false, level: 2 },
+          { type: 'BOT', name: `${this.$t('play.ai.title')} 2`, dealer: false, level: 2 },
+          { type: 'BOT', name: `${this.$t('play.ai.title')} 3`, dealer: false, level: 2 }
         ]
       };
     },
@@ -128,7 +128,7 @@
   @import '../../scss/sizes';
   @import '../../scss/images';
   .play {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
