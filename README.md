@@ -6,8 +6,8 @@
 ![size](https://img.shields.io/github/repo-size/nikolalohinski/ace.svg)
 
 
-_This is a web-app for a french card game called Belotte coinchée with a Python 
-back-end server and a Vue.js front-end. It is currently under development._
+_An entertaining app built with VueJS of the popular french card game Coinche. It is currently 
+under development._
 
 #### Setup
 * Install [NodeJS](https://nodejs.org/) version 9.2.1 or later. 
