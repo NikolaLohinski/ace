@@ -1,10 +1,13 @@
 # ACE
 
 ##### _Awesome coinche entertainer_
+![version](https://img.shields.io/badge/dynamic/json.svg?label=version&url=https%3A%2F%2Fraw.githubusercontent.com%2FNikolaLohinski%2Face%2Fproduction%2Fpackage.json&query=version&colorB=%23d15c45)
+![licence](https://img.shields.io/github/license/nikolalohinski/ace.svg)
+![size](https://img.shields.io/github/repo-size/nikolalohinski/ace.svg)
+
+
 _This is a web-app for a french card game called Belotte coinchée with a Python 
 back-end server and a Vue.js front-end. It is currently under development._
-
-### Development branch
 
 #### Setup
 * Install [NodeJS](https://nodejs.org/) version 9.2.1 or later. 
