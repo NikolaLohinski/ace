@@ -21,7 +21,7 @@
   </div>
 </template>
 <script>
-  import _consts_ from '../../json/constants.json';
+  import _consts_ from '../../js/engine/constants.js';
   export default {
     methods: {
       hit () {

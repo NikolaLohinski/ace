@@ -1,4 +1,4 @@
-import _consts_ from '../json/constants.json';
+import _consts_ from './engine/constants.js';
 import Engine from './engine/Engine.js';
 import Player from './engine/Player.js';
 import utils from './utils.js';

@@ -1,4 +1,4 @@
-import Constants from '../../json/constants.json';
+import _const_ from './constants.js';
 /**
  * Implementation of the Player object for cards and bets logic as well as
  * information storage and management
@@ -8,58 +8,45 @@ import Constants from '../../json/constants.json';
 export default class Player {
   /**
    * @constructor
-   * @param {Object} object JSON object containing every info to generate
+   * @param {Object} playerObj JSON object containing every info to generate
    * a new player object
    */
-  constructor (object) {
-    this.id = object.id || '';
-    if (this.id === '') {
-      throw Error('[Player.constructor] : constructor needs an identifier');
+  constructor (playerObj) {
+    for (const property in playerObj) {
+      if (playerObj.hasOwnProperty(property)) {
+        this[property] = playerObj[property];
+      }
     }
-    this.name = object.name || '';
-    this.hand = object.hand || [];
-    this.played = object.played || null;
-    this.status = (typeof object.status) !== 'undefined' ? object.status : Constants.__PLAYER_STATUS_CONNECTED__;
-  }
-  /**
-   * Get identifier of the Player
-   * @return {string}
-   */
-  getId () {
-    return this.id;
-  }
-
-  /**
-   * Get cards in hand of the player
-   * @return {Array} The cards in hand
-   */
-  getHand () {
-    return this.hand;
+    this.dealer = this.dealer || false;
+    this.turn = this.turn || false;
+    this.canCoinche = this.canCoinche || false;
+    this.auctions = this.auctions || [];
+    this.forbiddenPrices = this.forbiddenPrices || [];
+    this.forbiddenCards = this.forbiddenCards || [];
+    this.hand = this.hand || [];
+    this.folds = this.folds || [];
+    this.status = (typeof this.status) !== 'undefined' ? this.status : _const_.__PLAYER_STATUS_CONNECTED__;
+    if (!this.name ||
+      ['USR', 'BOT'].indexOf(this.type) === -1 ||
+      (this.type === 'BOT' && !this.level)) {
+      throw Error('Errors in defintion of player');
+    }
   }
 
   /**
-   * Get card played by player
-   * @return {String} the card played
+   * Get a public image of a player, that can be share with other ones
+   * @return {object} Current public image of the player
    */
-  getPlayed () {
-    if (!this.played) throw Error(`[Player.getPlayed] : No card played by player ${this.id}`);
-    return this.played;
-  }
-  /**
-   * Set a card as played
-   * @param {String} card
-   */
-  play (card) {
-    if (this.hand.indexOf(card) === -1) throw Error(`[Player.play] : Card ${card} not in hand`);
-    this.played = this.hand.splice(this.hand.indexOf(card), 1)[0];
-  }
-  /**
-   * Reverse a played card (if it was not possible to play it)
-   * @param {String} card
-   */
-  reverse (card) {
-    if (this.played !== card) throw Error(`[Player.reverse] : Trying to reverse ${card} card but was not played`);
-    this.hand = this.hand.concat(this.played);
-    this.played = null;
+  getPublicImage () {
+    return {
+      type: this.type,
+      name: this.name,
+      id: this.id,
+      dealer: this.dealer,
+      turn: this.turn,
+      auctions: this.auctions,
+      status: this.status,
+      folds: this.folds
+    };
   }
 }

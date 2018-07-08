@@ -1,5 +1,5 @@
 import Engine from '../engine/Engine.js';
-import _consts_ from '../../json/constants.json';
+import _consts_ from '../engine/constants.js';
 const __TIME_BET__ = [2500, 4000];  // Time in ms
 const __TIME_PLAY__ = [1500, 2500];  // Time in ms
 const __TIME_COINCHE__ = [500, 1500];  // Time in ms

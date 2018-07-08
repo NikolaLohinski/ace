@@ -1,4 +1,4 @@
-import _consts_ from '../../json/constants.json';
+import _consts_ from '../engine/constants.js';
 const __THINKING_TIME_BET__ = 2500;  // Time in ms
 const __THINKING_TIME_COINCHE__ = 1500;  // Time in ms
 const __THINKING_TIME_PLAY__ = 1500;  // Time in ms

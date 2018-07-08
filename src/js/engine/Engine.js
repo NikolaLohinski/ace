@@ -1,5 +1,4 @@
-import Game from './Game';
-import Constants from '../../json/constants.json';
+import _consts_ from './constants.js';
 /**
  * Implementation of the Engine object that will run the game
  * @author: Nikola LOHINSKI (https://NikolaLohinski.github.io)
@@ -10,342 +9,258 @@ const Engine = {
    * Deal cards from deck among the players starting by the player following the
    * dealer. If no deck is provided in the game object, then a default is taken
    * and shuffled
-   * @param {Game} game game object
-   * @param {Array<Player>} players self explanatory
-   * @return {Object} new game and players
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
    */
   init (game, players) {
-    if (game.getState() !== Constants.__GAME_STATE_INIT__) {
-      throw Error(`[Engine.init] : Game not in state that allows initialization`);
-    }
-    if (game.getDeck().length !== 32) {
-      // If no deck in game object, then get a new deck and shuffle it
-      const deck = Constants.__DECK__;
-      let count = deck.length;
-      let randomNumber, temp;
+    if (!game.deck || game.deck.length !== 32) {
+      game.deck = _consts_.__DECK__;
+      // shuffle
+      let count = game.deck.length;
+      let randomNumber;
+      let temp;
       while (count) {
         randomNumber = Math.random() * count-- | 0;
-        temp = deck[count];
-        deck[count] = deck[randomNumber];
-        deck[randomNumber] = temp;
+        temp = game.deck[count];
+        game.deck[count] = game.deck[randomNumber];
+        game.deck[randomNumber] = temp;
       }
-      // Set deck
-      game.setDeck(deck);
     }
-    game.initialize(players);
-    return { game, players };
+    [game, players] = Engine.deal(game, players);
+    game.scores = game.scores || [0, 0];
+    game.history = game.history || [];
+    game.goal = game.goal || 1000;
+    game.state = _consts_.__GAME_STATE_BETS__;
+    game.initialized = true;
+    game.turn = [null, null, null, null];
+    game.starter = (players.findIndex((p) => p.dealer) + 1) % 4;
+    return [game, players];
   },
   /**
    * Deal cards from game's deck amongst players
-   * @param {Game} game game object
-   * @param {Object|null} hands Already defined hands
-   * @return {Object} new game and hands dealt
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
    */
-  deal (game, hands = null) {
-    if (game.getState() !== Constants.__GAME_STATE_BETS__) {
-      throw Error(`[Engine.deal] : Game not in state that allows dealing`);
-    }
-    if (game.getDeck().length !== 32 && !hands) {
-      throw Error(`[Engine.deal] : Deck can not be dealt in this state`);
-    }
-    if (!hands) {
-      const cutIndex = Math.floor(3 + Math.random() * 26);
-      const orders = Constants.__DEAL_ORDERS__;
-      const dealOrder = orders[Math.floor(Math.random() * orders.length)];
-      const deck = game.getDeck().slice(cutIndex).concat(game.getDeck().slice(0, cutIndex));
-      hands = {};
-      for (const count of dealOrder) {
-        let who;
-        for (let k = 0; k < 4; k++) {
-          if (!who) {
-            who = game.getPlayerNextTo(game.getDealer());
-          } else {
-            who = game.getPlayerNextTo(who);
-          }
-          if (!hands[who]) {
-            hands[who] = [];
-          }
-          hands[who].push(...deck.splice(0, count));
-        }
+  deal (game, players) {
+    const cutIndex = Math.floor(3 + Math.random() * 26);
+    const dealOrder = _consts_.__DEAL_ORDERS__[Math.floor(Math.random() * _consts_.__DEAL_ORDERS__.length)];
+    const dealerIndex = players.findIndex((p) => p.dealer);
+    players[(dealerIndex + 1) % 4].turn = true;
+    game.deck = game.deck.slice(cutIndex).concat(game.deck.slice(0, cutIndex));
+    for (let k = 0; k < dealOrder.length; k++) {
+      const count = dealOrder[k];
+      for (let p = 0; p < players.length; p++) {
+        const player = players[(p + dealerIndex + 1) % 4];
+        player.hand = player.hand.concat(game.deck.splice(0, count));
       }
     }
-    const sortedHands = {};
-    for (const id in hands) {
-      if (hands.hasOwnProperty(id)) {
-        sortedHands[id] = Engine.niceSort(hands[id]);
-      }
-    }
-    game.setHandHashes(sortedHands);
-    game.setDeck([]);
-    return { game, hands };
+    return [game, players];
   },
   /**
-   * Simple sort of cards by family following s, h, c, d as no-assets
-   * @param {Array} cards list of cards to sort
-   * @param {String|null} category use a category for inner family sorting
-   * @return {Array} sorted cards
+   * Clear player objects for new game
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
    */
-  niceSort (cards, category = null) {
-    let sortedCards = [];
-    if (cards.length > 0) {
-      for (const family of ['s', 'h', 'c', 'd']) {
-        const fCards = cards.filter((card) => card[card.length - 1] === family);
-        const isAsset = category ? [category, 'AA'].indexOf(family) !== -1 : false;
-        fCards.sort((x, y) => Engine.compareCards(x, y, isAsset));
-        sortedCards = sortedCards.concat(fCards.reverse());
+  clear (game, players) {
+    game.initialized = false;
+    game.deck = [];
+    for (let k = 0; k < players.length; k++) {
+      for (let c = 0; c < players[k].hand.length; c++) {
+        game.deck.push(players[k].hand[c]);
       }
+      for (let c = 0; c < players[k].folds.length; c++) {
+        game.deck.push(players[k].folds[c]);
+      }
+      players[k].hand = [];
+      players[k].folds = [];
+      players[k].auctions = [];
+      players[k].forbiddenPrices = [];
+      players[k].forbiddenCards = [];
+      players[k].canCoinche = false;
+      players[k].coinche = false;
+      players[k].belote = false;
     }
-    return sortedCards;
-  },
-  /**
-   * Sort the cards
-   * @param {Array} cards List of cards in order
-   * @param {String} category Category of the game
-   * @return {Array} sorted cards
-   */
-  sort (cards, category) {
-    let sortedCards = [];
-    if (cards.length > 0) {
-      const startFamily = cards[0][cards[0].length - 1];
-      let families = ['s', 'h', 'c', 'd'];
-      const index = families.indexOf(startFamily);
-      families.splice(index, 1);
-      families = [startFamily].concat(families);
-      if (families.indexOf(category) !== -1) {
-        families.splice(families.indexOf(category), 1);
-        families = [category].concat(families);
-      }
-      for (const family of families) {
-        const filtered = cards.filter((c) => c[c.length - 1] === family);
-        filtered.sort((x, y) => Engine.compareCards(x, y, ['AA', category].indexOf(family) !== -1));
-        sortedCards = sortedCards.concat(filtered.reverse());
-      }
-    }
-    return sortedCards;
-  },
-  /**
-   * Compare 2 cards
-   * @param {String} card1 first card
-   * @param {String} card2 second card
-   * @param {Boolean} asset whether the cards are assets or not
-   * @return {Number}  > 0 if card1 is better than card2, < 0 otherwise, and 0 if cards
-   *  can not be compared
-   */
-  compareCards (card1, card2, asset = false) {
-    if (card1[card1.length - 1] !== card2[card2.length - 1]) {
-      return 0;
-    } else {
-      const order = asset ? Constants.__ORDERS__.ASSET : Constants.__ORDERS__.REGUL;
-      return order.indexOf(card1.slice(0, card1.length - 1)) -
-        order.indexOf(card2.slice(0, card2.length - 1));
-    }
-  },
-  /**
-   * Bet and update game
-   * @param {Game} game Current game object
-   * @param {Object} auction Bet object
-   * @return {Object} Game object updated
-   */
-  bet (game, auction) {
-    if ([Constants.__GAME_STATE_WAIT__, Constants.__GAME_STATE_BETS__].indexOf(game.getState()) === -1) {
-      throw Error(`[Engine.bet] : Game not in state that allows auctions`);
-    }
-    const order = game.getOrder();
-    const meIndex = order.indexOf(auction.id);
-    const prices = Constants.__AUCTION_PRICES__;
-    if (auction.type === Constants.__BET_ACTION_COINCHE__) {
-      if (!game.getCanCoinche()[auction.id]) {
-        throw Error(`[Game.bet] : Player "${auction.id}" can not coinche`);
-      }
-      game.placeAuction(auction);
-      game.setCanCoinche(false);
-      game.setWhosTurn(null);
-      // Case of a Coinche
-      game.setCoinche(auction.id);
-      // My partner can not coinche anymore either
-      const canCoinche = {};
-      canCoinche[order[meIndex]] = false;
-      canCoinche[order[(meIndex + 2) % 4]] = false;
-      if (!game.isCounterCoinche(auction.id)) {
-        canCoinche[order[(meIndex + 1) % 4]] = true;
-        canCoinche[order[(meIndex + 3) % 4]] = true;
-      }
-      game.setCanCoinche(canCoinche);
-      game.setState(Constants.__GAME_STATE_WAIT__);
-    } else {
-      // Check if it was this player's turn
-      if (game.getWhosTurn() !== auction.id) {
-        throw Error(`[Game.bet] : It's not player "${auction.id}"'s turn`);
-      }
-      const lastAuction = game.getLastAuction();
-      if (auction.type === Constants.__BET_ACTION_BET__) {
-        if (!auction.price || !auction.category) {
-          throw Error(`[Game.bet] : The placed auction lacks some details`);
-        }
-        if (Constants.__AUCTION_PRICES__.indexOf(auction.price) === -1) {
-          throw Error(`[Game.bet] : Acution with price ${auction.price} is not possible`);
-        }
-        if (Constants.__AUCTION_CATEGORIES__.indexOf(auction.category) === -1) {
-          throw Error(`[Game.bet] : Acution with category ${auction.category} is not possible`);
-        }
-        if (lastAuction && prices.indexOf(lastAuction.price) >= prices.indexOf(auction.price)) {
-          throw Error(`[Game.bet] : "${lastAuction.price}" was already placed. Can not place "${auction.price}"`);
-        }
-        game.setCanCoinche(false);
-        game.setWhosTurn(null);
-        // Case of a regular auction
-        game.placeAuction(auction);
-        // Update who's turn it is
-        game.setWhosTurn(game.getPlayerNextTo(auction.id));
-        const canCoinche = {};
-        canCoinche[order[(meIndex + 1) % 4]] = true;
-        canCoinche[order[(meIndex + 3) % 4]] = true;
-        game.setCanCoinche(canCoinche);
-        const forbidden = [];
-        for (let i = 0; i < prices.length; i++) {
-          if (i <= prices.indexOf(auction.price)) {
-            forbidden.push(prices[i]);
-          }
-        }
-        game.setForbiddenPrices(forbidden);
-      } else if (auction.type === Constants.__BET_ACTION_PASS__) {
-        game.setCanCoinche(false);
-        game.setWhosTurn(null);
-        // Get last auction for further checking
-        const next = game.getPlayerNextTo(auction.id);
-        // Case of pass
-        game.placeAuction(auction);
-        if (!lastAuction && next === game.getStarter()) {
-          // Case when everyone passed
-          game.setState(Constants.__GAME_STATE_INTER__);
-        } else {
-          if (lastAuction && next === lastAuction.id) {
-            // Case when the player about to be the next to play is the one leading the auctions
-            // Finishing betting phase by a WAIT phase
-            game.setState(Constants.__GAME_STATE_WAIT__);
-          } else {
-            game.setWhosTurn(next);
-          }
-        }
-      } else {
-        // arguments unknown
-        throw new Error(`[Engine.bet] : Unknown bet arguments ${JSON.stringify(auction)}`);
-      }
-    }
-    return { game };
+    const dealerIndex = players.findIndex((p) => p.dealer);
+    players[dealerIndex].dealer = false;
+    players[(dealerIndex + 1) % 4].dealer = true;
+    return [game, players];
   },
   /**
    * Start playing part
-   * @param {Game} game game object
-   * @return {Object} new game object
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
    */
-  start (game) {
-    if (game.getState() !== Constants.__GAME_STATE_WAIT__) {
-      throw Error(`[Game.start] : Game not in state that allows to start playing phase`);
+  start (game, players) {
+    players = Engine.next(game, players, 'dealer');
+    const leaderIndex = Engine.leader(game, players);
+    game.auction = players[leaderIndex].auctions[players[leaderIndex].auctions.length - 1];
+    game.auctioneerIndex = leaderIndex;
+    game.starter = players.findIndex((p) => p.turn);
+    game.state = _consts_.__GAME_STATE_PLAY__;
+    for (let p = 0; p < players.length; p++) {
+      players[p].canCoinche = false;
+      if (players[p].hand.indexOf(`q${game.auction.category}`) !== -1 &&
+      players[p].hand.indexOf(`k${game.auction.category}`) !== -1) {
+        players[p].belote = true;
+      }
     }
-    game.setWhosTurn(game.getStarter());
-    // Clear forbidden prices
-    game.setForbiddenPrices([]);
-    game.setState(Constants.__GAME_STATE_PLAY__);
-    return { game };
+    return [game, players];
   },
   /**
-   * Act upon a card played by a player
-   * @param {Game} game game object
-   * @param {Player} player Player playing the card
-   * @return {Object} new game state
+   * Bet and update players
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @param {Object} bet Bet object
+   * @return {Array} new game and players
    */
-  play (game, player) {
-    if (game.getState() !== Constants.__GAME_STATE_PLAY__) {
-      throw Error(`[Engine.play] : Game not in state that allows playing cards`);
+  bet (game, players, bet) {
+    const meIndex = players.findIndex((p) => p.id === bet.id);
+    const me = players[meIndex];
+    for (let p = 0; p < players.length; p++) {
+      players[p].canCoinche = false;
     }
-    if (game.getWhosTurn() !== player.getId()) {
-      throw Error(`[Game.bet] : It's not player with "${player.getId()}"'s turn`);
-    }
-    if (player.getHand().indexOf(player.getPlayed()) !== -1) {
-      throw Error(`[Game.bet] : Can not play "${player.getPlayed()}" if it is still in hand`);
-    }
-    if (Engine.forbiddenCards(game, player, true).indexOf(player.getPlayed()) !== -1) {
-      throw Error(`[Game.bet] : Can not play forbidden card "${player.getPlayed()}"`);
-    }
-    const cardsPlayed = [player.getPlayed()].concat(player.getHand());
-    for (const record of game.getFolds()) {
-      cardsPlayed.push(record[player.getId()]);
-    }
-    if (!game.checkHashCards(player.getId(), Engine.niceSort(cardsPlayed))) {
-      throw Error(`[Game.bet] : Player "${player.getId()}" can not play card that was not dealt to him`);
-    }
-    game.setFold(player);
-    if (game.getPlayerNextTo(player.getId()) === game.getStarter()) {
-      const master = Engine.foldMaster(game);
-      game.finishFold(master);
-      if (game.getFolds().length === 8) {
-        game.setState(Constants.__GAME_STATE_INTER__);
-        game = Engine.evaluate(game).game;
+    if (bet.type === _consts_.__BET_ACTION_COINCHE__) {
+      // Case of a Coinche
+      for (let k = 0; k < players.length; k++) {
+        players[k].turn = false;
+      }
+      players[meIndex].coinche = true;
+      players[meIndex].canCoinche = false;
+      players[(meIndex + 2) % 4].canCoinche = false;
+      if (!(players[(meIndex + 1) % 4].coinche || players[(meIndex + 3) % 4].coinche)) {
+        players[(meIndex + 1) % 4].canCoinche = true;
+        players[(meIndex + 3) % 4].canCoinche = true;
+      }
+      game.state = _consts_.__GAME_STATE_WAIT__;
+    } else if (bet.type === _consts_.__BET_ACTION_BET__) {
+      // Case of a regular bet
+      me.auctions.push(bet);
+      players = Engine.next(game, players, null);
+      players[(meIndex + 1) % 4].canCoinche = true;
+      players[(meIndex + 3) % 4].canCoinche = true;
+      for (let k = 0; k < players.length; k++) {
+        for (let b = 0; b < _consts_.__AUCTION_PRICES__.length; b++) {
+          if (b <= _consts_.__AUCTION_PRICES__.indexOf(bet.price) &&
+          players[k].forbiddenPrices.indexOf(_consts_.__AUCTION_PRICES__[b]) === -1) {
+            players[k].forbiddenPrices.push(_consts_.__AUCTION_PRICES__[b]);
+          }
+        }
+      }
+    } else if (bet.type === _consts_.__BET_ACTION_PASS__) {
+      // Case of pass
+      me.auctions.push(bet);
+      if (players.findIndex((p) => {
+        return p.auctions.length === 0 ||
+        p.auctions[p.auctions.length - 1].type !== _consts_.__BET_ACTION_PASS__;
+      }) !== -1) {
+        const leaderIndex = Engine.leader(game, players);
+        if (leaderIndex === ((players.findIndex((p) => p.turn) + 1) % 4)) {
+          game.state = _consts_.__GAME_STATE_WAIT__;
+          players[meIndex].turn = false;
+        } else {
+          players = Engine.next(game, players, null);
+        }
       } else {
-        game.setStarter(master);
-        game.setWhosTurn(master);
+        players[meIndex].turn = false;
+        game.state = _consts_.__GAME_STATE_INTER__;
       }
     } else {
-      game.setWhosTurn(game.getPlayerNextTo(player.getId()));
+      // arguments unknown
+      throw new Error('Unknown bet arguments');
     }
-    return { game };
+    return [game, players];
   },
   /**
-   * Determine forbidden cards of a given player
-   * @param {Game} game Game object
-   * @param {Player} player Player object
-   * @param {Boolean} addPlayed Whether to also use the played card when determining forbidden cards
-   * @return {Array<String>} forbidden cards
+   * Bet and update players
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @param {Object} play Play object
+   * @return {Array} new game and players
    */
-  forbiddenCards (game, player, addPlayed = false) {
-    let forbiddenCards = [];
-    const fold = game.getFold();
-    let hand = player.getHand();
-    if (addPlayed) {
-      hand = hand.concat(player.getPlayed());
+  play (game, players, play) {
+    if (game.turn.indexOf(null) === -1) game.turn = [null, null, null, null];
+    const meIndex = players.findIndex((p) => p.id === play.id);
+    const me = players[meIndex];
+    game.turn[meIndex] = play.card;
+    const cardIndex = me.hand.indexOf(play.card);
+    const hand = JSON.parse(JSON.stringify(me.hand));
+    me.hand = hand.slice(0, cardIndex).concat(hand.slice(cardIndex + 1));
+    if (game.turn.indexOf(null) === -1) {
+      const leaderIndex = Engine.leader(game, players);
+      players[leaderIndex].folds = players[leaderIndex].folds.concat(game.turn);
+      if (players[0].hand.length === 0) {
+        // End of game
+        game.starter = null;
+        me.turn = false;
+        game.state = _consts_.__GAME_STATE_INTER__;
+        return [game, players];
+      } else {
+        players = Engine.next(game, players, 'leader');
+        game.starter = players.findIndex((p) => p.turn);
+      }
+    } else {
+      players = Engine.next(game, players, null);
     }
-    const id = player.getId();
-    if (game.getStarter() !== game.whosTurn) {
-      const startCard = fold[game.getStarter()];
-      const family = startCard[startCard.length - 1];
-      const masterCard = fold[Engine.foldMaster(game)];
-      const category = game.getLastAuction().category;
+    for (let k = 0; k < players.length; k++) {
+      players[k].forbiddenCards = Engine.forbiddenCards(game, players, k);
+    }
+    return [game, players];
+  },
+  /**
+   * Determine forbidden cards given the game object and cards in hand
+   * @param {Object} game Game object
+   * @param {Array} players List of players
+   * @param {Number} index Concerned player index
+   * @return {Array} forbidden cards
+   */
+  forbiddenCards (game, players, index) {
+    const player = players[index];
+    let forbiddenCards = [];
+    if (game.turn.indexOf(null) !== -1) {
+      const startCard = game.turn[game.starter];
+      const familyStart = startCard[startCard.length - 1];
+      const leaderIndex = Engine.leader(game, players);
+      const leaderCard = game.turn[leaderIndex];
+      const category = game.auction.category;
       const potentialFC = [];
-      if (hand.findIndex((c) => c[c.length - 1] === family) !== -1) {
+      if (player.hand.findIndex((c) => c[c.length - 1] === familyStart) !== -1) {
         // If players has cards from the same family of the first one
-        for (const card of hand) {
-          if (card[card.length - 1] !== family) {
+        for (let c = 0; c < player.hand.length; c++) {
+          const card = player.hand[c];
+          if (card[card.length - 1] !== familyStart) {
             forbiddenCards.push(card);
-          } else if (['AA', family].indexOf(category) !== -1) {
-            if (Engine.compareCards(masterCard, card, true) > 0) {
+          } else if (['AA', familyStart].indexOf(category) !== -1) {
+            if (Engine.compareCards(leaderCard, card, true) > 0) {
               potentialFC.push(card);
             }
           }
         }
         if (potentialFC.length > 0) {
-          const assetSuperiorIndex = hand.findIndex(
-            (c) => c[c.length - 1] === family && Engine.compareCards(masterCard, c, true) < 0
+          const assetSuperiorIndex = player.hand.findIndex(
+            (c) => c[c.length - 1] === familyStart &&
+              Engine.compareCards(leaderCard, c, true) < 0
           );
           if (assetSuperiorIndex !== -1) {
             forbiddenCards = forbiddenCards.concat(potentialFC);
           }
         }
       } else {
-        const order = game.getOrder();
-        const partner = order[(order.indexOf(id) + 2) % 4];
-        const master = Engine.foldMaster(game);
-        if ((['AA', 'NA'].indexOf(category) === -1 && partner !== master) || (
-            hand.findIndex((c) => c[c.length - 1] !== category) === -1 && partner === master)
+        if (['AA', 'NA'].indexOf(category) === -1 && (((index + 2) % 4) !== leaderIndex) || (
+            player.hand.findIndex((c) => c[c.length - 1] !== category) === -1 && ((index + 2) % 4) === leaderIndex)
         ) {
-          if (hand.findIndex((c) => c[c.length - 1] === category) !== -1) {
+          if (player.hand.findIndex((c) => c[c.length - 1] === category) !== -1) {
             const potentialFC = [];
-            for (const card of hand) {
+            for (let c = 0; c < player.hand.length; c++) {
+              const card = player.hand[c];
               if (card[card.length - 1] !== category) {
                 forbiddenCards.push(card);
               } else {
-                if (masterCard[masterCard.length - 1] === category) {
-                  if (Engine.compareCards(masterCard, card, true) < 0) {
+                if (leaderCard[leaderCard.length - 1] === category) {
+                  if (Engine.compareCards(leaderCard, card, true) < 0) {
                     potentialFC.push(card);
                   }
                 }
@@ -354,7 +269,7 @@ const Engine = {
           }
         }
         if (potentialFC.length > 0) {
-          const anyAssetSuperior = hand.findIndex(
+          const anyAssetSuperior = player.hand.findIndex(
             (c) => c[c.length - 1] === category && potentialFC.indexOf(c) === -1
           ) !== -1;
           if (anyAssetSuperior) {
@@ -366,148 +281,244 @@ const Engine = {
     return forbiddenCards;
   },
   /**
-   * Returns the id of the master of the fold or null if none was found
-   * @param {Game} game Game object
-   * @return {String} Id of the leader
+   * Compare 2 cards
+   * @param {String} card1 first card
+   * @param {String} card2 second card
+   * @param {Boolean|null} asset whether the cards are assets or not
+   * @return {Number}  > 0 if card1 is better than card2, < 0 otherwise, and 0 if cards
+   *  can not be compared
    */
-  foldMaster (game) {
-    const order = game.getOrder();
-    const starterIndex = order.indexOf(game.getStarter());
-    const fold = game.getFold();
-    // Organize cards starting by the card of the starter
-    const cards = [];
-    const ids = [];
-    for (let i = 0; i < 4; i++) {
-      const id = order[(starterIndex + i) % 4];
-      const card = fold[id];
-      if (card) {
-        cards.push(card);
-        ids.push(id);
+  compareCards (card1, card2, asset) {
+    if (card1[card1.length - 1] !== card2[card2.length - 1]) {
+      return 0;
+    } else {
+      const order = asset ? _consts_.__ORDERS__.ASSET : _consts_.__ORDERS__.REGUL;
+      return order.indexOf(card1.slice(0, card1.length - 1)) -
+        order.indexOf(card2.slice(0, card2.length - 1));
+    }
+  },
+  /**
+   * Return new array with cards sorted
+   * @param {Array} cards list of cards to sort
+   * @param {String} category Auction category (cf. _consts_)
+   * @return {Array} sorted cards
+   */
+  sort (cards, category) {
+    let sortedCards = [];
+    if (cards && cards.length > 0) {
+      const firstFamily = cards[0][cards[0].length - 1];
+      let familist;
+      switch (firstFamily) {
+        case 's':
+          familist = ['s', 'h', 'c', 'd'];
+          break;
+        case 'h':
+          familist = ['h', 'c', 'd', 's'];
+          break;
+        case 'c':
+          familist = ['c', 'd', 's', 'h'];
+          break;
+        default:
+          familist = ['d', 's', 'h', 'c'];
+          break;
+      }
+      const assetIndex = familist.indexOf(category);
+      if (assetIndex !== -1) {
+        familist.splice(assetIndex, 1);
+        familist = [category].concat(familist);
+      }
+      for (let f = 0; f < familist.length; f++) {
+        const family = familist[f];
+        const fCards = [];
+        for (let c = 0; c < cards.length; c++) {
+          const card = cards[c];
+          if (card[card.length - 1] === family) {
+            fCards.push(card);
+          }
+        }
+        fCards.sort((x, y) => Engine.compareCards(x, y, [family, 'AA'].indexOf(category) !== -1));
+        sortedCards = sortedCards.concat(fCards.reverse());
       }
     }
-    const auction = game.getLastAuction();
-    const sortedCards = Engine.sort(cards, auction.category);
-    return ids[cards.indexOf(sortedCards[0])];
+    return sortedCards;
+  },
+  /**
+   * Find next player and give him the turn boolean value
+   * @param {Object} game Game object
+   * @param {Array} players List of players
+   * @param {String|null} after Whether the next player should be found regarding
+   *    the 'dealer' or the 'leader'
+   * @return {Array} new list of players updated
+   */
+  next (game, players, after) {
+    const playingIndex = players.findIndex((p) => p.turn);
+    if (playingIndex !== -1) players[playingIndex].turn = false;
+    let index;
+    switch (after) {
+      case 'dealer':
+        index = (players.findIndex((p) => p.dealer) + 1) % 4;
+        break;
+      case 'leader':
+        index = Engine.leader(game, players);
+        break;
+      default:
+        index = (playingIndex + 1) % 4;
+        break;
+    }
+    players[index].turn = true;
+    return players;
+  },
+  /**
+   * Returns the index of the leader of the game, either best bet or bet card
+   * depending on the game state
+   * @param {Object} game Game object
+   * @param {Array} players List of players
+   * @return {Number} Index of the leader
+   */
+  leader (game, players) {
+    let max = -1;
+    if ([_consts_.__GAME_STATE_BETS__, _consts_.__GAME_STATE_WAIT__].indexOf(game.state) !== -1) {
+      for (let k = 0; k < players.length; k++) {
+        const auctions = players[k].auctions;
+        if (auctions && auctions.length > 0) {
+          if (max === -1 ||
+            _consts_.__AUCTION_PRICES__.indexOf(auctions[auctions.length - 1].price) >
+          _consts_.__AUCTION_PRICES__.indexOf(players[max].auctions[players[max].auctions.length - 1].price)) {
+            max = k;
+          }
+        }
+      }
+    } else if (game.state === _consts_.__GAME_STATE_PLAY__ ||
+      game.state === _consts_.__GAME_STATE_INTER__) {
+      const cards = [];
+      for (let k = 0; k < players.length; k++) {
+        if (game.turn[(k + game.starter) % 4]) {
+          cards.push(game.turn[(k + game.starter) % 4]);
+        }
+      }
+      if (game.auction) {
+        const sortedCards = Engine.sort(cards, game.auction.category);
+        max = game.turn.findIndex((c) => c === sortedCards[0]);
+      }
+    }
+    return max;
   },
    /**
    * Evaluate the game, update scores etc..
-   * @param {Game} game game object
-   * @return {Object} new game
+   * @param {Object} game game object
+   * @param {Array} players self explanatory
+   * @return {Array} new game and players
    */
-  evaluate (game) {
-    if (game.state !== Constants.__GAME_STATE_INTER__) {
-      throw Error('[Engine.evaluate] : Trying to evaluate game that has not ended');
+  evaluate (game, players) {
+    if (game.state !== _consts_.__GAME_STATE_INTER__) throw Error('Trying to evaluate game that has not ended');
+    const announcerIndex = players.findIndex((p) => p.id === game.auction.id);
+    const offense = [players[announcerIndex], players[(announcerIndex + 2) % 4]];
+    const defense = [players[(announcerIndex + 1) % 4], players[(announcerIndex + 3) % 4]];
+    let coinchePriceFactor = 1;
+    let coinche = false;
+    let surCoinche = false;
+    if (defense[0].coinche || defense[1].coinche) {
+      coinchePriceFactor = coinchePriceFactor * 2;
+      coinche = true;
+      if (offense[0].coinche || offense[1].coinche) {
+        coinchePriceFactor = coinchePriceFactor * 2;
+        surCoinche = true;
+      }
     }
-    const offense = game.getOffense();
-    const auction = game.getLastAuction();
-    let offenseScore = null;
-    let belote = null;
-    const folds = game.getFolds();
-    let success = false;
-    if (auction.price === 'GEN') {
+    let price;
+    let victoryOffense = false;
+    let scores = [null, null];
+    let belote = false;
+    if (game.auction.price === 'GEN') {
       // all folds for announcer
-      success = folds.every((fold) => fold.winner === auction.id);
-    } else if (auction.price === 'CAP') {
+      victoryOffense = players[announcerIndex].folds.length === 32;
+      price = coinchePriceFactor * _consts_.__GEN_PRICE__;
+    } else if (game.auction.price === 'CAP') {
       // all folds for announcer's team
-      success = folds.every((fold) => offense.indexOf(fold.winner) !== -1);
+      victoryOffense = (offense[0].folds.length + offense[0].folds.length) === 32;
+      price = coinchePriceFactor * _consts_.__CAP_PRICE__;
     } else {
-      if (auction.category === ['AA']) {  // All assets
-        const map = {};
-        for (let k = 0; k < Constants.__ORDERS__.ASSET.length; k++) {
-          map[Constants.__ORDERS__.ASSET[k]] = Constants.__PRICES__.AA[k];
+      // Regular auction
+      let goal = game.auction.price;
+      let offenseScore = 0;
+      if (game.auction.category === ['AA']) {  // All assets
+        const cardMap = {};
+        for (let k = 0; k < _consts_.__ORDERS__.ASSET.length; k++) {
+          cardMap[_consts_.__ORDERS__.ASSET[k]] = _consts_.__PRICES__.AA[k];
         }
-        for (const id of offense) {
-          const wonFolds = folds.filter((fold) => fold.winner === id);
-          for (const fold of wonFolds) {
-            for (const i of game.getOrder()) {
-              offenseScore += map[fold[i].slice(0, fold[i].length - 1)];
-            }
+        for (let p = 0; p < offense.length; p++) {
+          for (let c = 0; c < offense[p].folds.length; c++) {
+            const card = offense[p].folds[c];
+            offenseScore += cardMap[card.slice(0, card.length - 1)];
           }
         }
-      } else if (auction.category === 'NA') {  // No assets
-        const map = {};
-        for (let k = 0; k < Constants.__ORDERS__.REGUL.length; k++) {
-          map[Constants.__ORDERS__.REGUL[k]] = Constants.REGUL.NA[k];
+      } else if (game.auction.category === 'NA') {  // No assets
+        const cardMap = {};
+        for (let k = 0; k < _consts_.__ORDERS__.REGUL.length; k++) {
+          cardMap[_consts_.__ORDERS__.REGUL[k]] = _consts_.__PRICES__.NA[k];
         }
-        for (const id of offense) {
-          const wonFolds = folds.filter((fold) => fold.winner === id);
-          for (const fold of wonFolds) {
-            for (const i of game.getOrder()) {
-              offenseScore += map[fold[i].slice(0, fold[i].length - 1)];
-            }
+        for (let p = 0; p < offense.length; p++) {
+          for (let c = 0; c < offense[p].folds.length; c++) {
+            const card = offense[p].folds[c];
+            offenseScore += cardMap[card.slice(0, card.length - 1)];
           }
         }
       } else {  // Regular type of game
         const regularMap = {};
         const assetsMap = {};
-        offenseScore = 0;
-        for (let k = 0; k < Constants.__ORDERS__.ASSET.length; k++) {
-          assetsMap[Constants.__ORDERS__.ASSET[k]] = Constants.__PRICES__.ASSET[k];
+        for (let k = 0; k < _consts_.__ORDERS__.ASSET.length; k++) {
+          assetsMap[_consts_.__ORDERS__.ASSET[k]] = _consts_.__PRICES__.ASSET[k];
         }
-        for (let k = 0; k < Constants.__ORDERS__.REGUL.length; k++) {
-          regularMap[Constants.__ORDERS__.REGUL[k]] = Constants.__PRICES__.REGUL[k];
+        for (let k = 0; k < _consts_.__ORDERS__.REGUL.length; k++) {
+          regularMap[_consts_.__ORDERS__.REGUL[k]] = _consts_.__PRICES__.REGUL[k];
         }
-        for (const id of offense) {
-          const wonFolds = folds.filter((fold) => fold.winner === id);
-          for (const fold of wonFolds) {
-            for (const i of game.getOrder()) {
-              let map = regularMap;
-              if (fold[i][fold[i].length - 1] === auction.category) {
-                map = assetsMap;
-              }
-              offenseScore += map[fold[i].slice(0, fold[i].length - 1)];
+        for (let p = 0; p < offense.length; p++) {
+          for (let c = 0; c < offense[p].folds.length; c++) {
+            const card = offense[p].folds[c];
+            const family = card[card.length - 1];
+            if (family === game.auction.category) {
+              offenseScore += assetsMap[card.slice(0, card.length - 1)];
+            } else {
+              offenseScore += regularMap[card.slice(0, card.length - 1)];
             }
           }
-          const hand = folds.map((fold) => fold[id]);
-          if (hand.indexOf(`q${auction.category}`) !== -1 && hand.indexOf(`k${auction.category}`) !== -1) {
-            belote = Math.max(0, Math.min(20, auction.price - 81));
+          // Test if belote
+          if (offense[p].belote) {
+            goal -= 20;
+            belote = true;
           }
         }
       }
-      if (offense.indexOf(folds[folds.length - 1].winner) !== -1) {
+      if ([announcerIndex, (announcerIndex + 2) % 4].indexOf(Engine.leader(game, players)) !== -1) {
         offenseScore += 10;
       }
-      success = offenseScore >= Math.max(81, auction.price - (belote || 0));
-    }
-    const defenseScore = (offenseScore) ? 162 - offenseScore : null;
-    game.finishSession(success, offenseScore, defenseScore, belote);
-    const scores = game.getScores();
-    for (const id in scores) {
-      if (scores.hasOwnProperty(id)) {
-        if (scores[id] > game.getGoal()) {
-          game.setState(Constants.__GAME_STATE_END__);
-          break;
-        }
+      if ([0, 2].indexOf(announcerIndex) !== -1) {
+        scores = [offenseScore, 162 - offenseScore];
+      } else {
+        scores = [162 - offenseScore, offenseScore];
       }
+      goal = Math.max(81, goal);
+      victoryOffense = offenseScore >= goal;
+      price = coinchePriceFactor * game.auction.price;
     }
-    return { game };
-  },
-  /**
-   * Clear game to start anew
-   * @param {Game} game game object
-   * @return {Object} updated game
-   */
-  restart (game) {
-    if (game.state !== Constants.__GAME_STATE_INTER__) {
-      throw Error('[Engine.restart] : Game not is state that permits restarting');
+    if (([0, 2].indexOf(announcerIndex) !== -1 && victoryOffense) ||
+    ([1, 3].indexOf(announcerIndex) !== -1 && !victoryOffense)) {
+      game.scores[0] += price;
+    } else {
+      game.scores[1] += price;
     }
-    // Rebuild deck
-    const folds = game.getFolds();
-    const order = game.getOrder();
-    const deck = [];
-    for (const fold of folds) {
-      const index = order.indexOf(fold.starter);
-      for (let i = 0; i < 4; i++) {
-        deck.push(fold[order[(index + i) % 4]]);
-      }
+    game.history.push({
+      auction: game.auction,
+      won: victoryOffense,
+      scores: scores,
+      belote: belote,
+      coinche: coinche,
+      surCoinche: surCoinche
+    });
+    if (game.scores[0] >= game.goal || game.scores[1] >= game.goal) {
+      game.state = _consts_.__GAME_STATE_END__;
     }
-    game.clear();
-    // Set new dealer
-    const index = order.indexOf(game.getDealer());
-    game.setDealer(order[(index + 1) % 4]);
-    // re-set state
-    game.setState(Constants.__GAME_STATE_INIT__);
-    return { game };
+    return [game, players];
   }
 };
 

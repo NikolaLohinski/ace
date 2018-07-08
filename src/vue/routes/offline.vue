@@ -34,7 +34,7 @@
   </section>
 </template>
 <script>
-  import _consts_ from '../../json/constants.json';
+  import _consts_ from '../../js/engine/constants.js';
 
   import vLink from '../utils/link.vue';
   import otherPlayer from '../utils/other-player.vue';
