@@ -1,0 +1,115 @@
+{
+  "winners": [
+      "id 2",
+      "id 4"
+  ],
+  "offense": 132,
+  "defense": 30,
+  "belote": 20,
+  "dealer": "id 3",
+  "price": 240,
+  "order": [
+    "id 1", "id 2", "id 3", "id 4"
+  ],
+  "coinche": {
+      "id 3": true
+  },
+  "auctions": {
+      "id 1": [
+          {
+              "id": "id 1",
+              "type": 1,
+              "price": 110,
+              "category": "h"
+          }
+      ],
+      "id 2": [
+          {
+              "id": "id 2",
+              "type": 1,
+              "price": 120,
+              "category": "c"
+          }
+      ],
+      "id 3": [
+          {
+              "id": "id 3",
+              "type": 2
+          }
+      ],
+      "id 4": [
+          {
+              "id": "id 4",
+              "type": 1,
+              "price": 100,
+              "category": "c"
+          }
+      ]
+  },
+  "folds": [
+      {
+          "winner": "id 4",
+          "starter": "id 4",
+          "id 1": "9d",
+          "id 2": "kc",
+          "id 3": "10c",
+          "id 4": "jc"
+      },
+      {
+          "winner": "id 4",
+          "starter": "id 4",
+          "id 1": "8d",
+          "id 2": "qc",
+          "id 3": "9s",
+          "id 4": "9c"
+      },
+      {
+          "winner": "id 4",
+          "starter": "id 4",
+          "id 1": "7d",
+          "id 2": "8s",
+          "id 3": "qs",
+          "id 4": "as"
+      },
+      {
+          "winner": "id 1",
+          "starter": "id 4",
+          "id 1": "ah",
+          "id 2": "8h",
+          "id 3": "kh",
+          "id 4": "7h"
+      },
+      {
+          "winner": "id 2",
+          "starter": "id 1",
+          "id 1": "10h",
+          "id 2": "8c",
+          "id 3": "qd",
+          "id 4": "ks"
+      },
+      {
+          "winner": "id 4",
+          "starter": "id 2",
+          "id 1": "9h",
+          "id 2": "kd",
+          "id 3": "ad",
+          "id 4": "ac"
+      },
+      {
+          "winner": "id 3",
+          "starter": "id 4",
+          "id 1": "qh",
+          "id 2": "7s",
+          "id 3": "10s",
+          "id 4": "js"
+      },
+      {
+          "winner": "id 4",
+          "starter": "id 3",
+          "id 1": "jh",
+          "id 2": "jd",
+          "id 3": "10d",
+          "id 4": "7c"
+      }
+  ]
+}

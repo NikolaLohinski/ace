@@ -9,7 +9,7 @@ module.exports = {
     'app.js': './src/js/main.js'
   },
   output: {
-    path: require('path').resolve(__dirname, 'dist'),
+    path: require('path').resolve(__dirname, 'dist', 'app'),
     filename: '[name]'
   },
   resolve: {
@@ -54,6 +54,10 @@ module.exports = {
             attrs: ['link:href', 'script:src']
           }
         }]
+      },
+      {
+        test: /\.json$/,
+        loader: 'json-loader'
       },
       {
         test: /\.js$/,

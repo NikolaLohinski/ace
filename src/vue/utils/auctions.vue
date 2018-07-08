@@ -38,7 +38,7 @@
   </div>
 </template>
 <script>
-  import _consts_ from '../../js/engine/constants.js';
+  import _consts_ from '../../json/constants.json';
   import vSelect from './select.vue';
   export default {
     data () {

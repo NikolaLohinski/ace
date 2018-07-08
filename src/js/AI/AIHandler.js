@@ -1,6 +1,6 @@
 import BacterIA from './BacterIA.js';
 import LucIA from './LucIA.js';
-import _consts_ from '../engine/constants.js';
+import _consts_ from '../../json/constants.json';
 
 /**
  * Implementation of the AI Handler
