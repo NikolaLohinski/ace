@@ -163,9 +163,10 @@ const Engine = {
       // Case of a Coinche
       game.setCoinche(auction.id);
       // My partner can not coinche anymore either
-      const canCoinche = {};
-      canCoinche[order[meIndex]] = false;
-      canCoinche[order[(meIndex + 2) % 4]] = false;
+      const canCoinche = {
+        [order[meIndex]]: false,
+        [order[(meIndex + 2) % 4]]: false
+      };
       if (!game.isCounterCoinche(auction.id)) {
         canCoinche[order[(meIndex + 1) % 4]] = true;
         canCoinche[order[(meIndex + 3) % 4]] = true;
@@ -197,10 +198,10 @@ const Engine = {
         game.placeAuction(auction);
         // Update who's turn it is
         game.setWhosTurn(game.getPlayerNextTo(auction.id));
-        const canCoinche = {};
-        canCoinche[order[(meIndex + 1) % 4]] = true;
-        canCoinche[order[(meIndex + 3) % 4]] = true;
-        game.setCanCoinche(canCoinche);
+        game.setCanCoinche({
+          [order[(meIndex + 1) % 4]]: true,
+          [order[(meIndex + 3) % 4]]: true
+        });
         const forbidden = [];
         for (let i = 0; i < prices.length; i++) {
           if (i <= prices.indexOf(auction.price)) {

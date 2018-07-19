@@ -93,6 +93,14 @@ export default class Game {
     }
     this.dealer = id;
   }
+
+  /**
+   * Tell whether game has been initialized
+   * @return {boolean} True if game has been initialized
+   */
+  isInitialized () {
+    return this.initialized;
+  }
   /**
    * Get dealer's id
    * @return {String} id of the dealer
@@ -255,7 +263,6 @@ export default class Game {
    * @return {Object} Mapping id to can-or-can-not coinche status
    */
   getCanCoinche () {
-    if (!this.canCoinche) throw Error(`[Game.canCoinche] : Game was not initialized`);
     return this.canCoinche;
   }
   /**
@@ -307,6 +314,25 @@ export default class Game {
     }
     return lastAuction;
   }
+
+  /**
+   * Get the auctions
+   * @return {Object} the auctions of the game
+   */
+  getAuctions () {
+    return this.auctions;
+  }
+  /**
+   * Get the patner of a given player
+   * @param {String} id Player that is looking for his buddy
+   * @return {String|null} the id of the buddy
+   */
+  getPartner (id) {
+    if (!this.order) return null;
+    const where = this.order.indexOf(id);
+    if (where === -1) return null;
+    return this.order[(where + 2) % 4];
+  }
   /**
    * Set forbidden prices. The input can be either an array or a list of forbidden prices
    * @param {Array<Number|String>|Number|String} prices
@@ -319,6 +345,13 @@ export default class Game {
       }
     }
     this.forbiddenPrices = _prices;
+  }
+  /**
+   * Return the forbidden prices
+   * @return {Array<Number|String>} the forbidden prices
+   */
+  getForbiddenPrices () {
+    return this.forbiddenPrices;
   }
   /**
    * Calculate hash for each player's hand
@@ -462,5 +495,33 @@ export default class Game {
    */
   getScores () {
     return this.scores;
+  }
+  /**
+   * Return whether the game has ended or not
+   * @return {Boolean} True if the game has ended
+   */
+  hasEnded () {
+    return this.state === Constants.__GAME_STATE_END__;
+  }
+  /**
+   * Tell whether the game is in bets state
+   * @return {Boolean} True if the game is in bets state
+   */
+  isBets () {
+    return this.state === Constants.__GAME_STATE_BETS__;
+  }
+  /**
+   * Tell whether the game is in play state
+   * @return {Boolean} True if the game is in play state
+   */
+  isPlay () {
+    return this.state === Constants.__GAME_STATE_PLAY__;
+  }
+  /**
+   * Tell whether the game is in wait state
+   * @return {Boolean} True if the game is in wait state
+   */
+  isWait () {
+    return this.state === Constants.__GAME_STATE_WAIT__;
   }
 }

@@ -43,7 +43,7 @@ export default {
    * @param {Array} players List of all players including me and my cards
    * @return {Promise} promise of a bet object defining the action
    */
-  bet (players) {
+  bet (game) {
     return new Promise((resolve) => {
       const bet = {
         price: null,

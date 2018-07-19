@@ -1,6 +1,6 @@
 import BacterIA from './BacterIA.js';
-import LucIA from './LucIA.js';
-import _consts_ from '../../json/constants.json';
+// import LucIA from './LucIA.js';
+import Constants from '../../json/constants.json';
 
 /**
  * Implementation of the AI Handler
@@ -10,46 +10,36 @@ import _consts_ from '../../json/constants.json';
 export default {
   /**
    * React to current game state
-   * @param {Object} game Current game state
-   * @param {Array} players Current public state of all the players
-   * @param {Player} me The AI
+   * @param {Game} game Current game state
+   * @param {Player} me The bot
+   * @param {String} token token to respond to the action
    * @return {Promise} Promise for reaction
    */
-  react (game, players, me) {
-    const token = game.token;
+  react (game, me, token) {
     return new Promise((react) => {
-      const meIndex = players.findIndex((p) => p.id === me.id);
-      const arrangedPlayers = [me];
-      let arrangedTurn;
-      if (game.turn) arrangedTurn = [game.turn[meIndex]];
-      for (let k = 1; k < players.length; k++) {
-        const arrangedIndex = (k + meIndex) % 4;
-        arrangedPlayers.push(players[arrangedIndex]);
-        if (game.turn) arrangedTurn.push(game.turn[arrangedIndex]);
-      }
       let AI;
       switch (me.level) {
         case 2:
-          AI = LucIA;
+          // AI = LucIA;
           break;
         default:
           AI = BacterIA;
       }
-      if (players[meIndex].turn) { // Active reaction
-        if (game.state === _consts_.__GAME_STATE_BETS__) {
-          AI.bet(arrangedPlayers).then((arg) => {
+      if (game.getWhosTurn() === me.getId()) { // Active reaction
+        if (game.getState() === Constants.__GAME_STATE_BETS__) {
+          AI.bet(game, me).then((bet) => {
             react({
               action: 'bet',
-              arg: arg,
+              arg: bet,
               token,
               id: me.id
             });
           });
-        } else if (game.state === _consts_.__GAME_STATE_PLAY__) {
-          AI.play(arrangedPlayers, arrangedTurn, game.auction).then((arg) => {
+        } else if (game.getState() === Constants.__GAME_STATE_PLAY__) {
+          AI.play(game, me).then((newMe) => {
             react({
               action: 'play',
-              arg: arg,
+              arg: newMe,
               token,
               id: me.id
             });
@@ -57,11 +47,11 @@ export default {
         }
       } else { // Passive reaction
         if ([
-          _consts_.__GAME_STATE_BETS__,
-          _consts_.__GAME_STATE_WAIT__
-        ].indexOf(game.state) !== -1) {
-          if (arrangedPlayers[0].canCoinche) {
-            AI.coinche(arrangedPlayers).then((coinche) => {
+          Constants.__GAME_STATE_BETS__,
+          Constants.__GAME_STATE_WAIT__
+        ].indexOf(game.getState()) !== -1) {
+          if (game.getCanCoinche()[me.getId()]) {
+            AI.coinche(game, me).then((coinche) => {
               if (coinche) {
                 react({
                   action: 'bet',

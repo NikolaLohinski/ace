@@ -25,10 +25,14 @@
             selectedIndex: self.default,
             onValueChange (val) {
               self.$emit('select', val);
+            },
+            onCancel () {
+              self.$emit('close');
             }
           });
           self.picker.show();
         }, 100);
+        self.$emit('open');
       }
     },
     props: {

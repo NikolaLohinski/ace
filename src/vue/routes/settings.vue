@@ -85,7 +85,7 @@
     table {
       width: 100%;
       margin: 15px auto 0 auto;
-      height: calc(100% - #{$header-height} - 45px);
+      height: calc(100% - #{$header-height} - 30px);
       max-width: $max-width-main;
       td {
         margin: 15px auto;

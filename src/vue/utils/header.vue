@@ -45,7 +45,7 @@
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.51);
     background-color: $notification-background;
     color: $notification-text-color;
-    padding: 15px 15px 0 15px;
+    padding: 5px 15px 0 15px;
     line-height: $header-height;
     text-align: center;
     font-size: 20px;

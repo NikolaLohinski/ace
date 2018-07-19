@@ -1,22 +1,25 @@
-import _consts_ from '../json/constants.json';
-import Engine from './engine/Engine.js';
-import Player from './engine/Player.js';
-import utils from './utils.js';
-import AIHandler from './AI/AIHandler';
+import Constants from '../json/constants.json';
+import Engine from './engine/Engine';
+import Player from './engine/Player';
+import Game from './engine/Game';
+import utils from './utils';
+import Bot from './AI/Bot';
 
-const __DELAY_UI__ = 2000;  // in ms
+global.__timeoutStore = null;
 
 export default {
   state: {
-    timeoutId: -1,
     loading: true
   },
   localState: {
     path: null,
     game: {},
-    players: [],
+    token: null,
+    players: {},
+    me: null,
     config: {},
-    engineTimeout: 0
+    bots: {},
+    startDelay: null
   },
   mutations: {
     loading (state, loading) {
@@ -33,17 +36,20 @@ export default {
       state.config[data['key']] = data['value'];
     },
     game (state, game) {
-      game.token = utils.generateId();
-      state.game = JSON.parse(JSON.stringify(game));
+      state.token = utils.generateId();
+      state.game = game;
     },
     players (state, players) {
       state.players = players;
     },
-    engineTimeout (state, timeout) {
-      state.engineTimeout = timeout;
+    bots (state, bots) {
+      state.bots = bots;
     },
-    timeoutId (state, id) {
-      state.timeoutId = id;
+    me (state, id) {
+      state.me = id;
+    },
+    startDelay (state, delay) {
+      state.startDelay = delay;
     }
   },
   getters: {
@@ -64,81 +70,118 @@ export default {
       }
       return languages;
     },
-    sortCards () {
-      return Engine.sort;
-    },
-    findLeader (state) {
-      return Engine.leader(state.game, state.players);
+    sort (state) {
+      const lastAuction = new Game(state.game).getLastAuction();
+      const category = lastAuction ? lastAuction.category : null;
+      return (cards) => state.config.sortCards ? Engine.niceSort(cards, category) : cards;
     },
     config (state) {
       return state.config;
     },
     game (state) {
-      return state.game;
+      return new Game(state.game);
     },
     players (state) {
-      const players = [];
-      for (let k = 0; k < state.players.length; k++) {
-        players.push(new Player(state.players[k]));
-      }
-      return players;
+      return Object.assign({}, ...Object.keys(state.players).map((key) => ({
+        [key]: new Player(state.players[key])
+      })));
     },
-    publicPlayers (state) {
-      const players = [];
-      for (let k = 0; k < state.players.length; k++) {
-        players.push(new Player(state.players[k]).getPublicImage());
-      }
-      return players;
+    bots (state) {
+      return Object.assign({}, ...Object.keys(state.bots).map((key) => ({
+        [key]: new Bot(state.bots[key])
+      })));
     },
-    engineTimeout (state) {
-      return state.engineTimeout;
+    me (state) {
+      return state.me;
     },
-    timeoutId (state) {
-      return state.timeoutId;
+    token (state) {
+      return state.token;
+    },
+    startDelay (state) {
+      return state.startDelay;
     }
   },
   actions: {
     clearGame (state) {
       return new Promise((resolve) => {
         state.commit('game', {});
-        state.commit('players', []);
+        state.commit('players', {});
         resolve();
       });
     },
     afk (state, isAfk) {
       return new Promise((resolve) => {
-        state.getters.players[0].status =
-          isAfk ? _consts_.__PLAYER_STATUS_INACTIVE__
-          : _consts_.__PLAYER_STATUS_CONNECTED__;
-        state.dispatch('notify', [state.getters.game, state.getters.players]).then(resolve);
+        const players = state.getters.players;
+        if (isAfk) {
+          players[state.getters.me].setStatus(Constants.__PLAYER_STATUS_INACTIVE__);
+        } else {
+          players[state.getters.me].setStatus(Constants.__PLAYER_STATUS_CONNECTED__);
+        }
+        state.dispatch('notify', {
+          players: players
+        }).then(resolve);
       });
     },
     continueGame (state) {
       return new Promise(() => {
         state.dispatch('afk', false).then(() => {
-          if (state.getters.players.findIndex((p) => p.status !== _consts_.__PLAYER_STATUS_CONNECTED__) === -1) {
-            const [game, players] = Engine.clear(state.getters.game, state.getters.players);
-            state.dispatch('notify', Engine.init(game, players)).then();
+          if (Object.values(state.getters.players).findIndex((p) => {
+            return p.status !== Constants.__PLAYER_STATUS_CONNECTED__;
+          }) === -1) {
+            const result = Engine.init(Engine.restart(state.getters.game).game, state.getters.players);
+            const items = {
+              game: result.game,
+              players: {}
+            };
+            const deal = Engine.deal(items.game);
+            result.forEach((ply) => {
+              ply.hand = deal.hands[ply.getId()];
+              items.players[ply.getId()] = ply;
+            });
+            state.dispatch('notify', items).then();
           }
         });
       });
     },
     initGame (state) {
       return new Promise(() => {
-        let game = state.getters.game;
-        let players = state.getters.players;
-        players[0].status = _consts_.__PLAYER_STATUS_CONNECTED__;
-        if (!game.initialized) {
-          [game, players] = Engine.init(game, players);
-        } else if ([_consts_.__GAME_STATE_INTER__, _consts_.__GAME_STATE_END__].indexOf(game.state) !== -1) {
-          players[0].status = _consts_.__PLAYER_STATUS_INACTIVE__;
+        const items = {
+          game: state.getters.game
+        };
+        if (!items.game.isInitialized()) {
+          const playersArray = [];
+          items.players = state.getters.players;
+          let k = 0;
+          while (k < 4) {
+            for (const player of Object.values(items.players)) {
+              if (player.position === playersArray.length) {
+                playersArray.push(player);
+              }
+            }
+            k++;
+          }
+          const init = Engine.init(items.game, playersArray);
+          const deal = Engine.deal(init.game);
+          const players = {};
+          init['players'].forEach((ply) => {
+            ply.hand = deal.hands[ply.getId()];
+            players[ply.getId()] = ply;
+          });
+          items.players = players;
+          items.game = deal['game'];
+        } else if ([
+          Constants.__GAME_STATE_INTER__,
+          Constants.__GAME_STATE_END__
+        ].indexOf(items.game.getState()) !== -1) {
+          items.players = state.getters.players;
+          items.players[state.getters.me].setStatus(Constants.__PLAYER_STATUS_INACTIVE__);
         }
-        state.dispatch('notify', [game, players]).then();
+        state.dispatch('notify', items).then();
       });
     },
     act (state, act) {
       return new Promise(() => {
-        if (act.token === state.getters.game.token) {
+        if (act.token === state.getters.token) {
           const arg = act.arg;
           arg.id = act.id;
           state.dispatch(act.action, arg).then();
@@ -147,79 +190,127 @@ export default {
         }
       });
     },
-    play (state, play) {
+    // New Functions -----------------------------------------------------------
+    initialize (state) {
       return new Promise(() => {
-        state.dispatch(
-          'notify',
-          Engine.play(state.getters.game, state.getters.players, play)
-        ).then(() => {
-          if (state.getters.game.state === _consts_.__GAME_STATE_INTER__) {
-            setTimeout(() => {
-              state.dispatch(
-                'notify',
-                Engine.evaluate(state.getters.game, state.getters.players)
-              ).then(() => {
-                state.dispatch('afk', true).then();
-              });
-            }, __DELAY_UI__);
+        let players = null;
+        let bots = null;
+        let game = state.getters.game;
+        if (!game.isInitialized()) {
+          players = state.getters.players;
+          bots = state.getters.bots;
+          const array = Object.values(players);
+          array.sort((p1, p2) => p1.getPosition() - p2.getPosition());
+          const init = Engine.init(game, array);
+          const deal = Engine.deal(game);
+          init['players'].forEach((ply) => {
+            players[ply.getId()].setHand(deal.hands[ply.getId()]);
+            if (bots.hasOwnProperty(ply.getId())) {
+              bots[ply.getId()].setHand(deal.hands[ply.getId()]);
+            }
+          });
+          game = deal['game'];
+        }
+        state.dispatch('refresh', { game, players, bots }).then(() => {
+          if (typeof state.getters.startDelay === 'number') {
+            state.dispatch('start', state.getters.startDelay).then();
           }
         });
       });
     },
-    bet (state, bet) {
+    bet (state, action) {
       return new Promise(() => {
-        state.dispatch(
-          'notify',
-          Engine.bet(state.getters.game, state.getters.players, bet)
-        ).then(() => {
-          if (state.getters.game.state === _consts_.__GAME_STATE_INTER__) {
-            setTimeout(() => {
-              state.dispatch(
-                'notify',
-                Engine.clear(state.getters.game, state.getters.players)
-              ).then(() => {
-                setTimeout(state.dispatch, __DELAY_UI__, 'initGame');
-              });
-            }, __DELAY_UI__);
-          } else if (state.getters.game.state === _consts_.__GAME_STATE_WAIT__) {
-            state.dispatch('wait', _consts_.__WAIT_TIMEOUT__).then(() => {
-              state.dispatch(
-                'notify',
-                Engine.start(state.getters.game, state.getters.players)
-              ).then();
-            });
-          }
+        const token = state.getters.token;
+        state.dispatch('validate', token).then(() => {
+          const game = state.getters.game;
+          state.dispatch('refresh', Engine.bet(game, action)).then();
         });
       });
     },
-    wait (state, duration) {
-      return new Promise((resolve) => {
-        clearTimeout(state.getters.timeoutId);
-        state.commit('engineTimeout', duration);
-        state.commit('timeoutId', setTimeout(() => {
-          const newDuration = duration - 1000;
-          if (newDuration < 0) resolve();
-          else state.dispatch('wait', newDuration).then(resolve);
-        }, duration));
+    play (state, action) {
+      return new Promise(() => {
+        const token = state.getters.token;
+        state.dispatch('validate', token).then(() => {
+          const game = state.getters.game;
+          const players = state.getters.players;
+          const player = players[action.id];
+          player.play(action.card);
+          const result = Engine.play(game, player);
+          players[action.id] = player;
+          result.players = players;
+          if (state.getters.bots[action.id]) {
+            result.bots = state.getters.bots;
+            result.bots[action.id] = player;
+          }
+          state.dispatch('refresh', result).then();
+        });
       });
     },
-    notify (state, [game, players]) {
+    validate (state, token) {
+      return new Promise((resolve, reject) => {
+        token === state.getters.token ? resolve() : reject();
+      });
+    },
+    refresh (state, args) {
       return new Promise((resolve) => {
-        state.commit('game', game);
-        state.commit('players', players);
-        for (let k = 0; k < state.getters.players.length; k++) {
-          const player = state.getters.players[k];
-          if (player.type === 'BOT') {
-            AIHandler.react(
-              state.getters.game,
-              state.getters.publicPlayers,
-              player
-            ).then((reaction) => {
-              state.dispatch('act', reaction).then();
-            });
-          }
+        if (args.game) state.commit('game', args.game);
+        if (args.bots) state.commit('bots', args.bots);
+        if (args.players) state.commit('players', args.players);
+        state.dispatch('notify').then(resolve);
+      });
+    },
+    notify (state) {
+      return new Promise((resolve) => {
+        const token = state.getters.token;
+        const game = state.getters.game;
+        for (const bot of Object.values(state.getters.bots)) {
+          bot.react(game, token).then((reaction) => state.dispatch('AIct', reaction).then());
         }
         resolve();
+      });
+    },
+    AIct (state, action) {
+      return new Promise(() => {
+        switch (action.name) {
+          case 'BET':
+            action.args.id = action.id;
+            state.dispatch('bet', action.args);
+            break;
+          case 'PLAY':
+            action.args.id = action.id;
+            state.dispatch('play', action.args);
+            break;
+          default:
+            break;
+        }
+      });
+    },
+    clear (state) {
+      return new Promise((resolve) => {
+        state.commit('game', {});
+        state.commit('players', {});
+        state.commit('bots', {});
+        resolve();
+      });
+    },
+    start (state, delay = Constants.__WAIT_TIMEOUT__) {
+      if (typeof state.getters.startDelay !== 'number') {
+        state.commit('startDelay', delay);
+      }
+      return new Promise(() => {
+        clearTimeout(global.__timeoutStore);
+        global.__timeoutStore = setTimeout(() => {
+          state.commit('startDelay', delay);
+          const left = delay - 1000;
+          if (left < 0) {
+            // start
+            state.commit('startDelay', null);
+            const game = state.getters.game;
+            state.dispatch('refresh', Engine.start(game));
+          } else {
+            state.dispatch('start', left).then();
+          }
+        }, delay);
       });
     }
   }
