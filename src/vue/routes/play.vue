@@ -82,19 +82,25 @@
         ];
       }
     },
+    store: global.store,
     mixins: [saveState],
     methods: {
       confirmGameConfig () {
-        for (let k = 0; k < this.players.length; k++) {
-          const player = this.players[k];
-          if (!player.id) {
-            player.id = utils.generateId();
-          }
+        const players = {};
+        const bots = {};
+        const game = {};
+        for (const player of this.players) {
+          if (!player.id) player.id = utils.generateId();
+          player.position = this.players.indexOf(player);
+          players[player.id] = player;
+          if (player.dealer) game.dealer = player.id;
+          if (player.type === 'BOT') bots[player.id] = player;
         }
-        if (this.players.findIndex((p) => p.dealer) === -1) {
-          this.players[Math.floor(4 * Math.random())].dealer = true;
-        }
-        this.$store.commit('players', this.players);
+        if (!game.dealer) game.dealer = this.players[Math.floor(4 * Math.random())].id;
+        this.$store.commit('me', this.players[0].id);
+        this.$store.commit('game', game);
+        this.$store.commit('players', players);
+        this.$store.commit('bots', bots);
       },
       getSaveStateConfig () {
         return {
@@ -134,7 +140,7 @@
     right: 0;
     bottom: 0;
     .container {
-      height: calc(100% - #{$header-height} - 45px);
+      height: calc(100% - #{$header-height});
       margin: 0 auto;
       padding: 15px 0;
       -webkit-overflow-scrolling: touch;
@@ -217,7 +223,7 @@
                 vertical-align: middle;
                 &[checked] {
                   background: $dealer-coin -3px -3px;
-                  background-size: 46px 46px;
+                  background-size: 44px 44px;
                 }
               }
             }

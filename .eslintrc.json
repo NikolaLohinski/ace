@@ -10,6 +10,7 @@
     "no-unused-vars": "off"
   },
   "globals": {
-    "__VERSION__": true
+    "__VERSION__": true,
+    "__ENV__": true
   }
 }

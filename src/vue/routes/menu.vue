@@ -9,6 +9,9 @@
           <v-switch v-model="config.sortCards" class="item" @change="sortCards">
             {{ $t('menu.sortCards') }}
           </v-switch>
+          <v-switch v-model="config.goClockwise" class="item" @change="goClockwise">
+            {{ $t('menu.goClockwise') }}
+          </v-switch>
         </td>
       </tr>
       <tr>
@@ -30,6 +33,12 @@
       sortCards (bool) {
         this.$store.commit('setConfig', {
           key: 'sortCards',
+          value: bool
+        });
+      },
+      goClockwise (bool) {
+        this.$store.commit('setConfig', {
+          key: 'goClockwise',
           value: bool
         });
       }
@@ -56,7 +65,7 @@
           confirmBtn: self.$t('menu.quit'),
           cancelBtn: self.$t('utils.cancel'),
           onConfirm: () => {
-            this.$store.dispatch('clearGame').then(next);
+            this.$store.dispatch('clear').then(next);
           }
         }).show();
       } else {
@@ -77,7 +86,7 @@
     bottom: 0;
     table {
       width: 100%;
-      height: calc(100% - #{$header-height} - 45px);
+      height: calc(100% - #{$header-height} - 30px);
       margin: 15px auto 0 auto;
       max-width: $max-width-main;
       td {

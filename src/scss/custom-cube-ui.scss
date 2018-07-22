@@ -91,6 +91,10 @@ li.cube-picker-wheel-item {
   overflow: visible;
 }
 
+.cube-toast .cube-popup-content {
+  pointer-events: none;
+}
+
 // text input
 .cube-input {
   color: inherit;

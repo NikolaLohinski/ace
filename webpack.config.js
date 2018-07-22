@@ -9,7 +9,7 @@ module.exports = {
     'app.js': './src/js/main.js'
   },
   output: {
-    path: require('path').resolve(__dirname, 'dist'),
+    path: require('path').resolve(__dirname, 'dist', 'app'),
     filename: '[name]'
   },
   resolve: {
@@ -56,8 +56,12 @@ module.exports = {
         }]
       },
       {
+        test: /\.json$/,
+        loader: 'json-loader'
+      },
+      {
         test: /\.js$/,
-        exclude: [/node_modules/],
+        exclude: [/node_modules\/(?!(deck-of-cards)\/).*/],
         loader: 'babel-loader'
       },
       {
@@ -73,6 +77,10 @@ module.exports = {
     ]
   },
   plugins: [
+    new Webpack.DefinePlugin({
+      '__VERSION__': JSON.stringify(require('./package.json').version),
+      '__ENV__': JSON.stringify(process.env.NODE_ENV)
+    }),
     new TransformModulesPlugin(),
     new FaviconsWebpackPlugin({
       logo: './src/img/ace-logo.png',
@@ -90,9 +98,6 @@ module.exports = {
     }),
     new AppCachePlugin({
       output: 'cache.manifest'
-    }),
-    new Webpack.DefinePlugin({
-      '__VERSION__': JSON.stringify(require('./package.json').version)
     }),
     new CopyWebpackPlugin([
       { from: 'README_master.md', to: 'README.md' }

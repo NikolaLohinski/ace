@@ -21,6 +21,7 @@ const translations = {
       'title': 'Menu',
       'quit': 'Quit',
       'sortCards': 'Sort cards',
+      'goClockwise': 'Play clockwise',
       'youWillLoseYourCurrentProgress': 'You will lose your current progress'
     },
     'utils': {
@@ -43,26 +44,31 @@ const translations = {
       'dealer': 'Dealer',
       'playerType': 'Type',
       'pleaseChooseAName': 'Please choose a pseudo',
-      'wonPhrase': 'You won, congratulations !',
-      'lostPhrase': 'Too bad, you lost...',
+      'wonPhrase': 'Congratulations !',
+      'lostPhrase': 'Too bad...',
       'scoresUsThem': 'Us : {us} - Them : {them}',
-      'withBelote': 'With belote',
-      'made': 'Auction {auction} was achieved',
-      'failed': 'Auction {auction} was lost',
+      'withBelote': 'with belote',
+      'belote': 'Belote !',
+      'rebelote': 'Rebelote !',
+      'made': 'Auction met by {name}',
+      'failed': 'Contract failed by {name}',
+      'auctionAt': 'at {auction}',
       'achieved': 'Achieved',
       'lost': 'Failed',
       'lostGamePhrase': 'You lost the game...',
       'wonGamePhrase': 'Victory !',
-      'playerCoinched': 'Coinched by {player} !',
-      'playerSurCoinched': 'Counter-coinched by {player} !',
+      'playerCoinched': 'Coinched by {player}',
+      'playerCounterCoinched': 'Counter-coinched by {player}',
+      'noAuctionsPhrase': 'No auctions were placed...',
+      'gameCanceled': 'Game canceled',
       'ai': {
         'title': 'Bot',
         '1': {
-          'name': 'BacterIA',
+          'name': 'Penny',
           'description': 'Unpredictable'
         },
         '2': {
-          'name': 'LucIA',
+          'name': 'Lucy',
           'description': 'First born'
         }
       }
@@ -252,12 +258,14 @@ to test the game, the IAs, and even give us a hand in the development, which wou
       'title': 'Menu',
       'quit': 'Quitter',
       'sortCards': 'Trier les cartes',
+      'goClockwise': 'Tourner dans le sens horaire',
       'youWillLoseYourCurrentProgress': 'Vous ne pourrez plus reprendre le cours de la partie'
     },
     'utils': {
       'ok': 'Ok',
       'warning': 'Attention',
       'cancel': 'Annuler',
+      'sorry': 'Navré',
       'you': 'Vous',
       'continue': 'Continuer',
       'back': 'Retour'
@@ -274,26 +282,31 @@ to test the game, the IAs, and even give us a hand in the development, which wou
       'dealer': 'Dealer',
       'playerType': 'Type',
       'pleaseChooseAName': 'Veuillez renseigner un pseudo',
-      'wonPhrase': 'Victoire, bravo !',
+      'wonPhrase': 'Bravo !',
       'lostPhrase': 'Dommage...',
       'scoresUsThem': 'Nous : {us} - Eux : {them}',
-      'withBelote': 'Avec belote',
-      'made': 'Annonce {auction} faite',
-      'failed': 'Annonce {auction} chutée',
+      'withBelote': 'avec la belote',
+      'belote': 'Belote !',
+      'rebelote': 'Rebelote !',
+      'made': 'Contrat rempli par {name}',
+      'failed': 'Annonce de {name} chutée',
+      'auctionAt': 'à {auction}',
       'achieved': 'Fait',
       'lost': 'Chuté',
       'lostGamePhrase': 'Partie perdue...',
       'wonGamePhrase': 'Victoire !',
-      'playerCoinched': 'Coinché par {player} !',
-      'playerSurCoinched': 'Surcoinché par {player} !',
+      'playerCoinched': 'Coinché par {player}',
+      'playerCounterCoinched': 'Surcoinché par {player}',
+      'noAuctionsPhrase': 'Personne n\'a fait d\'annonces...',
+      'gameCanceled': 'Partie annulée',
       'ai': {
         'title': 'PNJ',
         '1': {
-          'name': 'BacterIA',
+          'name': 'Penny',
           'description': 'Imprédictible'
         },
         '2': {
-          'name': 'LucIA',
+          'name': 'Lucy',
           'description': 'Première née'
         }
       }

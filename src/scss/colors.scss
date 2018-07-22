@@ -1,6 +1,6 @@
 $lighter-background: #fff;
 $general-background: #f3f3f3;
-$general-background-opaque: rgba(240, 240, 240, 0.8);
+$general-background-opaque: rgba(240, 240, 240, 0.85);
 $notification-background: rgba(0, 0, 0, 0.81);
 
 $default-border-color: #ddd;
@@ -26,8 +26,7 @@ $active-player-color: #00d516;
 $inactive-player-color: #ffff00;
 $afk-player-color: #f00;
 
-$cards-background-color: #fff;
 $cards-border-color: #eee;
-$cards-box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+$cards-box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 
 a { color: $default-text-color; }

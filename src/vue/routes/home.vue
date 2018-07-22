@@ -144,7 +144,7 @@
         color: $default-text-color;
         text-align: center;
         transition: all 200ms ease;
-        font-size: 20px;
+        font-size: 17px;
         width: 96px;
         height: 96px;
         &:active {
