@@ -77,6 +77,10 @@ module.exports = {
     ]
   },
   plugins: [
+    new Webpack.DefinePlugin({
+      '__VERSION__': JSON.stringify(require('./package.json').version),
+      '__ENV__': JSON.stringify(process.env.NODE_ENV)
+    }),
     new TransformModulesPlugin(),
     new FaviconsWebpackPlugin({
       logo: './src/img/ace-logo.png',
@@ -94,9 +98,6 @@ module.exports = {
     }),
     new AppCachePlugin({
       output: 'cache.manifest'
-    }),
-    new Webpack.DefinePlugin({
-      '__VERSION__': JSON.stringify(require('./package.json').version)
     }),
     new CopyWebpackPlugin([
       { from: 'README_master.md', to: 'README.md' }

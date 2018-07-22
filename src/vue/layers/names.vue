@@ -1,12 +1,10 @@
 <template>
-  <div class="player-info">
+  <div class="names">
     <v-touch tag="div" :key="player.getId()"
-             @tap="reveal(player)" class="other-player"
+             @tap="reveal(player)" class="other-player-name"
              v-for="player in otherPlayers"
-             :position="player.getPosition()"
-             :playing="isPlaying(player)"
+             :position="where(player.getPosition())"
              :show-name="show.indexOf(player.getId()) !== -1">
-      <i class="badge" :available="player.isAvailable()"></i>
       <span class="name">
         {{ player.getName() }}
       </span>
@@ -24,13 +22,10 @@
     store: global.store,
     computed: {
       otherPlayers () {
-        const players = this.$store.getters.players;
-        const me = this.$store.getters.me;
-        const others = {};
-        for (const id in players) {
-          if (players.hasOwnProperty(id) && id !== me) others[id] = players[id];
-        }
-        return others;
+        return Object.values(this.$store.getters.players).filter((p) => p.getId() !== this.$store.getters.me);
+      },
+      where () {
+        return this.$store.getters.position;
       }
     },
     methods: {
@@ -44,20 +39,17 @@
           self.show = self.show.concat(player.getId());
           global.__timeoutNames = setTimeout(() => { self.show = []; }, timeout);
         }
-      },
-      isPlaying (player) {
-        return this.$store.getters.game.getWhosTurn() === player.getId();
       }
     },
     mounted () {
-      Object.values(this.otherPlayers).map((player) => this.reveal(player));
+      this.otherPlayers.forEach((player) => this.reveal(player));
     }
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
   @import '../../scss/colors';
-  .player-info {
-    .other-player {
+  .names {
+    .other-player-name {
       width: 100px;
       height: 100px;
       position: fixed;
@@ -129,7 +121,7 @@
       &[position='2'] {
         top: 0; left: 50%; transform: translate(-50%, 0);
         > * {
-          top: 5px; left: 50%; transform: translate(-50%, 0);
+          top: 15px; left: 50%; transform: translate(-50%, 0);
         }
         .name { top: 35px; }
         .name:after {

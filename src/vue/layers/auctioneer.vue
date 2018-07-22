@@ -26,7 +26,7 @@
     data () {
       return {
         categories: Constants.__AUCTION_CATEGORIES__,
-        passType: Constants.__BET_ACTION_PASS__
+        passType: Constants.PASS
       };
     },
     components: {
@@ -52,8 +52,8 @@
       },
       options () {
         const priceOptions = [];
-        for (let k = 0; k < Constants.__AUCTION_PRICES__.length; k++) {
-          const price = Constants.__AUCTION_PRICES__[k];
+        for (let k = 0; k < Constants.AUCTIONPRICES.length; k++) {
+          const price = Constants.AUCTIONPRICES[k];
           if (this.forbiddenPrices.indexOf(price) === -1) {
             priceOptions.push({
               text: (price === 'GEN' || price === 'CAP') ? this.$t(`play.${price}`) : price,
@@ -71,14 +71,14 @@
           const partnersAuctions = auctions[partner];
           if (partnersAuctions.length) {
             const auction = partnersAuctions[partnersAuctions.length - 1];
-            if (auction.type === Constants.__BET_ACTION_BET__) {
+            if (auction.type === Constants.BET) {
               return [0, this.categoryOptions.findIndex((category) => category.value === auction.category)];
             }
           }
           const myAuctions = auctions[this.$store.getters.me];
           if (myAuctions.length) {
             const auction = myAuctions[myAuctions.length - 1];
-            if (auction.type === Constants.__BET_ACTION_BET__) {
+            if (auction.type === Constants.BET) {
               return [0, this.categoryOptions.findIndex((category) => category.value === auction.category)];
             }
           }
@@ -89,10 +89,13 @@
     methods: {
       bet (bet) {
         const auction = {
-          price: bet ? bet[0] : null,
-          category: bet ? bet[1] : null,
-          type: bet ? Constants.__BET_ACTION_BET__ : Constants.__BET_ACTION_PASS__,
-          id: this.$store.getters.me
+          args: {
+            price: bet ? bet[0] : null,
+            category: bet ? bet[1] : null,
+            type: bet ? Constants.BET : Constants.PASS,
+            id: this.$store.getters.me
+          },
+          token: this.$store.getters.token
         };
         this.$store.dispatch('bet', auction);
         this.$emit('finished');

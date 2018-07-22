@@ -1,6 +1,6 @@
 import Player from '../engine/Player';
-import BacterIA from './BacterIA';
-// import LucIA from './LucIA';
+import Penny from './bots/Penny';
+import Lucy from './bots/Lucy';
 
 /**
  * Implementation of the Bot object for cards and bets logic as well as
@@ -19,13 +19,13 @@ export default class Bot extends Player {
     this._level = object.level || object._level || 1;
     switch (this._level) {
       case 1:
-        this._AI = BacterIA;
+        this._AI = Penny;
         break;
-      // case 2:
-      //   this._AI = LucIA;
-      //   break;
+      case 2:
+        this._AI = Lucy;
+        break;
       default:
-        this._AI = BacterIA;
+        this._AI = Penny;
     }
   }
   /**
@@ -52,24 +52,33 @@ export default class Bot extends Player {
   react (game, token) {
     return new Promise((resolve) => {
       const id = this.getId();
-      let method = null;
-      let name = null;
-      if (game.getWhosTurn() === id) { // Active reaction
-        if (game.isBets()) {
-          method = this.getAI().bet;
-          name = 'BET';
-        } else if (game.isPlay()) {
-          method = this.getAI().play;
-          name = 'PLAY';
-        }
-      } else { // Passive reaction
-        if (game.getCanCoinche()[id]) {
-          method = this.getAI().coinche;
-          name = 'COINCHE';
-        }
+      if (game.getCanCoinche()[id]) {
+        this.getAI().coinche(game, this).then(
+          (args) => resolve({ args, token, id, name: 'COINCHE' }),
+          () => {
+            this.activeReaction(game, token).then(resolve);
+          }
+        );
+      } else {
+        this.activeReaction(game, token).then(resolve);
       }
-      if (method && name) {
-        method(game, this).then((args) => resolve({ args, token, id, name }));
+    });
+  }
+  /**
+   * React actively to a current game state
+   * @param {Game} game current Game state
+   * @param {String} token current Game token for reaction
+   * @return {Promise} Promise for reaction
+   */
+  activeReaction (game, token) {
+    return new Promise((resolve) => {
+      const id = this.getId();
+      if (game.getWhosTurn() === id) {
+        if (game.isBets()) {
+          this.getAI().bet(game, this).then((args) => resolve({ args, token, id, name: 'BET' }));
+        } else if (game.isPlay()) {
+          this.getAI().play(game, this).then((args) => resolve({ args, token, id, name: 'PLAY' }));
+        }
       }
     });
   }

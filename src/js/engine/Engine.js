@@ -15,7 +15,7 @@ const Engine = {
    * @return {Object} new game and players
    */
   init (game, players) {
-    if (game.getState() !== Constants.__GAME_STATE_INIT__) {
+    if (game.getState() !== Constants.INITGAME) {
       throw Error(`[Engine.init] : Game not in state that allows initialization`);
     }
     if (game.getDeck().length !== 32) {
@@ -90,7 +90,7 @@ const Engine = {
     if (cards.length > 0) {
       for (const family of ['s', 'h', 'c', 'd']) {
         const fCards = cards.filter((card) => card[card.length - 1] === family);
-        const isAsset = category ? [category, 'AA'].indexOf(family) !== -1 : false;
+        const isAsset = category === family || category === 'AA';
         fCards.sort((x, y) => Engine.compareCards(x, y, isAsset));
         sortedCards = sortedCards.concat(fCards.reverse());
       }
@@ -117,7 +117,7 @@ const Engine = {
       }
       for (const family of families) {
         const filtered = cards.filter((c) => c[c.length - 1] === family);
-        filtered.sort((x, y) => Engine.compareCards(x, y, ['AA', category].indexOf(family) !== -1));
+        filtered.sort((x, y) => Engine.compareCards(x, y, category === family || category === 'AA'));
         sortedCards = sortedCards.concat(filtered.reverse());
       }
     }
@@ -135,7 +135,7 @@ const Engine = {
     if (card1[card1.length - 1] !== card2[card2.length - 1]) {
       return 0;
     } else {
-      const order = asset ? Constants.__ORDERS__.ASSET : Constants.__ORDERS__.REGUL;
+      const order = asset ? Constants.ORDERS.ASSET : Constants.ORDERS.REGUL;
       return order.indexOf(card1.slice(0, card1.length - 1)) -
         order.indexOf(card2.slice(0, card2.length - 1));
     }
@@ -147,13 +147,13 @@ const Engine = {
    * @return {Object} Game object updated
    */
   bet (game, auction) {
-    if ([Constants.__GAME_STATE_WAIT__, Constants.__GAME_STATE_BETS__].indexOf(game.getState()) === -1) {
+    if ([Constants.WAITGAME, Constants.__GAME_STATE_BETS__].indexOf(game.getState()) === -1) {
       throw Error(`[Engine.bet] : Game not in state that allows auctions`);
     }
     const order = game.getOrder();
     const meIndex = order.indexOf(auction.id);
-    const prices = Constants.__AUCTION_PRICES__;
-    if (auction.type === Constants.__BET_ACTION_COINCHE__) {
+    const prices = Constants.AUCTIONPRICES;
+    if (auction.type === Constants.COINCHE) {
       if (!game.getCanCoinche()[auction.id]) {
         throw Error(`[Game.bet] : Player "${auction.id}" can not coinche`);
       }
@@ -172,18 +172,18 @@ const Engine = {
         canCoinche[order[(meIndex + 3) % 4]] = true;
       }
       game.setCanCoinche(canCoinche);
-      game.setState(Constants.__GAME_STATE_WAIT__);
+      game.setState(Constants.WAITGAME);
     } else {
       // Check if it was this player's turn
       if (game.getWhosTurn() !== auction.id) {
         throw Error(`[Game.bet] : It's not player "${auction.id}"'s turn`);
       }
       const lastAuction = game.getLastAuction();
-      if (auction.type === Constants.__BET_ACTION_BET__) {
+      if (auction.type === Constants.BET) {
         if (!auction.price || !auction.category) {
           throw Error(`[Game.bet] : The placed auction lacks some details`);
         }
-        if (Constants.__AUCTION_PRICES__.indexOf(auction.price) === -1) {
+        if (Constants.AUCTIONPRICES.indexOf(auction.price) === -1) {
           throw Error(`[Game.bet] : Acution with price ${auction.price} is not possible`);
         }
         if (Constants.__AUCTION_CATEGORIES__.indexOf(auction.category) === -1) {
@@ -209,7 +209,7 @@ const Engine = {
           }
         }
         game.setForbiddenPrices(forbidden);
-      } else if (auction.type === Constants.__BET_ACTION_PASS__) {
+      } else if (auction.type === Constants.PASS) {
         game.setCanCoinche(false);
         game.setWhosTurn(null);
         // Get last auction for further checking
@@ -218,12 +218,12 @@ const Engine = {
         game.placeAuction(auction);
         if (!lastAuction && next === game.getStarter()) {
           // Case when everyone passed
-          game.setState(Constants.__GAME_STATE_INTER__);
+          game.setState(Constants.INTERGAME);
         } else {
           if (lastAuction && next === lastAuction.id) {
             // Case when the player about to be the next to play is the one leading the auctions
             // Finishing betting phase by a WAIT phase
-            game.setState(Constants.__GAME_STATE_WAIT__);
+            game.setState(Constants.WAITGAME);
           } else {
             game.setWhosTurn(next);
           }
@@ -241,13 +241,14 @@ const Engine = {
    * @return {Object} new game object
    */
   start (game) {
-    if (game.getState() !== Constants.__GAME_STATE_WAIT__) {
+    if (game.getState() !== Constants.WAITGAME) {
       throw Error(`[Game.start] : Game not in state that allows to start playing phase`);
     }
     game.setWhosTurn(game.getStarter());
+    game.setCanCoinche(false);
     // Clear forbidden prices
     game.setForbiddenPrices([]);
-    game.setState(Constants.__GAME_STATE_PLAY__);
+    game.setState(Constants.PLAYGAME);
     return { game };
   },
   /**
@@ -257,7 +258,7 @@ const Engine = {
    * @return {Object} new game state
    */
   play (game, player) {
-    if (game.getState() !== Constants.__GAME_STATE_PLAY__) {
+    if (game.getState() !== Constants.PLAYGAME) {
       throw Error(`[Engine.play] : Game not in state that allows playing cards`);
     }
     if (game.getWhosTurn() !== player.getId()) {
@@ -281,7 +282,7 @@ const Engine = {
       const master = Engine.foldMaster(game);
       game.finishFold(master);
       if (game.getFolds().length === 8) {
-        game.setState(Constants.__GAME_STATE_INTER__);
+        game.setState(Constants.INTERGAME);
         game = Engine.evaluate(game).game;
       } else {
         game.setStarter(master);
@@ -396,7 +397,7 @@ const Engine = {
    * @return {Object} new game
    */
   evaluate (game) {
-    if (game.state !== Constants.__GAME_STATE_INTER__) {
+    if (game.state !== Constants.INTERGAME) {
       throw Error('[Engine.evaluate] : Trying to evaluate game that has not ended');
     }
     const offense = game.getOffense();
@@ -414,8 +415,8 @@ const Engine = {
     } else {
       if (auction.category === ['AA']) {  // All assets
         const map = {};
-        for (let k = 0; k < Constants.__ORDERS__.ASSET.length; k++) {
-          map[Constants.__ORDERS__.ASSET[k]] = Constants.__PRICES__.AA[k];
+        for (let k = 0; k < Constants.ORDERS.ASSET.length; k++) {
+          map[Constants.ORDERS.ASSET[k]] = Constants.PRICES.AA[k];
         }
         for (const id of offense) {
           const wonFolds = folds.filter((fold) => fold.winner === id);
@@ -427,8 +428,8 @@ const Engine = {
         }
       } else if (auction.category === 'NA') {  // No assets
         const map = {};
-        for (let k = 0; k < Constants.__ORDERS__.REGUL.length; k++) {
-          map[Constants.__ORDERS__.REGUL[k]] = Constants.REGUL.NA[k];
+        for (let k = 0; k < Constants.ORDERS.REGUL.length; k++) {
+          map[Constants.ORDERS.REGUL[k]] = Constants.REGUL.NA[k];
         }
         for (const id of offense) {
           const wonFolds = folds.filter((fold) => fold.winner === id);
@@ -442,11 +443,11 @@ const Engine = {
         const regularMap = {};
         const assetsMap = {};
         offenseScore = 0;
-        for (let k = 0; k < Constants.__ORDERS__.ASSET.length; k++) {
-          assetsMap[Constants.__ORDERS__.ASSET[k]] = Constants.__PRICES__.ASSET[k];
+        for (let k = 0; k < Constants.ORDERS.ASSET.length; k++) {
+          assetsMap[Constants.ORDERS.ASSET[k]] = Constants.PRICES.ASSET[k];
         }
-        for (let k = 0; k < Constants.__ORDERS__.REGUL.length; k++) {
-          regularMap[Constants.__ORDERS__.REGUL[k]] = Constants.__PRICES__.REGUL[k];
+        for (let k = 0; k < Constants.ORDERS.REGUL.length; k++) {
+          regularMap[Constants.ORDERS.REGUL[k]] = Constants.PRICES.REGUL[k];
         }
         for (const id of offense) {
           const wonFolds = folds.filter((fold) => fold.winner === id);
@@ -472,14 +473,8 @@ const Engine = {
     }
     const defenseScore = (offenseScore) ? 162 - offenseScore : null;
     game.finishSession(success, offenseScore, defenseScore, belote);
-    const scores = game.getScores();
-    for (const id in scores) {
-      if (scores.hasOwnProperty(id)) {
-        if (scores[id] > game.getGoal()) {
-          game.setState(Constants.__GAME_STATE_END__);
-          break;
-        }
-      }
+    if (Object.values(game.getScores()).some((score) => score >= game.getGoal())) {
+      game.setState(Constants.ENDGAME);
     }
     return { game };
   },
@@ -489,7 +484,7 @@ const Engine = {
    * @return {Object} updated game
    */
   restart (game) {
-    if (game.state !== Constants.__GAME_STATE_INTER__) {
+    if (game.state !== Constants.INTERGAME) {
       throw Error('[Engine.restart] : Game not is state that permits restarting');
     }
     // Rebuild deck
@@ -507,7 +502,7 @@ const Engine = {
     const index = order.indexOf(game.getDealer());
     game.setDealer(order[(index + 1) % 4]);
     // re-set state
-    game.setState(Constants.__GAME_STATE_INIT__);
+    game.setState(Constants.INITGAME);
     return { game };
   }
 };

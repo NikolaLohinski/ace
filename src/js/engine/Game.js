@@ -15,7 +15,7 @@ export default class Game {
   constructor (object) {
     // Game state handling
     this.initialized = object.initialized || false;
-    this.state = object.state || Constants.__GAME_STATE_INIT__;
+    this.state = object.state || Constants.INITGAME;
     // Deck and cards
     this.deck = object.deck || [];
     this.handsHashes = object.handsHashes || null;
@@ -48,7 +48,7 @@ export default class Game {
     if (this.initialized) {
       throw Error(`[Game.init] : game already initialized`);
     }
-    if (this.state !== Constants.__GAME_STATE_INIT__) {
+    if (this.state !== Constants.INITGAME) {
       throw Error(`[Game.init] : Impossible to init game in state ${this.state}`);
     }
     if (players.length !== 4) {
@@ -251,6 +251,14 @@ export default class Game {
   getFold () {
     return this.fold;
   }
+
+  /**
+   * Returns last fold from history if any, and null otherwise
+   * @return {null|{}} the last fold if any
+   */
+  getLastFold () {
+    return this.folds.length ? this.folds[this.folds.length - 1] : null;
+  }
   /**
    * Set the fold for one player
    * @param {Player} player The player that played a card
@@ -264,6 +272,13 @@ export default class Game {
    */
   getCanCoinche () {
     return this.canCoinche;
+  }
+  /**
+   * Get the didCoinche status of players
+   * @return {Object} Mapping id to did-or-did-not coinche status
+   */
+  getDidCoinche () {
+    return this.didCoinche;
   }
   /**
    * Set the state of game.
@@ -297,14 +312,15 @@ export default class Game {
   getLastAuction () {
     let lastAuction = null;
     let index = -1;
-    const prices = Constants.__AUCTION_PRICES__;
+    const prices = Constants.AUCTIONPRICES;
+    if (!this.order) return lastAuction;
     const dealerPosition = this.order.indexOf(this.dealer);
     for (let k = 0; k < 4; k++) {
       const id = this.order[(dealerPosition + 4 - k) % 4];
       const auctions = this.auctions[id];
       if (auctions.length > 0) {
-        const auction = auctions[auctions.length - 1];
-        if (auctions.length >= index && auction.type === Constants.__BET_ACTION_BET__) {
+        const auction = [...auctions].pop();
+        if (auctions.length >= index && auction.type === Constants.BET) {
           index = auctions.length;
           if (!lastAuction || prices.indexOf(auction.price) > prices.indexOf(lastAuction.price)) {
             lastAuction = auction;
@@ -340,7 +356,7 @@ export default class Game {
   setForbiddenPrices (prices) {
     const _prices = [].concat(prices);
     for (const price of _prices) {
-      if (Constants.__AUCTION_PRICES__.indexOf(price) === -1) {
+      if (Constants.AUCTIONPRICES.indexOf(price) === -1) {
         throw Error(`[Game.setForbiddenPrices] : unknown "${price}" price`);
       }
     }
@@ -462,16 +478,17 @@ export default class Game {
     const price = this.getPrice();
     const winners = success ? this.getOffense() : this.getDefense();
     this.history.push({
-      'auctions': this.auctions,
+      'auctions': Object.assign({}, this.auctions),
       'winners': winners,
       'offense': pointsOffense,
       'defense': pointsDefense,
       'belote': belote,
       'folds': this.folds,
       'price': price,
-      'coinche': this.didCoinche,
+      'coinche': Object.assign({}, this.didCoinche),
       'dealer': this.dealer,
-      'order': this.order
+      'order': this.order.slice(0),
+      'lastAuction': Object.assign({}, this.getLastAuction())
     });
     for (const id of this.order) {
       if (!this.scores[id]) {
@@ -481,6 +498,14 @@ export default class Game {
         this.scores[id] += price;
       }
     }
+  }
+
+  /**
+   * History object of the previous session or null if there was no previous session
+   * @return {null|Object} the previous session history
+   */
+  getLastSession () {
+    return this.history.length ? this.history[this.history.length - 1] : null;
   }
   /**
    * Return the goal of the full game
@@ -497,11 +522,18 @@ export default class Game {
     return this.scores;
   }
   /**
+   * Returns the history of the game
+   * @return {Array<Object>} the history
+   */
+  getHistory () {
+    return this.history;
+  }
+  /**
    * Return whether the game has ended or not
    * @return {Boolean} True if the game has ended
    */
   hasEnded () {
-    return this.state === Constants.__GAME_STATE_END__;
+    return this.state === Constants.ENDGAME;
   }
   /**
    * Tell whether the game is in bets state
@@ -515,13 +547,27 @@ export default class Game {
    * @return {Boolean} True if the game is in play state
    */
   isPlay () {
-    return this.state === Constants.__GAME_STATE_PLAY__;
+    return this.state === Constants.PLAYGAME;
   }
   /**
    * Tell whether the game is in wait state
    * @return {Boolean} True if the game is in wait state
    */
   isWait () {
-    return this.state === Constants.__GAME_STATE_WAIT__;
+    return this.state === Constants.WAITGAME;
+  }
+  /**
+   * Tell whether the game has is in inter game state
+   * @return {Boolean} True if the game is in inter game sate
+   */
+  isInter () {
+    return this.state === Constants.INTERGAME;
+  }
+  /**
+   * Tell whether the game has ended
+   * @return {Boolean} True if the game has end
+   */
+  isEnd () {
+    return this.state === Constants.ENDGAME;
   }
 }

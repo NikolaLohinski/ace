@@ -12,7 +12,6 @@ import VueResource from 'vue-resource';
 import VueRouter from 'vue-router';
 import VueSimpleMarkdown from 'vue-simple-markdown';
 import VuexLocalState from 'vuex-local-state';
-import VueBrowserstore from 'vue-browserstore';
 
 import Store from './store.js';
 import Router from './router.js';
@@ -22,7 +21,6 @@ import Vm from './vm.js';
 Vue.use(Cube);
 Vue.use(VueSimpleMarkdown);
 Vue.use(VueResource);
-Vue.use(VueBrowserstore);
 Vue.use(VueTouch, { name: 'v-touch' });
 
 new VuexLocalState(Store);

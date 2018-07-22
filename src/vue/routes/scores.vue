@@ -23,14 +23,14 @@
           <td class="index">{{ history.length - index }}</td>
           <td :stroke="whoWon(game) === 1 && [0, 2].indexOf(whoIsAuctioneer(game)) !== -1">
             <span v-if="[0, 2].indexOf(whoIsAuctioneer(game)) !== -1">
-              <span class="price" v-if="['CAP', 'GEN'].indexOf(game.auction.price) !== -1">
-                {{ `play.${game.auction.price}` | translate }}
+              <span class="price" v-if="['CAP', 'GEN'].indexOf(game.lastAuction.price) !== -1">
+                {{ `play.${game.lastAuction.price}` | translate }}
               </span>
               <span class="price" v-else>
-                {{ game.auction.price }}
+                {{ game.lastAuction.price }}
               </span>
               <span class="category">
-                <i :class="`card-icon ${game.auction.category}`"></i>
+                <i :class="`card-icon ${game.lastAuction.category}`"></i>
                 <span v-if="game.belote">B</span>
               </span>
             </span>
@@ -43,24 +43,24 @@
             {{ `play.${ whoWon(game) !== whoIsAuctioneer(game) ? 'lost' : 'achieved' }` | translate }}
           </td>
           <td :bold="whoWon(game) === 0" v-if="!isCapOrGen(game)" class="score">
-            {{ game.scores[0] }}
+            {{ usOffense(game) ? game.offense : game.defense }}
           </td>
           <td :bold="whoWon(game) === 1" v-if="!isCapOrGen(game)" class="score">
-            {{ game.scores[1] }}
+            {{ usOffense(game) ? game.defense : game.offense }}
           </td>
           <td class="coinche">
             <i class="logo" v-if="themCoinche(game)"></i>
           </td>
           <td :stroke="whoWon(game) === 0 && [1, 3].indexOf(whoIsAuctioneer(game)) !== -1">
             <span v-if="[1, 3].indexOf(whoIsAuctioneer(game)) !== -1">
-              <span class="price" v-if="['CAP', 'GEN'].indexOf(game.auction.price) !== -1">
-                {{ `play.${game.auction.price}` | translate }}
+              <span class="price" v-if="['CAP', 'GEN'].indexOf(game.lastAuction.price) !== -1">
+                {{ `play.${game.lastAuction.price}` | translate }}
               </span>
               <span class="price" v-else>
-                {{ game.auction.price }}
+                {{ game.lastAuction.price }}
               </span>
               <span class="category">
-                <i :class="`card-icon ${game.auction.category}`"></i>
+                <i :class="`card-icon ${game.lastAuction.category}`"></i>
               </span>
             </span>
           </td>
@@ -74,49 +74,42 @@
   import vHeader from '../utils/header.vue';
   export default {
     computed: {
-      players () {
-        return this.$store.getters.players;
+      me () {
+        return this.$store.getters.me;
       },
-      scores () {
-        return this.$store.getters.game.scores;
+      us () {
+        return [this.me, this.$store.getters.game.getPartner(this.me)];
+      },
+      them () {
+        return this.$store.getters.game.getOrder().filter((i) => !this.us.includes(i));
       },
       history () {
-        return this.$store.getters.game.history;
+        return this.$store.getters.game.getHistory();
+      },
+      scores () {
+        return this.history.reduce(([us, them], game) => {
+          return game.winners.indexOf(this.me) !== -1 ? [us + game.price, them] : [us, them + game.price];
+        }, [0, 0]);
       }
     },
     methods: {
       whoWon (game) {
-        const auctioneerIndex = this.players.findIndex((p) => p.id === game.auction.id);
-        if ([0, 2].indexOf(auctioneerIndex) !== -1) {
-          return (game.won) ? 0 : 1;
-        } else {
-          return (game.won) ? 1 : 0;
-        }
+        return game.winners.indexOf(this.me) !== -1 ? 0 : 1;
       },
       whoIsAuctioneer (game) {
-        const auctioneerIndex = this.players.findIndex((p) => p.id === game.auction.id);
-        return ([0, 2].indexOf(auctioneerIndex) !== -1) ? 0 : 1;
+        return this.usOffense(game) ? 0 : 1;
       },
       isCapOrGen (game) {
-        return ['CAP', 'GEN'].indexOf(game.auction.price) !== -1;
+        return ['CAP', 'GEN'].indexOf(game.lastAuction.price) !== -1;
+      },
+      usOffense (game) {
+        return this.us.indexOf(game.lastAuction.id) !== -1;
       },
       usCoinche (game) {
-        let usCoinche = false;
-        if (game.coinche || game.surCoinche) {
-          const auctioneerIndex = this.players.findIndex((p) => p.id === game.auction.id);
-          usCoinche = ([0, 2].indexOf(auctioneerIndex) !== -1 && game.surCoinche) ||
-          ([1, 3].indexOf(auctioneerIndex) !== -1 && game.coinche);
-        }
-        return usCoinche;
+        return this.us.some((id) => game.coinche[id]);
       },
       themCoinche (game) {
-        let themCoinche = false;
-        if (game.coinche || game.surCoinche) {
-          const auctioneerIndex = this.players.findIndex((p) => p.id === game.auction.id);
-          themCoinche = ([1, 3].indexOf(auctioneerIndex) !== -1 && game.surCoinche) ||
-          ([0, 2].indexOf(auctioneerIndex) !== -1 && game.coinche);
-        }
-        return themCoinche;
+        return this.them.some((id) => game.coinche[id]);
       }
     },
     components: {

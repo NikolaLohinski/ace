@@ -50,21 +50,21 @@ class PyAce:
         })
         self.game = r.get('game')
         self.players = {
-            p.get('id'): p
+            p.get('_id'): p
             for p in r.get('players')
         }
 
     def deal(self, hands=None):
         r = self.post('/deal', dict(game=self.game, hands=hands))
         for identifier, player in self.players.items():
-            player['hand'] = r.get('hands').get(identifier)
+            player['_hand'] = r.get('hands').get(identifier)
         self.game = r.get('game')
 
     def bet(self, bet):
         if any((
                 bet.get('id') is None,
                 bet.get('type') is None,
-                bet.get('type') == self.constants['__BET_ACTION_BET__'] and
+                bet.get('type') == self.constants['BET'] and
                     (bet.get('price') is None or bet.get('category') is None)
         )):
             raise Exception('[PyAce.bet] : You need to provide type for a '
@@ -80,15 +80,15 @@ class PyAce:
     def play(self, card):
         player = None
         for identifier, p in self.players.items():
-            if card in p['hand']:
+            if card in p['_hand']:
                 player = p
-                player['played'] = player['hand'].pop(
-                    player['hand'].index(card)
+                player['_played'] = player['_hand'].pop(
+                    player['_hand'].index(card)
                 )
                 break
         if player is None:
             raise Exception('[PyAce.play] : Impossible to determine who plays')
-        r = self.post('/play', dict(game=self.game, player=player, card=card))
+        r = self.post('/play', dict(game=self.game, player=player))
         self.game = r.get('game')
 
     def last_auction(self, game=None):

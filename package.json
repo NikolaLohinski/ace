@@ -57,6 +57,7 @@
     "object.assign": "^4.1.0",
     "sass-loader": "^6.0.3",
     "style-loader": "^0.16.1",
+    "uglifyjs-webpack-plugin": "^1.2.7",
     "vue-html-loader": "^1.2.4",
     "vue-loader": "^11.3.4",
     "vue-template-compiler": "^2.1.10",

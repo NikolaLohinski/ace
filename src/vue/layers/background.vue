@@ -1,25 +1,41 @@
 <template>
   <div class="background">
-    <div v-for="auction in displayAuctions"
-         v-if="auction"
-         class="auction"
-         :position="auction.position">
-      <span class="pass" v-if="isPass(auction)">
-        {{ $t('play.pass')}}
-      </span>
-      <span v-else>
-        <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
-          {{ $t(`play.${auction.price}`) }}
-        </div>
-        <span v-else class="price">
-          {{ auction.price }}
+    <transition-group tag="div" name="fade">
+      <div v-for="auction in displayAuctions"
+           v-if="auction"
+           class="auction"
+           :key="where(auction.position)"
+           :position="where(auction.position)">
+        <span class="pass" v-if="isPass(auction)">
+          {{ $t('play.pass')}}
         </span>
-        <span>
-          <i :class="`card-icon ${auction.category}`" class="type">
-          </i>
+        <span v-else>
+          <div v-if="auction.price === 'CAP' || auction.price === 'GEN'" class="price">
+            {{ $t(`play.${auction.price}`) }}
+          </div>
+          <span v-else class="price">
+            {{ auction.price }}
+          </span>
+          <span>
+            <i :class="`card-icon ${auction.category}`" class="type">
+            </i>
+          </span>
         </span>
-      </span>
+      </div>
+    </transition-group>
+    <transition name="fade">
+    <div class="final-auction" v-if="lastAuction">
+      <div class="price" :price="lastAuction.price">
+        <span v-if="['GEN', 'CAP'].indexOf(lastAuction.price) !== -1">
+        {{ $t(`play.${lastAuction.price}`) }}
+        </span>
+        <span v-else>
+          {{ lastAuction.price }}
+        </span>
+      </div>
+      <i :class="`category card-icon ${lastAuction.category}`"></i>
     </div>
+    </transition>
   </div>
 </template>
 <script>
@@ -34,8 +50,9 @@
         const game = this.$store.getters.game;
         if (!game.isBets() && !game.isWait()) return [];
         const players = this.$store.getters.players;
-        return Object.values(this.auctions || {}).map((auctions) => {
-          if (auctions.length && auctions.id !== game.getWhosTurn()) {
+        return Object.keys(this.auctions || {}).map((id) => {
+          const auctions = this.auctions[id];
+          if (auctions.length && id !== game.getWhosTurn()) {
             let i = auctions.length - 1;
             while (this.isCoinche(auctions[i]) && i > -1) {
               i--;
@@ -53,19 +70,30 @@
           }
           return null;
         });
+      },
+      lastAuction () {
+        const game = this.$store.getters.game;
+        if (game.isPlay()) {
+          return game.getLastAuction();
+        }
+        return null;
+      },
+      where () {
+        return this.$store.getters.position;
       }
     },
     methods: {
       isPass (auction) {
-        return auction && auction.type === Constants.__BET_ACTION_PASS__;
+        return auction && auction.type === Constants.PASS;
       },
       isCoinche (auction) {
-        return auction && auction.type === Constants.__BET_ACTION_COINCHE__;
+        return auction && auction.type === Constants.COINCHE;
       }
     }
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
+  @import '../../scss/variables';
   @import '../../scss/colors';
   @import '../../scss/sizes';
   $img-path: '../../img';
@@ -104,7 +132,7 @@
         }
       }
       &[position='2'] {
-        top: 35px; left: 50%;
+        top: 45px; left: 50%;
         > * {
           transform: translate(-50%, 0);
         }
@@ -133,5 +161,32 @@
         color: $lighter-text-color;
       }
     }
+    .final-auction {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      .category {
+        transform: translateY(3px);
+        &:before {
+          width: 20px;
+          height: 20px;
+        }
+      }
+      .price {
+        font-size: 10px;
+        &[price='CAP'], &[price='GEN'] {
+          transform: translateY(2.5px);
+          font-size: 9px;
+        }
+      }
+    }
+  }
+  .fade-enter, .fade-leave-to {
+    opacity: 0;
+  }
+  .fade-enter-active {
+    transition: opacity .25s;
   }
 </style>

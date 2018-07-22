@@ -1,6 +1,6 @@
 <template>
   <div class="dealer-coin">
-    <div id="coin" :position="position"></div>
+    <div id="coin" :position="where(position)"></div>
   </div>
 </template>
 <script>
@@ -9,12 +9,16 @@
       position () {
         const dealer = this.$store.getters.game.getDealer();
         return this.$store.getters.players[dealer].getPosition();
+      },
+      where () {
+        return this.$store.getters.position;
       }
     },
     store: global.store
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss">
+  @import '../../scss/variables';
   $img-path: '../../img';
   @import '../../scss/images';
   @import '../../scss/sizes';
@@ -29,6 +33,7 @@
       text-align: center;
       margin: 0;
       pointer-events: auto;
+      transition: all 0.5s ease;
       &[position='-1'] {
         top: 50%;
         left: 50%;

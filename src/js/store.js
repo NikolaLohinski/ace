@@ -5,6 +5,7 @@ import Game from './engine/Game';
 import utils from './utils';
 import Bot from './AI/Bot';
 
+const WAITFREQ = 500;
 global.__timeoutStore = null;
 
 export default {
@@ -48,8 +49,8 @@ export default {
     me (state, id) {
       state.me = id;
     },
-    startDelay (state, delay) {
-      state.startDelay = delay;
+    startDelay (state, startDelay) {
+      state.startDelay = startDelay;
     }
   },
   getters: {
@@ -75,6 +76,11 @@ export default {
       const category = lastAuction ? lastAuction.category : null;
       return (cards) => state.config.sortCards ? Engine.niceSort(cards, category) : cards;
     },
+    whatForbiddenCards (state) {
+      const game = new Game(state.game);
+      if (!game.isPlay()) return () => [];
+      return (who) => Engine.forbiddenCards(game, new Player(state.players[who]));
+    },
     config (state) {
       return state.config;
     },
@@ -99,98 +105,18 @@ export default {
     },
     startDelay (state) {
       return state.startDelay;
+    },
+    position (state) {
+      return (position) => {
+        if (!state.config.goClockwise || ![1, 3].includes(position)) {
+          return position;
+        } else {
+          return position === 1 ? 3 : 1;
+        }
+      };
     }
   },
   actions: {
-    clearGame (state) {
-      return new Promise((resolve) => {
-        state.commit('game', {});
-        state.commit('players', {});
-        resolve();
-      });
-    },
-    afk (state, isAfk) {
-      return new Promise((resolve) => {
-        const players = state.getters.players;
-        if (isAfk) {
-          players[state.getters.me].setStatus(Constants.__PLAYER_STATUS_INACTIVE__);
-        } else {
-          players[state.getters.me].setStatus(Constants.__PLAYER_STATUS_CONNECTED__);
-        }
-        state.dispatch('notify', {
-          players: players
-        }).then(resolve);
-      });
-    },
-    continueGame (state) {
-      return new Promise(() => {
-        state.dispatch('afk', false).then(() => {
-          if (Object.values(state.getters.players).findIndex((p) => {
-            return p.status !== Constants.__PLAYER_STATUS_CONNECTED__;
-          }) === -1) {
-            const result = Engine.init(Engine.restart(state.getters.game).game, state.getters.players);
-            const items = {
-              game: result.game,
-              players: {}
-            };
-            const deal = Engine.deal(items.game);
-            result.forEach((ply) => {
-              ply.hand = deal.hands[ply.getId()];
-              items.players[ply.getId()] = ply;
-            });
-            state.dispatch('notify', items).then();
-          }
-        });
-      });
-    },
-    initGame (state) {
-      return new Promise(() => {
-        const items = {
-          game: state.getters.game
-        };
-        if (!items.game.isInitialized()) {
-          const playersArray = [];
-          items.players = state.getters.players;
-          let k = 0;
-          while (k < 4) {
-            for (const player of Object.values(items.players)) {
-              if (player.position === playersArray.length) {
-                playersArray.push(player);
-              }
-            }
-            k++;
-          }
-          const init = Engine.init(items.game, playersArray);
-          const deal = Engine.deal(init.game);
-          const players = {};
-          init['players'].forEach((ply) => {
-            ply.hand = deal.hands[ply.getId()];
-            players[ply.getId()] = ply;
-          });
-          items.players = players;
-          items.game = deal['game'];
-        } else if ([
-          Constants.__GAME_STATE_INTER__,
-          Constants.__GAME_STATE_END__
-        ].indexOf(items.game.getState()) !== -1) {
-          items.players = state.getters.players;
-          items.players[state.getters.me].setStatus(Constants.__PLAYER_STATUS_INACTIVE__);
-        }
-        state.dispatch('notify', items).then();
-      });
-    },
-    act (state, act) {
-      return new Promise(() => {
-        if (act.token === state.getters.token) {
-          const arg = act.arg;
-          arg.id = act.id;
-          state.dispatch(act.action, arg).then();
-        } else {
-          console.error(`Action outdated from ${act.id}`);
-        }
-      });
-    },
-    // New Functions -----------------------------------------------------------
     initialize (state) {
       return new Promise(() => {
         let players = null;
@@ -211,44 +137,48 @@ export default {
           });
           game = deal['game'];
         }
-        state.dispatch('refresh', { game, players, bots }).then(() => {
-          if (typeof state.getters.startDelay === 'number') {
-            state.dispatch('start', state.getters.startDelay).then();
-          }
-        });
+        state.dispatch('refresh', { game, players, bots }).then();
       });
     },
     bet (state, action) {
       return new Promise(() => {
-        const token = state.getters.token;
+        const token = action.token;
         state.dispatch('validate', token).then(() => {
           const game = state.getters.game;
-          state.dispatch('refresh', Engine.bet(game, action)).then();
+          state.dispatch('refresh', Engine.bet(game, action.args)).then();
         });
       });
     },
     play (state, action) {
       return new Promise(() => {
-        const token = state.getters.token;
-        state.dispatch('validate', token).then(() => {
+        state.dispatch('validate', action.token).then(() => {
           const game = state.getters.game;
           const players = state.getters.players;
-          const player = players[action.id];
-          player.play(action.card);
+          const id = action.args.id;
+          const player = players[id];
+          player.play(action.args.card);
           const result = Engine.play(game, player);
-          players[action.id] = player;
+          players[id] = player;
           result.players = players;
-          if (state.getters.bots[action.id]) {
+          if (state.getters.bots[id]) {
             result.bots = state.getters.bots;
-            result.bots[action.id] = player;
+            result.bots[id] = player;
           }
           state.dispatch('refresh', result).then();
         });
       });
     },
+    restart (state) {
+      return new Promise(() => {
+        const restarted = Engine.restart(state.getters.game);
+        state.dispatch('refresh', restarted).then(() => {
+          state.dispatch('initialize');
+        });
+      });
+    },
     validate (state, token) {
-      return new Promise((resolve, reject) => {
-        token === state.getters.token ? resolve() : reject();
+      return new Promise((resolve) => {
+        token === state.getters.token ? resolve() : console.log(`[$store.validate] : Token ${token} is outdated`);
       });
     },
     refresh (state, args) {
@@ -266,6 +196,18 @@ export default {
         for (const bot of Object.values(state.getters.bots)) {
           bot.react(game, token).then((reaction) => state.dispatch('AIct', reaction).then());
         }
+        state.dispatch('propagate').then(resolve);
+      });
+    },
+    propagate (state) {
+      return new Promise((resolve) => {
+        if (state.getters.game.isWait()) {
+          let delay = Constants.TIMEOUTWAIT;
+          if (typeof state.getters.startDelay === 'number') {
+            delay = state.getters.startDelay;
+          }
+          state.dispatch('start', delay);
+        }
         resolve();
       });
     },
@@ -273,12 +215,13 @@ export default {
       return new Promise(() => {
         switch (action.name) {
           case 'BET':
-            action.args.id = action.id;
-            state.dispatch('bet', action.args);
+            state.dispatch('bet', action);
+            break;
+          case 'COINCHE':
+            state.dispatch('bet', action);
             break;
           case 'PLAY':
-            action.args.id = action.id;
-            state.dispatch('play', action.args);
+            state.dispatch('play', action);
             break;
           default:
             break;
@@ -290,27 +233,36 @@ export default {
         state.commit('game', {});
         state.commit('players', {});
         state.commit('bots', {});
+        clearTimeout(global.__timeoutStore);
+        localStorage.removeItem('cards');
         resolve();
       });
     },
-    start (state, delay = Constants.__WAIT_TIMEOUT__) {
-      if (typeof state.getters.startDelay !== 'number') {
-        state.commit('startDelay', delay);
-      }
-      return new Promise(() => {
+    wait (state, isDoneAfter) {
+      return new Promise((resolve) => {
         clearTimeout(global.__timeoutStore);
         global.__timeoutStore = setTimeout(() => {
-          state.commit('startDelay', delay);
-          const left = delay - 1000;
-          if (left < 0) {
-            // start
-            state.commit('startDelay', null);
-            const game = state.getters.game;
-            state.dispatch('refresh', Engine.start(game));
+          if (isDoneAfter(WAITFREQ)) {
+            resolve();
           } else {
-            state.dispatch('start', left).then();
+            state.dispatch('wait', isDoneAfter).then(resolve);
           }
-        }, delay);
+        }, WAITFREQ);
+      });
+    },
+    start (state, delay) {
+      state.commit('startDelay', delay);
+      return new Promise(() => {
+        state.dispatch('wait', (elapsed) => {
+          const left = state.getters.startDelay;
+          if (left < elapsed) {
+            state.commit('startDelay', null);
+            return true;
+          } else {
+            state.commit('startDelay', left - elapsed);
+            return false;
+          }
+        }).then(() => state.dispatch('refresh', Engine.start(state.getters.game)).then());
       });
     }
   }

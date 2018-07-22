@@ -1,11 +1,13 @@
 <template>
-  <div class="buzzer" :disabled="!enable" :hidden="hide">
+  <transition name="fade">
+  <div class="buzzer" :disabled="!enable" v-if="!hide" :punched="punched">
     <div class="buzzer-holder">
-      <v-touch tag="div" class="buzzer-btn "
+      <v-touch tag="div" class="buzzer-btn"
                @tap.prevent="hit">
       </v-touch>
     </div>
   </div>
+  </transition>
 </template>
 <script>
   import Constants from '../../json/constants.json';
@@ -13,10 +15,13 @@
     methods: {
       hit () {
         this.$store.dispatch('bet', {
-          price: null,
-          category: null,
-          type: Constants.__BET_ACTION_COINCHE__,
-          id: this.$store.getters.me
+          args: {
+            price: null,
+            category: null,
+            type: Constants.COINCHE,
+            id: this.$store.getters.me
+          },
+          token: this.$store.getters.token
         });
       }
     },
@@ -27,12 +32,17 @@
         return canCoinche && canCoinche[this.$store.getters.me];
       },
       hide () {
-        return !this.$store.getters.game.isBets();
+        return !(this.$store.getters.game.isBets() || this.$store.getters.game.isWait());
+      },
+      punched () {
+        const didCoinche = this.$store.getters.game.getDidCoinche();
+        return didCoinche ? didCoinche[this.$store.getters.me] : false;
       }
     }
   };
 </script>
 <style lang="sass" type="text/scss" rel="stylesheet/scss" scoped>
+  @import '../../scss/variables';
   $img-path: '../../img';
   @import '../../scss/images';
   @import '../../scss/colors';
@@ -74,8 +84,20 @@
       pointer-events: none !important;
       opacity: 0.3;
     }
-    &[hidden] {
-      display: none;
+    &[punched] * {
+      opacity: 1;
+      .buzzer-btn {
+        background-color: $danger-link-color;
+        box-shadow: inset 1px 1px 2px $default-text-color;
+        border-color: $active-button-background-color;
+        color: white;
+      }
     }
+  }
+  .fade-enter, .fade-leave-to {
+    opacity: 0;
+  }
+  .fade-enter-active {
+    transition: opacity .25s;
   }
 </style>
