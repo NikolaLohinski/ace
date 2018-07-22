@@ -25,7 +25,7 @@
   export default {
     data () {
       return {
-        categories: Constants.__AUCTION_CATEGORIES__,
+        categories: Constants.AUCTIONCATEGORIES,
         passType: Constants.PASS
       };
     },

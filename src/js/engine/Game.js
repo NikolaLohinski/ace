@@ -75,7 +75,7 @@ export default class Game {
     }
     this.whosTurn = this.getPlayerNextTo(this.dealer);
     this.starter = this.whosTurn;
-    this.state = Constants.__GAME_STATE_BETS__;
+    this.state = Constants.BETSGAME;
   }
   /**
    * Set dealer
@@ -139,7 +139,7 @@ export default class Game {
       throw Error(`[Game.setDeck] : trying to set a deck of a size ${deck.length} != 32 or 0`);
     }
     if (deck.length !== 0) {
-      for (const card of Constants.__DECK__) {
+      for (const card of Constants.DECK) {
         if (deck.indexOf(card) === -1) {
           throw Error(`[Game.setDeck] : missing ${card} in deck`);
         }
@@ -311,23 +311,20 @@ export default class Game {
    */
   getLastAuction () {
     let lastAuction = null;
-    let index = -1;
     const prices = Constants.AUCTIONPRICES;
     if (!this.order) return lastAuction;
-    const dealerPosition = this.order.indexOf(this.dealer);
-    for (let k = 0; k < 4; k++) {
-      const id = this.order[(dealerPosition + 4 - k) % 4];
-      const auctions = this.auctions[id];
-      if (auctions.length > 0) {
-        const auction = [...auctions].pop();
-        if (auctions.length >= index && auction.type === Constants.BET) {
-          index = auctions.length;
-          if (!lastAuction || prices.indexOf(auction.price) > prices.indexOf(lastAuction.price)) {
-            lastAuction = auction;
-          }
+    this.order.forEach((id) => {
+      const auctions = [].concat(this.auctions[id]);
+      while (auctions.length && [...auctions].pop().type !== Constants.BET) {
+        auctions.pop();
+      }
+      if (auctions.length) {
+        const auction = auctions.pop();
+        if (!lastAuction || prices.indexOf(auction.price) > prices.indexOf(lastAuction.price)) {
+          lastAuction = auction;
         }
       }
-    }
+    });
     return lastAuction;
   }
 
@@ -458,7 +455,7 @@ export default class Game {
   getPrice () {
     const auction = this.getLastAuction();
     const price = auction.price;
-    let actualPrice = price === 'CAP' ? Constants.__CAP_PRICE__ : price === 'GEN' ? Constants.__GEN_PRICE__ : price;
+    let actualPrice = price === 'CAP' ? Constants.PRICECAP : price === 'GEN' ? Constants.PRICEGEN : price;
     for (const id in this.didCoinche) {
       if (this.didCoinche.hasOwnProperty(id)) {
         actualPrice *= 2;
@@ -540,7 +537,7 @@ export default class Game {
    * @return {Boolean} True if the game is in bets state
    */
   isBets () {
-    return this.state === Constants.__GAME_STATE_BETS__;
+    return this.state === Constants.BETSGAME;
   }
   /**
    * Tell whether the game is in play state

@@ -5,7 +5,7 @@ import Game from './engine/Game';
 import utils from './utils';
 import Bot from './AI/Bot';
 
-const WAITFREQ = 500;
+const WAITFREQ = 1000;
 global.__timeoutStore = null;
 
 export default {

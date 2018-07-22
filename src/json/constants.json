@@ -4,18 +4,18 @@
   "__PLAYER_STATUS_DISCONNECTED__": -1,
   "ENDGAME": -1,
   "INITGAME": 0,
-  "__GAME_STATE_BETS__": 1,
+  "BETSGAME": 1,
   "WAITGAME": 2,
-  "TIMEOUTWAIT": 3000,
+  "TIMEOUTWAIT": 3500,
   "PLAYGAME": 3,
   "INTERGAME": 4,
-  "__DECK__": [
+  "DECK": [
     "7c", "8c", "9c", "10c", "jc", "qc", "kc", "ac",
     "7h", "8h", "9h", "10h", "jh", "qh", "kh", "ah",
     "7s", "8s", "9s", "10s", "js", "qs", "ks", "as",
     "7d", "8d", "9d", "10d", "jd", "qd", "kd", "ad"
   ],
-  "__DEAL_ORDERS__": [
+  "DEALORDERS": [
     [3, 2, 3],
     [3, 3, 2],
     [2, 3, 3]
@@ -31,9 +31,9 @@
     "NA": [0, 0, 0, 2, 3, 4, 10, 19]
   },
   "AUCTIONPRICES": [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, "CAP", "GEN"],
-  "__GEN_PRICE__": 300,
-  "__CAP_PRICE__": 250,
-  "__AUCTION_CATEGORIES__": ["s", "h", "c", "d", "AA", "NA"],
+  "PRICEGEN": 300,
+  "PRICECAP": 250,
+  "AUCTIONCATEGORIES": ["s", "h", "c", "d", "AA", "NA"],
   "PASS": 0,
   "BET": 1,
   "COINCHE": 2

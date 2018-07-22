@@ -36,7 +36,7 @@ def run_scenario(scenario, constants):
     # Get last auction placed (only bets, no coinche or pass)
     last_auction = env.last_auction(game=_scenario)
     game = env.get_game()
-    while game['state'] == constants['__GAME_STATE_BETS__']:
+    while game['state'] == constants['BETSGAME']:
         whos_turn = env.get_game()['whosTurn']
         auction = _scenario.get('auctions').get(whos_turn).pop(0)
         env.bet(bet=auction)

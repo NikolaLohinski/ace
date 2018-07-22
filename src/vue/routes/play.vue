@@ -223,7 +223,7 @@
                 vertical-align: middle;
                 &[checked] {
                   background: $dealer-coin -3px -3px;
-                  background-size: 46px 46px;
+                  background-size: 44px 44px;
                 }
               }
             }

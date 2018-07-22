@@ -4,12 +4,12 @@
     <v-touch tag="div" id="show-last-fold" v-if="allowLastFold" @tap.prevent="showLastFold(true)">
     </v-touch>
     </transition>
-    <v-touch tag="div" @tap.prevent="expand" id="fold" :expanded="expanded">
+    <v-touch tag="div" @tap="expand" id="fold" :expanded="expanded">
     </v-touch>
     <div id="hand" :higher="higher">
     </div>
     <transition name="fade">
-    <v-touch tag="div" @tap.prevent="showLastFold(false)"
+    <v-touch tag="div" @tap="showLastFold(false)"
              class="veil" v-if="displayLastFold"></v-touch>
     </transition>
     <transition name="fade">
@@ -227,7 +227,7 @@
           const lastPlayerId = order.find((id) => this.foldCards[id] !== this.lastFold[id]);
           if (lastPlayerId) {
             this.playCard(lastPlayerId, this.lastFold[lastPlayerId]);
-            setTimeout(this.closeFold, 1250, this.$store.getters.players[this.lastFold.winner].getPosition());
+            setTimeout(this.closeFold, 1100, this.$store.getters.players[this.lastFold.winner].getPosition());
           }
         }
       },
@@ -317,7 +317,7 @@
               }
             }
           }
-          if (Object.values(fold).every((card) => card === null)) {
+          if (Object.values(fold).every((card) => card === null) && Object.values(this.foldCards).length > 1) {
             this.finishFold();
           }
           this.refresh();
@@ -383,6 +383,7 @@
       .card {
         transition: top $card-animation-duration ease,
                     left $card-animation-duration ease,
+                    opacity $card-animation-duration ease,
                     margin-top 200ms ease,
                     margin-left 200ms ease;
         &[side='1'] { top: 50% ; left: 100vw; }
@@ -396,7 +397,7 @@
         &[leave='1'] { top: 50% ; left: 100vw ; }
         &[leave='2'] { top: -100vh ; left: 50% ; }
         &[leave='3'] { top: 50% ; left: -100vw ; }
-        &[leave] { margin: 0 !important;}
+        &[leave] { margin: 0 !important; opacity: 0}
       }
       &[expanded] .card {
         $expand: $size-center-logo / 2;

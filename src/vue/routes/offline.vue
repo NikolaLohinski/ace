@@ -5,8 +5,9 @@
     <layer :z-index="4"><dealer-coin></dealer-coin></layer>
     <layer :z-index="5"><buzzer></buzzer></layer>
     <layer :z-index="6"><cards :moveup="placingBets"></cards></layer>
-    <layer :z-index="7"><names></names></layer>
-    <layer :z-index="8"><auctioneer @placing="placingBets = true" @finished="placingBets = false"></auctioneer></layer>
+    <layer :z-index="7"><belote></belote></layer>
+    <layer :z-index="8"><names></names></layer>
+    <layer :z-index="9"><auctioneer @placing="placingBets = true" @finished="placingBets = false"></auctioneer></layer>
     <layer :z-index="10"><div>
       <v-link to="offline/scores" class="menu r"><i class="fa fa-trophy"></i></v-link>
       <v-link to="offline/menu" class="menu l"><i class="fa fa-bars"></i></v-link>
@@ -18,6 +19,7 @@
   import Background from '../layers/background.vue';
   import Statuses from '../layers/statuses.vue';
   import Names from '../layers/names.vue';
+  import Belote from '../layers/belote.vue';
   import DealerCoin from '../layers/dealerCoin.vue';
   import Auctioneer from '../layers/auctioneer.vue';
   import Buzzer from '../layers/buzzer.vue';
@@ -36,6 +38,7 @@
       Notification,
       Statuses,
       Names,
+      Belote,
       DealerCoin,
       Auctioneer,
       Buzzer,

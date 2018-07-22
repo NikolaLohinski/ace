@@ -10,9 +10,9 @@ const _ = {
     min: 80
   },
   factor: {
-    partner: 0.85,
+    partner: 0.80 * (1 + (0.05 * Math.random() - 0.025)),
     coinche: 0.85,
-    counterCoinche: 0.8
+    counterCoinche: 0.8 * (1 + (0.05 * Math.random() - 0.025))
   },
   // 7, 8, Q, K, 10, A, 9, J
   assets: [
@@ -142,31 +142,35 @@ const Lucy = {
     return new Promise((resolve, reject) => {
       const start = performance.now();
       const lastAuction = game.getLastAuction();
-      if (['CAP', 'GEN'].includes(lastAuction.price)) return;
-      if (['AA', 'NA'].includes(lastAuction.category)) return;
-      const assets = me.getHand().reduce((total, card) => {
-        return Utils.getCardFamily(card) === lastAuction.category ? total + 1 : total;
-      }, 0);
-      const potentials = this.buildPotentials(game, me);
-      let coinche = assets > 3;
-      if (!coinche) {
-        let factor = _.factor.coinche;
-        if (game.getDefense().some((id) => game.getDidCoinche()[id])) {
-          factor = _.factor.counterCoinche;
-        }
-        coinche = 162 - potentials[lastAuction.category] * factor > lastAuction.price + _.potential.start;
-      }
-      if (coinche) {
-        const bet = {
-          category: null,
-          price: null,
-          type: Constants.COINCHE,
-          id: me.getId()
-        };
-        const now = performance.now();
-        setTimeout(resolve, Math.max(__TIMEOUTCOINCHE - Math.round(now - start), 0), bet);
-      } else {
+      if (['CAP', 'GEN'].includes(lastAuction.price)) {
         reject();
+      } else if (['AA', 'NA'].includes(lastAuction.category)) {
+        reject();
+      } else {
+        const assets = me.getHand().reduce((total, card) => {
+          return Utils.getCardFamily(card) === lastAuction.category ? total + 1 : total;
+        }, 0);
+        const potentials = this.buildPotentials(game, me);
+        let coinche = assets > 3;
+        if (!coinche) {
+          let factor = _.factor.coinche;
+          if (game.getDefense().some((id) => game.getDidCoinche()[id])) {
+            factor = _.factor.counterCoinche;
+          }
+          coinche = 162 * factor - potentials[lastAuction.category] > lastAuction.price + _.potential.start;
+        }
+        if (coinche) {
+          const bet = {
+            category: null,
+            price: null,
+            type: Constants.COINCHE,
+            id: me.getId()
+          };
+          const now = performance.now();
+          setTimeout(resolve, Math.max(__TIMEOUTCOINCHE - Math.round(now - start), 0), bet);
+        } else {
+          reject();
+        }
       }
     });
   },

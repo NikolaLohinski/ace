@@ -1,5 +1,6 @@
 import Game from './Game';
 import Constants from '../../json/constants.json';
+import Utils from '../utils';
 /**
  * Implementation of the Engine object that will run the game
  * @author: Nikola LOHINSKI (https://NikolaLohinski.github.io)
@@ -20,7 +21,7 @@ const Engine = {
     }
     if (game.getDeck().length !== 32) {
       // If no deck in game object, then get a new deck and shuffle it
-      const deck = Constants.__DECK__;
+      const deck = Constants.DECK;
       let count = deck.length;
       let randomNumber, temp;
       while (count) {
@@ -42,7 +43,7 @@ const Engine = {
    * @return {Object} new game and hands dealt
    */
   deal (game, hands = null) {
-    if (game.getState() !== Constants.__GAME_STATE_BETS__) {
+    if (game.getState() !== Constants.BETSGAME) {
       throw Error(`[Engine.deal] : Game not in state that allows dealing`);
     }
     if (game.getDeck().length !== 32 && !hands) {
@@ -50,7 +51,7 @@ const Engine = {
     }
     if (!hands) {
       const cutIndex = Math.floor(3 + Math.random() * 26);
-      const orders = Constants.__DEAL_ORDERS__;
+      const orders = Constants.DEALORDERS;
       const dealOrder = orders[Math.floor(Math.random() * orders.length)];
       const deck = game.getDeck().slice(cutIndex).concat(game.getDeck().slice(0, cutIndex));
       hands = {};
@@ -147,7 +148,7 @@ const Engine = {
    * @return {Object} Game object updated
    */
   bet (game, auction) {
-    if ([Constants.WAITGAME, Constants.__GAME_STATE_BETS__].indexOf(game.getState()) === -1) {
+    if ([Constants.WAITGAME, Constants.BETSGAME].indexOf(game.getState()) === -1) {
       throw Error(`[Engine.bet] : Game not in state that allows auctions`);
     }
     const order = game.getOrder();
@@ -186,7 +187,7 @@ const Engine = {
         if (Constants.AUCTIONPRICES.indexOf(auction.price) === -1) {
           throw Error(`[Game.bet] : Acution with price ${auction.price} is not possible`);
         }
-        if (Constants.__AUCTION_CATEGORIES__.indexOf(auction.category) === -1) {
+        if (Constants.AUCTIONCATEGORIES.indexOf(auction.category) === -1) {
           throw Error(`[Game.bet] : Acution with category ${auction.category} is not possible`);
         }
         if (lastAuction && prices.indexOf(lastAuction.price) >= prices.indexOf(auction.price)) {
@@ -308,9 +309,8 @@ const Engine = {
       hand = hand.concat(player.getPlayed());
     }
     const id = player.getId();
-    if (game.getStarter() !== game.whosTurn) {
-      const startCard = fold[game.getStarter()];
-      const family = startCard[startCard.length - 1];
+    if (game.getStarter() !== game.whosTurn && Object.values(fold).some((card) => card !== null)) {
+      const family = Utils.getCardFamily(fold[game.getStarter()]);
       const masterCard = fold[Engine.foldMaster(game)];
       const category = game.getLastAuction().category;
       const potentialFC = [];
@@ -429,7 +429,7 @@ const Engine = {
       } else if (auction.category === 'NA') {  // No assets
         const map = {};
         for (let k = 0; k < Constants.ORDERS.REGUL.length; k++) {
-          map[Constants.ORDERS.REGUL[k]] = Constants.REGUL.NA[k];
+          map[Constants.ORDERS.REGUL[k]] = Constants.PRICES.NA[k];
         }
         for (const id of offense) {
           const wonFolds = folds.filter((fold) => fold.winner === id);

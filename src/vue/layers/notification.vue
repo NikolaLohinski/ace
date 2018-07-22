@@ -42,7 +42,7 @@
         this.$createDialog({
           type: 'alert',
           icon: 'cubeic-alert',
-          title: this.$t('utils.sorry'),
+          title: this.$t('play.gameCanceled'),
           content: this.$t('play.noAuctionsPhrase'),
           confirmBtn: this.$t('utils.continue'),
           onConfirm: () => {
@@ -63,7 +63,7 @@
         const auctionDetail = ['CAP', 'GEN'].includes(auction.price)
           ? this.$t('play.auctionAt', { auction: this.$t(`play.${auction.price}`), name })
           : this.$t('play.auctionAt', { auction: auction.price, name });
-        const belote = auction.belote;
+        const belote = lastSession.belote;
         const scores = ['CAP', 'GEN'].includes(auction.price) ? ''
           : this.$t('play.scoresUsThem', {
             us: us.includes(auction.id) ? lastSession.offense : lastSession.defense,

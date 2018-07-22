@@ -28,7 +28,6 @@ const translations = {
       'ok': 'Ok',
       'warning': 'Warning',
       'cancel': 'Cancel',
-      'sorry': 'Sorry',
       'you': 'You',
       'continue': 'Continue',
       'back': 'Back'
@@ -49,6 +48,8 @@ const translations = {
       'lostPhrase': 'Too bad...',
       'scoresUsThem': 'Us : {us} - Them : {them}',
       'withBelote': 'with belote',
+      'belote': 'Belote !',
+      'rebelote': 'Rebelote !',
       'made': 'Auction met by {name}',
       'failed': 'Contract failed by {name}',
       'auctionAt': 'at {auction}',
@@ -59,6 +60,7 @@ const translations = {
       'playerCoinched': 'Coinched by {player}',
       'playerCounterCoinched': 'Counter-coinched by {player}',
       'noAuctionsPhrase': 'No auctions were placed...',
+      'gameCanceled': 'Game canceled',
       'ai': {
         'title': 'Bot',
         '1': {
@@ -284,6 +286,8 @@ to test the game, the IAs, and even give us a hand in the development, which wou
       'lostPhrase': 'Dommage...',
       'scoresUsThem': 'Nous : {us} - Eux : {them}',
       'withBelote': 'avec la belote',
+      'belote': 'Belote !',
+      'rebelote': 'Rebelote !',
       'made': 'Contrat rempli par {name}',
       'failed': 'Annonce de {name} chutée',
       'auctionAt': 'à {auction}',
@@ -294,6 +298,7 @@ to test the game, the IAs, and even give us a hand in the development, which wou
       'playerCoinched': 'Coinché par {player}',
       'playerCounterCoinched': 'Surcoinché par {player}',
       'noAuctionsPhrase': 'Personne n\'a fait d\'annonces...',
+      'gameCanceled': 'Partie annulée',
       'ai': {
         'title': 'PNJ',
         '1': {
