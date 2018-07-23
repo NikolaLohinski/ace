@@ -6,13 +6,12 @@ const __TIMEOUTCOINCHE = 2000;  // Time in ms
 const __TIMEOUTPLAY = 1500;  // Time in ms
 const _ = {
   potential: {
-    start: 35,
+    start: 37,
     min: 80
   },
   factor: {
-    partner: 0.80 * (1 + (0.05 * Math.random() - 0.025)),
-    coinche: 0.85,
-    counterCoinche: 0.8 * (1 + (0.05 * Math.random() - 0.025))
+    partner: 0.75,
+    coinche: 0.80
   },
   // 7, 8, Q, K, 10, A, 9, J
   assets: [
@@ -151,13 +150,9 @@ const Lucy = {
           return Utils.getCardFamily(card) === lastAuction.category ? total + 1 : total;
         }, 0);
         const potentials = this.buildPotentials(game, me);
-        let coinche = assets > 3;
-        if (!coinche) {
-          let factor = _.factor.coinche;
-          if (game.getDefense().some((id) => game.getDidCoinche()[id])) {
-            factor = _.factor.counterCoinche;
-          }
-          coinche = 162 * factor - potentials[lastAuction.category] > lastAuction.price + _.potential.start;
+        let coinche = assets > 3 && !game.getOrder().some((id) => game.getDidCoinche()[id]);
+        if (!coinche && !game.getOrder().some((id) => game.getDidCoinche()[id])) {
+          coinche = 162 * _.factor.coinche - potentials[lastAuction.category] > lastAuction.price + _.potential.start;
         }
         if (coinche) {
           const bet = {
