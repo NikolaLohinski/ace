@@ -25,7 +25,7 @@
   global.__zIndex = global.__zIndex || 0;
   const __suitMapping = { 0: 's', 1: 'h', 2: 'c', 3: 'd' };
   const __nameMapping = { 1: 'a', 7: '7', 8: '8', 9: '9', 10: '10', 11: 'j', 12: 'q', 13: 'k' };
-  const __Deck = Deck(false).cards.filter((c) => {
+  let __Deck = new Deck(false).cards.filter((c) => {
     return c['rank'] > 6 || c['rank'] === 1;
   }).reduce((deck, c) => {
     deck[__nameMapping[c['rank']] + __suitMapping[c['suit']]] = c;
@@ -37,7 +37,8 @@
         handCards: [],
         foldCards: {},
         expanded: false,
-        displayLastFold: false
+        displayLastFold: false,
+        resetting: false
       };
     },
     mixins: [saveState],
@@ -70,9 +71,26 @@
       },
       allowLastFold () {
         return !this.disabled && this.$store.getters.game.getLastFold();
+      },
+      doReset () {
+        return this.$store.getters.game.isInter() || this.$store.getters.game.isEnd();
       }
     },
     methods: {
+      reset () {
+        this.handCards = [];
+        this.foldCards = {};
+        Object.values(__Deck).forEach((card, index, array) => {
+          card.unmount();
+          delete array[index];
+        });
+        __Deck = new Deck(false).cards.filter((c) => {
+          return c['rank'] > 6 || c['rank'] === 1;
+        }).reduce((deck, c) => {
+          deck[__nameMapping[c['rank']] + __suitMapping[c['suit']]] = c;
+          return deck;
+        }, {});
+      },
       mountHand (hand) {
         for (const name of hand) {
           __Deck[name].setSide('front');
@@ -295,32 +313,58 @@
             }, 250);
           }
         }
+      },
+      updateFold (fold) {
+        const starter = this.$store.getters.game.getStarter();
+        const order = this.$store.getters.game.getOrder();
+        for (let k = 0; k < order.length; k++) {
+          const id = order[(order.indexOf(starter) + k) % 4];
+          if (fold.hasOwnProperty(id)) {
+            if (fold[id]) {
+              this.playCard(id, fold[id]);
+            }
+          }
+        }
+        if (Object.values(fold).every((card) => card === null) && Object.values(this.foldCards).length > 1) {
+          this.finishFold();
+        }
+        this.refresh();
       }
     },
     watch: {
       hand: {
         deep: true,
         handler (hand) {
-          this.mountHand(hand);
+          const lambda = (h) => {
+            if (!this.resetting) {
+              this.mountHand(h);
+            } else {
+              setTimeout(lambda, 200, h);
+            }
+          };
+          lambda(hand);
         }
       },
       fold: {
         deep: true,
         handler (fold) {
-          const starter = this.$store.getters.game.getStarter();
-          const order = this.$store.getters.game.getOrder();
-          for (let k = 0; k < order.length; k++) {
-            const id = order[(order.indexOf(starter) + k) % 4];
-            if (fold.hasOwnProperty(id)) {
-              if (fold[id]) {
-                this.playCard(id, fold[id]);
-              }
+          const lambda = (f) => {
+            if (!this.resetting) {
+              this.updateFold(f);
+            } else {
+              setTimeout(lambda, 200, f);
             }
-          }
-          if (Object.values(fold).every((card) => card === null) && Object.values(this.foldCards).length > 1) {
-            this.finishFold();
-          }
-          this.refresh();
+          };
+          lambda(fold);
+        }
+      },
+      doReset (doReset) {
+        if (doReset) {
+          this.resetting = true;
+          setTimeout(() => {
+            this.reset();
+            this.resetting = false;
+          }, 1100);
         }
       }
     },

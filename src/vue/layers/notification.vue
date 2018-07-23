@@ -88,7 +88,7 @@
             if (this.endGame) {
               setTimeout(this.notifyEnd, 200);
             } else {
-              this.$store.dispatch('restart').then();
+              setTimeout(() => this.$store.dispatch('restart').then(), 1000);
             }
           }
         }).show();
